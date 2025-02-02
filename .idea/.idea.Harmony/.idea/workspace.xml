@@ -12,39 +12,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dacea894-8351-4caf-83bb-60239bb9bc72" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/DependencyInjection.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Commands/CreatePerson/CreatePersonCommand.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Commands/CreatePerson/CreatePersonCommandHandler.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Commands/CreatePerson/CreatePersonDto.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Commands/DeletePerson/DeletePersonCommand.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Commands/DeletePerson/DeletePersonCommandHandler.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Commands/UpdatePerson/UpdatePersonCommand.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Commands/UpdatePerson/UpdatePersonCommandHandler.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/PersonDto.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Queries/GetPeople/GetPeopleQuery.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Queries/GetPeople/GetPeopleQueryHandler.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Queries/GetPerson/GetPersonQuery.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Features/People/Queries/GetPerson/GetPersonQueryHandler.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Application/Interfaces/IApplicationDbContext.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Core/Entities/BaseEntity.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Core/Entities/Group.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Core/Entities/Person.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Core/Exceptions/NotFoundException.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Infrastructure/DependencyInjection.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Infrastructure/Persistence/ApplicationDbContext.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Infrastructure/Persistence/DesignTimeDbContextFactory.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Web/Components/Pages/People/Create.razor" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Web/Components/Pages/People/Edit.razor" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Web/Components/Pages/People/Index.razor" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Web/Harmony.Web.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Web/Shared/Components/PersonForm.razor" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Harmony.Web/Shared/Components/PersonFormModel.cs" afterDir="false" />
+    <list default="true" id="dacea894-8351-4caf-83bb-60239bb9bc72" name="Changes" comment="Improve NavMenu">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Harmony/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Harmony/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Directory.Packages.props" beforeDir="false" afterPath="$PROJECT_DIR$/Directory.Packages.props" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Harmony.Core/Entities/Person.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Harmony.Core/Entities/Person.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Harmony.Web/Components/Pages/People/Index.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Harmony.Web/Components/Pages/People/Index.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Harmony.Web/Harmony.Web.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Harmony.Web/Harmony.Web.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Harmony.Web/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Harmony.Web/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Harmony.Web/Shared/Components/PersonForm.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Harmony.Web/Shared/Components/PersonForm.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Harmony.Web/Shared/Components/PersonFormModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Harmony.Web/Shared/Components/PersonFormModel.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager">
+    <option name="groupingKeys">
+      <option value="directory" />
+    </option>
   </component>
   <component name="DpaMonitoringSettings">
     <option name="firstShow" value="false" />
@@ -57,9 +43,15 @@
     <setting file="file://$PROJECT_DIR$/Harmony.Core/Entities/Group.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Harmony.Core/Entities/Person.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Harmony.Core/Exceptions/NotFoundException.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock://C:/Code/Harmony/Harmony.Web/Components/Layout/NavMenu.razor" root0="SKIP_HIGHLIGHTING" root1="FORCE_HIGHLIGHTING" root2="FORCE_HIGHLIGHTING" />
+    <setting file="mock://C:/Code/Harmony/Harmony.Web/Program.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Harmony.Web/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.js.map" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Harmony.Web/wwwroot/lib/bootstrap/dist/js/bootstrap.esm.min.js.map" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Harmony.Web/wwwroot/lib/bootstrap/dist/js/bootstrap.js.map" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Harmony.Web/wwwroot/lib/bootstrap/dist/js/bootstrap.min.js.map" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/b4f8b29071cfcf73e927671b936ba53110f1b613a1cc9bef4fc4f07dd0fbe9/Exception.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProjectColorInfo"><![CDATA[{
   "customColor": "",
   "associatedIndex": 8
@@ -81,7 +73,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "HotReloadSettingsPage",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -110,26 +102,47 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1738525303487</updated>
-      <workItem from="1738525304934" duration="7808000" />
+      <workItem from="1738525304934" duration="15002000" />
     </task>
+    <task id="LOCAL-00001" summary="WIP">
+      <option name="closed" value="true" />
+      <created>1738533547214</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1738533547214</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Improve NavMenu">
+      <option name="closed" value="true" />
+      <created>1738537121272</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1738537121272</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Harmony.Web/Components/Pages/People/Index.razor</url>
-          <line>55</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="WIP" />
+    <MESSAGE value="Improve NavMenu" />
+    <option name="LAST_COMMIT_MESSAGE" value="Improve NavMenu" />
   </component>
 </project>

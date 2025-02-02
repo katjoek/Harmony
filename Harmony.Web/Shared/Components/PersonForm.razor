@@ -1,9 +1,7 @@
 <!-- Harmony.Web/Shared/Components/PersonForm.razor -->
-@using Harmony.Application.Features.People.Commands.CreatePerson
-@using Harmony.Application.Features.People.Commands.UpdatePerson
 @using Microsoft.AspNetCore.Components.Forms
 
-<EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+<EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit" FormName="PersonForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -56,7 +54,8 @@
 
     <div class="form-group">
         <label>Date of Birth</label>
-        <InputDate @bind-Value="Model.DateOfBirth" class="form-control" />
+        <InputText @bind-Value="Model.DateOfBirthFormatted" class="form-control" />
+        <ValidationMessage For="@(() => Model.DateOfBirth)" />
     </div>
 
     <button type="submit" class="btn btn-primary mt-3">@SubmitButtonText</button>
@@ -75,7 +74,7 @@
 
     [Parameter]
     public EventCallback OnCancel { get; set; }
-    
+
     private async Task HandleValidSubmit()
     {
         // Your logic for handling the valid submit here

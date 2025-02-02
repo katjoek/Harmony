@@ -1,6 +1,8 @@
 <Project>
   <ItemGroup>
     <PackageVersion Include="Blazorise" Version="1.7.3" />
+    <PackageVersion Include="FluentValidation" Version="11.11.0" />
+    <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />

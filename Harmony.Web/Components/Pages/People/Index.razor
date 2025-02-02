@@ -1,15 +1,17 @@
 <!-- Harmony.Web/Pages/People/Index.razor -->
 @page "/people"
+@using System.Diagnostics
 @using Harmony.Application.Features.People.Commands.DeletePerson
 @using Harmony.Application.Features.People.Queries
 @using Harmony.Application.Features.People.Queries.GetPeople
 @using MediatR
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
 <h3>Manage People</h3>
 
-<button class="btn btn-primary" @onclick="NavigateToCreate">Add New Person</button>
+<button @onclick="NavigateToCreate" class="btn btn-primary">Create New Person</button>
 
 @if (_people is null)
 {
@@ -44,11 +46,12 @@ else
 }
 
 @code {
-    private List<PersonDto> _people = new();
+    private List<PersonDto>? _people = null;
 
     protected override async Task OnInitializedAsync()
     {
         _people = await Mediator.Send(new GetPeopleQuery());
+        Debug.WriteLine("Test OnInitializedAsync!");
     }
 
     private void NavigateToCreate()

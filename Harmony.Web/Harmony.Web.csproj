@@ -9,6 +9,8 @@
 
     <ItemGroup>
       <PackageReference Include="Blazorise" />
+      <PackageReference Include="FluentValidation" />
+      <PackageReference Include="FluentValidation.AspNetCore" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

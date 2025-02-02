@@ -1,5 +1,6 @@
 // Harmony.Web/Shared/Components/PersonFormModel.cs
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 
 namespace Harmony.Web.Shared.Components;
 
@@ -11,23 +12,35 @@ public class PersonFormModel
     [MaxLength(10)]
     public string? MiddleName { get; set; }
 
-    [Required, MaxLength(30)]
+    [MaxLength(30)]
     public string LastName { get; set; } = string.Empty;
 
-    [Required, MaxLength(80)]
+    [MaxLength(80)]
     public string StreetAndHouseNumber { get; set; } = string.Empty;
 
-    [Required, MaxLength(30)]
+    [MaxLength(30)]
     public string City { get; set; } = string.Empty;
 
-    [Required, MaxLength(7)]
+    [MaxLength(7)]
     public string ZipCode { get; set; } = string.Empty;
 
-    [Required, MaxLength(12)]
+    [MaxLength(12)]
     public string PhoneNumber { get; set; } = string.Empty;
 
-    [Required, MaxLength(128)]
-    public string EmailAddress { get; set; } = string.Empty;
+    [MaxLength(128), EmailAddress]
+    public string? EmailAddress { get; set; }
 
     public DateOnly? DateOfBirth { get; set; }
+    
+    internal string? DateOfBirthFormatted
+    {
+        get => DateOfBirth?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        set
+        {
+            if (DateOnly.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+            {
+                DateOfBirth = parsedDate;
+            }
+        }
+    }
 }

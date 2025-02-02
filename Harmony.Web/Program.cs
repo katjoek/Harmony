@@ -3,6 +3,7 @@ using Harmony.Infrastructure.Persistence;
 using Harmony.Web.Components;
 using Microsoft.EntityFrameworkCore;
 using Blazorise;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services
     })
     .AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddValidatorsFromAssemblyContaining(typeof(GetPeopleQuery));
 
 builder.Services.AddMediatR(cfg =>
 {

@@ -25,8 +25,8 @@ public class Person : BaseEntity
     [MaxLength(12)]
     public string PhoneNumber { get; set; } = "";
 
-    [MaxLength(128)]
-    public string EmailAddress { get; set; } = "";
+    [MaxLength(128), EmailAddress]
+    public string? EmailAddress { get; set; } = "";
     
     public DateOnly? DateOfBirth { get; set; }
 
