@@ -1,0 +1,36 @@
+@page "/people/create"
+@using Harmony.Application.Features.People.Commands.CreatePerson
+@using Harmony.Web.Shared.Components
+@using MediatR
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<h3>Create New Person</h3>
+
+<PersonForm Model="_person" SubmitButtonText="Create" OnValidSubmit="HandleValidSubmit" OnCancel="Cancel" />
+
+@code {
+    private PersonFormModel _person = new();
+
+    private async Task HandleValidSubmit()
+    {
+        var personId = await Mediator.Send(new CreatePersonCommand(
+            _person.FirstName,
+            _person.MiddleName,
+            _person.LastName,
+            _person.StreetAndHouseNumber,
+            _person.City,
+            _person.ZipCode,
+            _person.PhoneNumber,
+            _person.EmailAddress,
+            _person.DateOfBirth
+        ));
+
+        Navigation.NavigateTo($"/people/edit/{personId}");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/people");
+    }
+}

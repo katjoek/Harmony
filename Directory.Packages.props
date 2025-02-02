@@ -1,0 +1,10 @@
+<Project>
+  <ItemGroup>
+    <PackageVersion Include="Blazorise" Version="1.7.3" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />
+    <PackageVersion Include="MediatR" Version="12.4.1" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.1" />
+  </ItemGroup>
+</Project>

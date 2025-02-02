@@ -1,0 +1,65 @@
+<!-- Harmony.Web/Pages/People/Index.razor -->
+@page "/people"
+@using Harmony.Application.Features.People.Commands.DeletePerson
+@using Harmony.Application.Features.People.Queries
+@using Harmony.Application.Features.People.Queries.GetPeople
+@using MediatR
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<h3>Manage People</h3>
+
+<button class="btn btn-primary" @onclick="NavigateToCreate">Add New Person</button>
+
+@if (_people is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var person in _people)
+        {
+            <tr>
+                <td>@person.FullName</td>
+                <td>@person.EmailAddress</td>
+                <td>@person.PhoneNumber</td>
+                <td>
+                    <button @onclick="() => Edit(person.Id)" class="btn btn-sm btn-warning">Edit</button>
+                    <button @onclick="() => Delete(person.Id)" class="btn btn-sm btn-danger">Delete</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<PersonDto> _people = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _people = await Mediator.Send(new GetPeopleQuery());
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/people/create");
+    }
+
+    private void Edit(int id) => Navigation.NavigateTo($"/people/edit/{id}");
+    private async Task Delete(int id)
+    {
+        await Mediator.Send(new DeletePersonCommand(id));
+        _people = await Mediator.Send(new GetPeopleQuery());
+    }
+}

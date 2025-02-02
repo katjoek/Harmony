@@ -1,0 +1,61 @@
+@page "/people/edit/{Id}"
+@using Harmony.Application.Features.People.Commands.UpdatePerson
+@using Harmony.Application.Features.People.Queries.GetPerson
+@using Harmony.Web.Shared.Components
+@using MediatR
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<h3>Edit Person</h3>
+
+<PersonForm Model="_person" SubmitButtonText="Save" OnValidSubmit="HandleValidSubmit" OnCancel="Cancel" />
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private PersonFormModel _person = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var person = await Mediator.Send(new GetPersonQuery(Id));
+        if (person != null)
+        {
+            _person = new PersonFormModel
+            {
+                FirstName = person.FirstName,
+                MiddleName = person.MiddleName,
+                LastName = person.LastName,
+                StreetAndHouseNumber = person.StreetAndHouseNumber,
+                City = person.City,
+                ZipCode = person.ZipCode,
+                PhoneNumber = person.PhoneNumber,
+                EmailAddress = person.EmailAddress,
+                DateOfBirth = person.DateOfBirth
+            };
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await Mediator.Send(new UpdatePersonCommand(
+            Id,
+            _person.FirstName,
+            _person.MiddleName,
+            _person.LastName,
+            _person.StreetAndHouseNumber,
+            _person.City,
+            _person.ZipCode,
+            _person.PhoneNumber,
+            _person.EmailAddress,
+            _person.DateOfBirth
+        ));
+
+        Navigation.NavigateTo("/people");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/people");
+    }
+}
