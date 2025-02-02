@@ -2,11 +2,17 @@ using Harmony.Application.Features.People.Queries.GetPeople;
 using Harmony.Infrastructure.Persistence;
 using Harmony.Web.Components;
 using Microsoft.EntityFrameworkCore;
+using Blazorise;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
+builder.Services
+    .AddBlazorise(options =>
+    {
+        options.Immediate = true; // Optional: Enable immediate rendering
+    })
+    .AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMediatR(cfg =>
