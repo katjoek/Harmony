@@ -29,7 +29,7 @@ public class PersonDto
             City = person.City,
             ZipCode = person.ZipCode,
             PhoneNumber = person.PhoneNumber,
-            EmailAddress = person.EmailAddress,
+            EmailAddress = person.EmailAddress ?? "",
             DateOfBirth = person.DateOfBirth
         };
     }

@@ -1,65 +1,74 @@
-<!-- Harmony.Web/Shared/Components/PersonForm.razor -->
 @using Microsoft.AspNetCore.Components.Forms
 
 <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit" FormName="PersonForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <div class="form-group">
-        <label>First Name</label>
-        <InputText @bind-Value="Model.FirstName" class="form-control" />
-        <ValidationMessage For="@(() => Model.FirstName)" />
+    <!-- Name Fields Row -->
+    <div class="d-flex align-items-start gap-2">
+        <div>
+            <label class="d-block">First Name</label>
+            <InputText @bind-Value="Model.FirstName" class="form-control form-control-sm" style="width: 200px;" />
+            <ValidationMessage For="@(() => Model.FirstName)" />
+        </div>
+        <div>
+            <label class="d-block">Middle Name</label>
+            <InputText @bind-Value="Model.MiddleName" class="form-control form-control-sm" style="width: 200px;" />
+        </div>
+        <div>
+            <label class="d-block">Last Name</label>
+            <InputText @bind-Value="Model.LastName" class="form-control form-control-sm" style="width: 200px;" />
+            <ValidationMessage For="@(() => Model.LastName)" />
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Middle Name</label>
-        <InputText @bind-Value="Model.MiddleName" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label>Last Name</label>
-        <InputText @bind-Value="Model.LastName" class="form-control" />
-        <ValidationMessage For="@(() => Model.LastName)" />
-    </div>
-
-    <div class="form-group">
-        <label>Street and House Number</label>
-        <InputText @bind-Value="Model.StreetAndHouseNumber" class="form-control" />
+    <!-- Address Field -->
+    <div class="mt-1">
+        <label class="d-block">Street and House Number</label>
+        <InputText @bind-Value="Model.StreetAndHouseNumber" class="form-control form-control-sm" style="width: 400px;" />
         <ValidationMessage For="@(() => Model.StreetAndHouseNumber)" />
     </div>
 
-    <div class="form-group">
-        <label>City</label>
-        <InputText @bind-Value="Model.City" class="form-control" />
-        <ValidationMessage For="@(() => Model.City)" />
+    <!-- City & Zip Code Row -->
+    <div class="d-flex align-items-start gap-2 mt-1">
+        <div>
+            <label class="d-block">City</label>
+            <InputText @bind-Value="Model.City" class="form-control form-control-sm" style="width: 250px;" />
+            <ValidationMessage For="@(() => Model.City)" />
+        </div>
+        <div>
+            <label class="d-block">Zip Code</label>
+            <InputText @bind-Value="Model.ZipCode" class="form-control form-control-sm" style="width: 150px;" />
+            <ValidationMessage For="@(() => Model.ZipCode)" />
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Zip Code</label>
-        <InputText @bind-Value="Model.ZipCode" class="form-control" />
-        <ValidationMessage For="@(() => Model.ZipCode)" />
+    <!-- Phone & Email Row -->
+    <div class="d-flex align-items-start gap-2 mt-1">
+        <div>
+            <label class="d-block">Phone Number</label>
+            <InputText @bind-Value="Model.PhoneNumber" class="form-control form-control-sm" style="width: 250px;" />
+            <ValidationMessage For="@(() => Model.PhoneNumber)" />
+        </div>
+        <div>
+            <label class="d-block">Email Address</label>
+            <InputText @bind-Value="Model.EmailAddress" class="form-control form-control-sm" style="width: 300px;" />
+            <ValidationMessage For="@(() => Model.EmailAddress)" />
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Phone Number</label>
-        <InputText @bind-Value="Model.PhoneNumber" class="form-control" />
-        <ValidationMessage For="@(() => Model.PhoneNumber)" />
-    </div>
-
-    <div class="form-group">
-        <label>Email Address</label>
-        <InputText @bind-Value="Model.EmailAddress" class="form-control" />
-        <ValidationMessage For="@(() => Model.EmailAddress)" />
-    </div>
-
-    <div class="form-group">
-        <label>Date of Birth</label>
-        <InputDate @bind-Value="Model.DateOfBirth" class="form-control" />
+    <!-- Date of Birth -->
+    <div class="mt-1">
+        <label class="d-block">Date of Birth</label>
+        <InputDate @bind-Value="Model.DateOfBirth" class="form-control form-control-sm" style="width: 200px;" />
         <ValidationMessage For="@(() => Model.DateOfBirth)" />
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">@SubmitButtonText</button>
-    <button type="button" class="btn btn-secondary mt-3" @onclick="OnCancel">Cancel</button>
+    <!-- Buttons -->
+    <div class="mt-2">
+        <button type="submit" class="btn btn-primary btn-sm">@SubmitButtonText</button>
+        <button type="button" class="btn btn-secondary btn-sm ms-2" @onclick="OnCancel">Cancel</button>
+    </div>
 </EditForm>
 
 @code {
@@ -77,11 +86,9 @@
 
     private async Task HandleValidSubmit()
     {
-        // Your logic for handling the valid submit here
-        // This is typically where you'd call your command to create/update the person
         if (OnValidSubmit.HasDelegate)
         {
-            await OnValidSubmit.InvokeAsync(null); // Trigger the callback if it's passed in
+            await OnValidSubmit.InvokeAsync(null);
         }
     }
 }
