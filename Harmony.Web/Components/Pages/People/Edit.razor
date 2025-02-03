@@ -1,10 +1,11 @@
-@page "/people/edit/{Id}"
+@page "/people/edit/{Id:int}"
 @using Harmony.Application.Features.People.Commands.UpdatePerson
 @using Harmony.Application.Features.People.Queries.GetPerson
 @using Harmony.Web.Shared.Components
 @using MediatR
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
 <h3>Edit Person</h3>
 
@@ -47,7 +48,7 @@
             _person.City,
             _person.ZipCode,
             _person.PhoneNumber,
-            _person.EmailAddress,
+            _person.EmailAddress ?? "",
             _person.DateOfBirth
         ));
 

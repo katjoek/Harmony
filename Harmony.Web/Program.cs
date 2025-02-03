@@ -30,7 +30,6 @@ Harmony.Infrastructure.DependencyInjection.AddInfrastructure(builder.Services, b
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);

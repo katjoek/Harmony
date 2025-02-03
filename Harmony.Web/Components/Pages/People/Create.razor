@@ -4,13 +4,14 @@
 @using MediatR
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
 <h3>Create New Person</h3>
 
 <PersonForm Model="_person" SubmitButtonText="Create" OnValidSubmit="HandleValidSubmit" OnCancel="Cancel" />
 
 @code {
-    private PersonFormModel _person = new();
+    private readonly PersonFormModel _person = new();
 
     private async Task HandleValidSubmit()
     {
@@ -22,7 +23,7 @@
             _person.City,
             _person.ZipCode,
             _person.PhoneNumber,
-            _person.EmailAddress,
+            _person.EmailAddress ?? "",
             _person.DateOfBirth
         ));
 

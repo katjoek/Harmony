@@ -31,16 +31,4 @@ public class PersonFormModel
     public string? EmailAddress { get; set; }
 
     public DateOnly? DateOfBirth { get; set; }
-    
-    internal string? DateOfBirthFormatted
-    {
-        get => DateOfBirth?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
-        set
-        {
-            if (DateOnly.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
-            {
-                DateOfBirth = parsedDate;
-            }
-        }
-    }
 }
