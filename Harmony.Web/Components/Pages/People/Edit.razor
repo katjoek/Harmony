@@ -9,14 +9,25 @@
 
 <h3>Edit Person</h3>
 
-<PersonForm Model="_person" SubmitButtonText="Save" OnValidSubmit="HandleValidSubmit" OnCancel="Cancel" />
+<PersonForm
+    Model="_person"
+    SubmitButtonText="Save"
+    OnValidSubmit="HandleValidSubmit"
+    OnCancel="Cancel"
+    @rendermode="InteractiveServer"/>
 
+<div>
+    <button type="button" class="btn btn-secondary btn-sm ms-2" @onclick="OnClick">Click me!</button>
+    <span>@Counter</span>
+</div>
 @code {
     [Parameter]
     public int Id { get; set; }
+    
+    public int Counter { get; set; }
 
     private PersonFormModel _person = new();
-
+    
     protected override async Task OnInitializedAsync()
     {
         var person = await Mediator.Send(new GetPersonQuery(Id));
@@ -58,5 +69,10 @@
     private void Cancel()
     {
         Navigation.NavigateTo("/people");
+    }
+
+    private void OnClick()
+    {
+        Counter++;
     }
 }
