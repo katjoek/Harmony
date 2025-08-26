@@ -52,6 +52,7 @@ public class ReportService : IReportService
             var columnCount = GetColumnCount(config);
             var table = new Table(columnCount);
             table.SetWidth(UnitValue.CreatePercentValue(100));
+            table.SetFontSize(9);
 
             // Add headers
             AddTableHeader(table, "Volledige naam");
