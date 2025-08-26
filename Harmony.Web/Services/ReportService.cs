@@ -179,6 +179,142 @@ public class ReportService : IReportService
         return Task.FromResult(package.GetAsByteArray());
     }
 
+    public Task<byte[]> GenerateBirthdayPdfReportAsync(string monthNameNl, List<PersonDto> persons, ReportModel config)
+    {
+        try
+        {
+            using var stream = new MemoryStream();
+            using var writer = new PdfWriter(stream);
+            using var pdf = new PdfDocument(writer);
+            var pageSize = string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
+                ? PageSize.A4.Rotate()
+                : PageSize.A4;
+            pdf.SetDefaultPageSize(pageSize);
+            using var document = new Document(pdf);
+
+            var title = new Paragraph($"Verjaardagen in {monthNameNl}")
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetFontSize(20)
+                .SetBold();
+            document.Add(title);
+
+            var timestamp = new Paragraph($"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}")
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetFontSize(10)
+                .SetFontColor(ColorConstants.GRAY);
+            document.Add(timestamp);
+
+            document.Add(new Paragraph("\n"));
+
+            // Order by day in month ascending
+            var ordered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
+
+            var columnCount = GetColumnCount(config);
+            var table = new Table(columnCount);
+            table.SetWidth(UnitValue.CreatePercentValue(100));
+            table.SetFontSize(9);
+
+            AddTableHeader(table, "Volledige naam");
+            if (config.IncludeDateOfBirth) AddTableHeader(table, "Geboortedatum");
+            if (config.IncludeAddress) AddTableHeader(table, "Adres");
+            if (config.IncludePhoneNumber) AddTableHeader(table, "Telefoon");
+            if (config.IncludeEmailAddress) AddTableHeader(table, "E-mail");
+
+            foreach (var person in ordered)
+            {
+                table.AddCell(new Cell().Add(new Paragraph(person.FullName ?? "")));
+                if (config.IncludeDateOfBirth)
+                    table.AddCell(new Cell().Add(new Paragraph(person.DateOfBirth?.ToString("dd-MM-yyyy") ?? "")));
+                if (config.IncludeAddress)
+                    table.AddCell(new Cell().Add(new Paragraph(person.FormattedAddress ?? "")));
+                if (config.IncludePhoneNumber)
+                    table.AddCell(new Cell().Add(new Paragraph(person.PhoneNumber ?? "")));
+                if (config.IncludeEmailAddress)
+                    table.AddCell(new Cell().Add(new Paragraph(person.EmailAddress ?? "")));
+            }
+
+            document.Add(table);
+            document.Close();
+
+            return Task.FromResult(stream.ToArray());
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public Task<byte[]> GenerateBirthdayExcelReportAsync(string monthNameNl, List<PersonDto> persons, ReportModel config)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+        using var package = new ExcelPackage();
+        var worksheet = package.Workbook.Worksheets.Add($"Verjaardagen {monthNameNl}");
+
+        worksheet.PrinterSettings.Orientation =
+            string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
+                ? eOrientation.Landscape
+                : eOrientation.Portrait;
+
+        var row = 1;
+
+        worksheet.Cells[row, 1].Value = $"Verjaardagen in {monthNameNl}";
+        worksheet.Cells[row, 1].Style.Font.Size = 16;
+        worksheet.Cells[row, 1].Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cells[row, 1].Value = $"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}";
+        worksheet.Cells[row, 1].Style.Font.Size = 10;
+        worksheet.Cells[row, 1].Style.Font.Color.SetColor(System.Drawing.Color.Gray);
+        row++;
+
+        row += 2;
+
+        var col = 1;
+        worksheet.Cells[row, col++].Value = "Volledige naam";
+        if (config.IncludeDateOfBirth) worksheet.Cells[row, col++].Value = "Geboortedatum";
+        if (config.IncludeAddress) worksheet.Cells[row, col++].Value = "Adres";
+        if (config.IncludePhoneNumber) worksheet.Cells[row, col++].Value = "Telefoon";
+        if (config.IncludeEmailAddress) worksheet.Cells[row, col++].Value = "E-mail";
+
+        using (var range = worksheet.Cells[row, 1, row, col - 1])
+        {
+            range.Style.Font.Bold = true;
+            range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+            range.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+        }
+
+        row++;
+
+        var ordered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
+
+        foreach (var person in ordered)
+        {
+            col = 1;
+            worksheet.Cells[row, col++].Value = person.FullName ?? "";
+            if (config.IncludeDateOfBirth)
+                worksheet.Cells[row, col++].Value = person.DateOfBirth?.ToString("dd-MM-yyyy") ?? "";
+            if (config.IncludeAddress)
+                worksheet.Cells[row, col++].Value = person.FormattedAddress ?? "";
+            if (config.IncludePhoneNumber)
+                worksheet.Cells[row, col++].Value = person.PhoneNumber ?? "";
+            if (config.IncludeEmailAddress)
+                worksheet.Cells[row, col++].Value = person.EmailAddress ?? "";
+
+            using (var range = worksheet.Cells[row, 1, row, col - 1])
+            {
+                range.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            }
+
+            row++;
+        }
+
+        worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+        return Task.FromResult(package.GetAsByteArray());
+    }
+
     private static int GetColumnCount(ReportModel config)
     {
         int count = 1; // Always include full name

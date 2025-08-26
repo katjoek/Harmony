@@ -1,0 +1,72 @@
+@using Harmony.Web.Models
+
+@if (Model is not null)
+{
+	<!-- Field Selection -->
+	<div class="mb-3">
+		<label class="form-label">Velden selecteren *</label>
+		<div class="row">
+			<div class="col-md-6">
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" @bind="Model.IncludeFullName" id="includeFullName" disabled>
+					<label class="form-check-label" for="includeFullName">
+						Volledige naam (verplicht)
+					</label>
+				</div>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" @bind="Model.IncludeDateOfBirth" @bind:event="onchange" id="includeDateOfBirth">
+					<label class="form-check-label" for="includeDateOfBirth">
+						Geboortedatum
+					</label>
+				</div>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" @bind="Model.IncludeAddress" @bind:event="onchange" id="includeAddress">
+					<label class="form-check-label" for="includeAddress">
+						Adres
+					</label>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" @bind="Model.IncludePhoneNumber" @bind:event="onchange" id="includePhoneNumber">
+					<label class="form-check-label" for="includePhoneNumber">
+						Telefoonnummer
+					</label>
+				</div>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" @bind="Model.IncludeEmailAddress" @bind:event="onchange" id="includeEmailAddress">
+					<label class="form-check-label" for="includeEmailAddress">
+						E-mailadres
+					</label>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Output Format -->
+	<div class="mb-3">
+		<label class="form-label">Uitvoerformaat *</label>
+		<InputSelect @bind-Value="Model.OutputFormat" class="form-select w-auto">
+			<option value="PDF">PDF</option>
+			<option value="Excel">Excel</option>
+		</InputSelect>
+		<ValidationMessage For="@(() => Model.OutputFormat)" />
+	</div>
+
+	<!-- Orientation -->
+	<div class="mb-3">
+		<label class="form-label">Oriëntatie *</label>
+		<InputSelect @bind-Value="Model.Orientation" class="form-select w-auto">
+			<option value="Portrait">Staand (Portrait)</option>
+			<option value="Landscape">Liggend (Landscape)</option>
+		</InputSelect>
+		<ValidationMessage For="@(() => Model.Orientation)" />
+	</div>
+}
+
+@code {
+	[Parameter]
+	public ReportModel Model { get; set; } = default!;
+}
+
+

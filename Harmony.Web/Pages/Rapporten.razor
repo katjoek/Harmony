@@ -22,127 +22,87 @@
                 <EditForm Model="@reportModel" OnValidSubmit="@GenerateReport">
                     <DataAnnotationsValidator />
                     
-                    <!-- Group Selection -->
+                    <!-- Report Type Selection -->
                     <div class="mb-3">
-                        <label class="form-label">Groep selecteren *</label>
-                        <InputSelect TValue="string"
-                                     Value="@reportModel.SelectedGroupId"
-                                     ValueChanged="@OnSelectedGroupChanged"
-                                     ValueExpression="@(() => reportModel.SelectedGroupId)"
-                                     class="form-select">
-                            <option value="">-- Selecteer een groep --</option>
-                            @if (groups != null)
-                            {
-                                @foreach (var group in groups)
+                        <label class="form-label">Rapporttype *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Group")" checked="@(reportModel.ReportType == "Group")" id="typeGroup">
+                                    <label class="form-check-label" for="typeGroup">
+                                        Groepsrapport
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Birthday")" checked="@(reportModel.ReportType == "Birthday")" id="typeBirthday">
+                                    <label class="form-check-label" for="typeBirthday">
+                                        Verjaardagen
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (reportModel.ReportType == "Group")
+                    {
+                        <!-- Group Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Groep selecteren *</label>
+                            <InputSelect TValue="string"
+                                         Value="@reportModel.SelectedGroupId"
+                                         ValueChanged="@OnSelectedGroupChanged"
+                                         ValueExpression="@(() => reportModel.SelectedGroupId)"
+                                         class="form-select">
+                                <option value="">-- Selecteer een groep --</option>
+                                @if (groups != null)
                                 {
-                                    <option value="@group.Id">@group.Name (@group.MemberCount leden)</option>
+                                    @foreach (var group in groups)
+                                    {
+                                        <option value="@group.Id">@group.Name (@group.MemberCount leden)</option>
+                                    }
                                 }
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="@(() => reportModel.SelectedGroupId)" />
-                    </div>
-
-                    <!-- Field Selection -->
-                    <div class="mb-3">
-                        <label class="form-label">Velden selecteren *</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeFullName" id="includeFullName" disabled>
-                                    <label class="form-check-label" for="includeFullName">
-                                        Volledige naam (verplicht)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeDateOfBirth" @bind:event="onchange" id="includeDateOfBirth">
-                                    <label class="form-check-label" for="includeDateOfBirth">
-                                        Geboortedatum
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeAddress" @bind:event="onchange" id="includeAddress">
-                                    <label class="form-check-label" for="includeAddress">
-                                        Adres
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludePhoneNumber" @bind:event="onchange" id="includePhoneNumber">
-                                    <label class="form-check-label" for="includePhoneNumber">
-                                        Telefoonnummer
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeEmailAddress" @bind:event="onchange" id="includeEmailAddress">
-                                    <label class="form-check-label" for="includeEmailAddress">
-                                        E-mailadres
-                                    </label>
-                                </div>
-                            </div>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => reportModel.SelectedGroupId)" />
                         </div>
-                    </div>
-
-                    <!-- Output Format -->
-                    <div class="mb-3">
-                        <label class="form-label">Uitvoerformaat *</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="outputFormat" @onchange="@(() => reportModel.OutputFormat = "PDF")" checked="@(reportModel.OutputFormat == "PDF")" id="formatPdf">
-                                    <label class="form-check-label" for="formatPdf">
-                                        <i class="fas fa-file-pdf me-2 text-danger"></i>PDF
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="outputFormat" @onchange="@(() => reportModel.OutputFormat = "Excel")" checked="@(reportModel.OutputFormat == "Excel")" id="formatExcel">
-                                    <label class="form-check-label" for="formatExcel">
-                                        <i class="fas fa-file-excel me-2 text-success"></i>Excel
-                                    </label>
-                                </div>
-                            </div>
+                    }
+                    else if (reportModel.ReportType == "Birthday")
+                    {
+                        <!-- Month Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Maand *</label>
+                            <InputSelect TValue="int" @bind-Value="reportModel.SelectedMonth" class="form-select">
+                                @for (int m = 1; m <= 12; m++)
+                                {
+                                    <option value="@m">@GetDutchMonthName(m)</option>
+                                }
+                            </InputSelect>
                         </div>
-                        <ValidationMessage For="@(() => reportModel.OutputFormat)" />
-                    </div>
+                    }
 
-                    <!-- Orientation -->
-                    <div class="mb-3">
-                        <label class="form-label">Oriëntatie *</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="orientation" @onchange="@(() => reportModel.Orientation = "Portrait")" checked="@(reportModel.Orientation == "Portrait")" id="orientPortrait">
-                                    <label class="form-check-label" for="orientPortrait">
-                                        Staand (Portrait)
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="orientation" @onchange="@(() => reportModel.Orientation = "Landscape")" checked="@(reportModel.Orientation == "Landscape")" id="orientLandscape">
-                                    <label class="form-check-label" for="orientLandscape">
-                                        Liggend (Landscape)
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <ValidationMessage For="@(() => reportModel.Orientation)" />
-                    </div>
+                    <ReportOptions Model="@reportModel" />
 
                     <!-- Generate Button -->
                     <div class="d-flex justify-content-between">
                         <div>
-                            @if (!string.IsNullOrEmpty(reportModel.SelectedGroupId) && selectedGroup != null)
+                            @if (reportModel.ReportType == "Group" && !string.IsNullOrEmpty(reportModel.SelectedGroupId) && selectedGroup != null)
                             {
                                 <small class="text-muted">
                                     <i class="fas fa-info-circle me-1"></i>
                                     Dit rapport bevat @memberCount leden van groep "@selectedGroup.Name"
                                 </small>
                             }
+                            else if (reportModel.ReportType == "Birthday" && allPersons != null)
+                            {
+                                var count = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth).Count();
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    @count personen met verjaardag in @GetDutchMonthName(reportModel.SelectedMonth)
+                                </small>
+                            }
                         </div>
-                        <button type="submit" class="btn btn-primary" disabled="@(isGenerating || string.IsNullOrEmpty(reportModel.SelectedGroupId))">
+                        <button type="submit" class="btn btn-primary" disabled="@(isGenerating || (reportModel.ReportType == "Group" && string.IsNullOrEmpty(reportModel.SelectedGroupId)))">
                             @if (isGenerating)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -166,7 +126,7 @@
                 <h6 class="mb-0">Voorbeeld</h6>
             </div>
             <div class="card-body">
-                @if (selectedGroup != null)
+                @if (reportModel.ReportType == "Group" && selectedGroup != null)
                 {
                     <h6>@selectedGroup.Name</h6>
                     <p class="small text-muted mb-2">
@@ -242,7 +202,71 @@
                 }
                 else
                 {
-                    <p class="text-muted">Selecteer een groep om een voorbeeld te zien</p>
+                    <h6>Voorbeeld</h6>
+                    <p class="small text-muted mb-2">
+                        Gegenereerd op: @DateTime.Now.ToString("dd-MM-yyyy HH:mm")
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Volledige naam</th>
+                                    @if (reportModel.IncludeDateOfBirth)
+                                    {
+                                        <th>Geboortedatum</th>
+                                    }
+                                    @if (reportModel.IncludeAddress)
+                                    {
+                                        <th>Adres</th>
+                                    }
+                                    @if (reportModel.IncludePhoneNumber)
+                                    {
+                                        <th>Telefoon</th>
+                                    }
+                                    @if (reportModel.IncludeEmailAddress)
+                                    {
+                                        <th>E-mail</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (reportModel.ReportType == "Birthday" && allPersons != null)
+                                {
+                                    var sample = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
+                                                           .OrderBy(p => p.DateOfBirth?.Day)
+                                                           .Take(3);
+                                    foreach (var member in sample)
+                                    {
+                                        <tr>
+                                            <td>@member.FullName</td>
+                                            @if (reportModel.IncludeDateOfBirth)
+                                            {
+                                                <td>@member.DateOfBirth?.ToString("dd-MM-yyyy")</td>
+                                            }
+                                            @if (reportModel.IncludeAddress)
+                                            {
+                                                <td>@member.FormattedAddress</td>
+                                            }
+                                            @if (reportModel.IncludePhoneNumber)
+                                            {
+                                                <td>@member.PhoneNumber</td>
+                                            }
+                                            @if (reportModel.IncludeEmailAddress)
+                                            {
+                                                <td>@member.EmailAddress</td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="@GetColumnCount()" class="text-muted">Selecteer een groep of maand</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 }
             </div>
         </div>
@@ -309,16 +333,25 @@
 
     private async Task GenerateReport()
     {
-        if (selectedGroup == null || groupMembers == null) return;
+        if (reportModel.ReportType == "Group" && (selectedGroup == null || groupMembers == null)) return;
 
         try
         {
             isGenerating = true;
             StateHasChanged();
 
-            var adaptedGroupName = selectedGroup.Name.Replace(" ", "_");
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var fileName = $"{adaptedGroupName}_{timestamp}";
+            string fileName;
+            if (reportModel.ReportType == "Group")
+            {
+                var adaptedGroupName = selectedGroup!.Name.Replace(" ", "_");
+                fileName = $"{adaptedGroupName}_{timestamp}";
+            }
+            else
+            {
+                var monthName = GetDutchMonthName(reportModel.SelectedMonth).Replace(" ", "_");
+                fileName = $"Verjaardagen_{monthName}_{timestamp}";
+            }
             
             if (reportModel.OutputFormat == "PDF")
             {
@@ -344,18 +377,42 @@
 
     private async Task GeneratePdfReport(string fileName)
     {
-        if (selectedGroup == null || groupMembers == null) return;
-
-        var reportData = await ReportService.GeneratePdfReportAsync(selectedGroup, groupMembers, reportModel);
-        await DownloadFile($"{fileName}.pdf", reportData, "application/pdf");
+        if (reportModel.ReportType == "Group")
+        {
+            if (selectedGroup == null || groupMembers == null) return;
+            var reportData = await ReportService.GeneratePdfReportAsync(selectedGroup, groupMembers, reportModel);
+            await DownloadFile($"{fileName}.pdf", reportData, "application/pdf");
+        }
+        else
+        {
+            if (allPersons == null) return;
+            var monthName = GetDutchMonthName(reportModel.SelectedMonth);
+            var persons = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
+                                    .OrderBy(p => p.DateOfBirth?.Day)
+                                    .ToList();
+            var reportData = await ReportService.GenerateBirthdayPdfReportAsync(monthName, persons, reportModel);
+            await DownloadFile($"{fileName}.pdf", reportData, "application/pdf");
+        }
     }
 
     private async Task GenerateExcelReport(string fileName)
     {
-        if (selectedGroup == null || groupMembers == null) return;
-
-        var reportData = await ReportService.GenerateExcelReportAsync(selectedGroup, groupMembers, reportModel);
-        await DownloadFile($"{fileName}.xlsx", reportData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        if (reportModel.ReportType == "Group")
+        {
+            if (selectedGroup == null || groupMembers == null) return;
+            var reportData = await ReportService.GenerateExcelReportAsync(selectedGroup, groupMembers, reportModel);
+            await DownloadFile($"{fileName}.xlsx", reportData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        else
+        {
+            if (allPersons == null) return;
+            var monthName = GetDutchMonthName(reportModel.SelectedMonth);
+            var persons = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
+                                    .OrderBy(p => p.DateOfBirth?.Day)
+                                    .ToList();
+            var reportData = await ReportService.GenerateBirthdayExcelReportAsync(monthName, persons, reportModel);
+            await DownloadFile($"{fileName}.xlsx", reportData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
     }
 
     private async Task DownloadFile(string fileName, byte[] data, string contentType)
@@ -379,6 +436,12 @@
         if (reportModel.IncludePhoneNumber) count++;
         if (reportModel.IncludeEmailAddress) count++;
         return count;
+    }
+
+    private static string GetDutchMonthName(int month)
+    {
+        var culture = new System.Globalization.CultureInfo("nl-NL");
+        return culture.DateTimeFormat.GetMonthName(month);
     }
 
     private void ShowSuccessMessage(string message)
