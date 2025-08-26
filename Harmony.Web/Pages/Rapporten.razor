@@ -163,7 +163,7 @@
                     <tbody>
                         @if (groupMembers != null)
                         {
-                            @foreach (var member in groupMembers.Take(3))
+                            @foreach (var member in GetSortedGroupMembers().Take(3))
                             {
                                 <tr>
                                     <td>@member.FullName</td>
@@ -185,11 +185,11 @@
                                     }
                                 </tr>
                             }
-                            @if (groupMembers.Count > 3)
+                            @if (GetSortedGroupMembers().Count() > 3)
                             {
                                 <tr>
                                     <td colspan="@GetColumnCount()" class="text-center text-muted">
-                                        ... en @(groupMembers.Count - 3) meer
+                                        ... en @(GetSortedGroupMembers().Count() - 3) meer
                                     </td>
                                 </tr>
                             }
@@ -230,9 +230,7 @@
                     <tbody>
                         @if (reportModel.ReportType == "Birthday" && allPersons != null)
                         {
-                            var sample = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
-                                                   .OrderBy(p => p.DateOfBirth?.Day)
-                                                   .Take(3);
+                            var sample = GetSortedBirthdayPersons().Take(3);
                             foreach (var member in sample)
                             {
                                 <tr>
@@ -448,6 +446,27 @@
     private void ShowErrorMessage(string message)
     {
         Console.WriteLine($"ERROR: {message}");
+    }
+
+    private IEnumerable<PersonDto> GetSortedGroupMembers()
+    {
+        if (groupMembers == null) return Enumerable.Empty<PersonDto>();
+        
+        return reportModel.SortOrder == "FirstName"
+            ? groupMembers.OrderBy(p => p.FirstName).ThenBy(p => p.Surname ?? "")
+            : groupMembers.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName);
+    }
+
+    private IEnumerable<PersonDto> GetSortedBirthdayPersons()
+    {
+        if (allPersons == null) return Enumerable.Empty<PersonDto>();
+        
+        var birthdayPersons = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
+                                       .OrderBy(p => p.DateOfBirth?.Day);
+        
+        return reportModel.SortOrder == "FirstName"
+            ? birthdayPersons.ThenBy(p => p.FirstName).ThenBy(p => p.Surname ?? "")
+            : birthdayPersons.ThenBy(p => p.Surname ?? "").ThenBy(p => p.FirstName);
     }
 }
 

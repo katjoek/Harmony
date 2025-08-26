@@ -67,8 +67,9 @@ public class ReportService : IReportService
             if (config.IncludePhoneNumber) AddTableHeader(table, "Telefoon");
             if (config.IncludeEmailAddress) AddTableHeader(table, "E-mail");
 
-            // Add member data
-            foreach (var member in members)
+            // Add member data (sorted according to config)
+            var sortedMembers = SortPersons(members, config.SortOrder);
+            foreach (var member in sortedMembers)
             {
                 table.AddCell(new Cell().Add(new Paragraph(member.FullName ?? "")));
                 if (config.IncludeDateOfBirth) 
@@ -150,8 +151,9 @@ public class ReportService : IReportService
 
         row++;
 
-        // Data rows
-        foreach (var member in members)
+        // Data rows (sorted according to config)
+        var sortedMembers = SortPersons(members, config.SortOrder);
+        foreach (var member in sortedMembers)
         {
             col = 1;
             worksheet.Cells[row, col++].Value = member.FullName ?? "";
@@ -206,8 +208,9 @@ public class ReportService : IReportService
 
             document.Add(new Paragraph("\n"));
 
-            // Order by day in month ascending
-            var ordered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
+            // Order by day in month ascending, then by the configured sort order
+            var dayOrdered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
+            var ordered = SortPersons(dayOrdered, config.SortOrder, preservePrimarySort: true);
 
             var columnCount = GetColumnCount(config);
             var table = new Table(columnCount);
@@ -287,7 +290,9 @@ public class ReportService : IReportService
 
         row++;
 
-        var ordered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
+        // Order by day in month ascending, then by the configured sort order
+        var dayOrdered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
+        var ordered = SortPersons(dayOrdered, config.SortOrder, preservePrimarySort: true);
 
         foreach (var person in ordered)
         {
@@ -331,5 +336,23 @@ public class ReportService : IReportService
         cell.SetBackgroundColor(ColorConstants.LIGHT_GRAY);
         cell.SetBold();
         table.AddHeaderCell(cell);
+    }
+
+    private static List<PersonDto> SortPersons(List<PersonDto> persons, string sortOrder, bool preservePrimarySort = false)
+    {
+        if (preservePrimarySort)
+        {
+            // For birthday reports, maintain the primary sort (by day) and add secondary sort
+            return sortOrder == "FirstName"
+                ? persons.OrderBy(p => p.DateOfBirth?.Day).ThenBy(p => p.FirstName).ThenBy(p => p.Surname ?? "").ToList()
+                : persons.OrderBy(p => p.DateOfBirth?.Day).ThenBy(p => p.Surname ?? "").ThenBy(p => p.FirstName).ToList();
+        }
+        else
+        {
+            // For regular reports, use the selected sort order as primary
+            return sortOrder == "FirstName"
+                ? persons.OrderBy(p => p.FirstName).ThenBy(p => p.Surname ?? "").ToList()
+                : persons.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName).ToList();
+        }
     }
 }

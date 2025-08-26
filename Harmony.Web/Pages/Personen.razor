@@ -21,6 +21,13 @@
                 </button>
             }
         </div>
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-sort"></i></span>
+            <select class="form-select" @onchange="OnSortOrderChanged" style="width: auto;">
+                <option value="LastName" selected="@(personSortOrder == "LastName")">Achternaam</option>
+                <option value="FirstName" selected="@(personSortOrder == "FirstName")">Voornaam</option>
+            </select>
+        </div>
         <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
             <i class="fas fa-plus me-2"></i>
             Nieuwe Persoon
@@ -220,6 +227,7 @@
     private bool isEditing = false;
     private bool showPersonModal = false;
     private string personSearch = "";
+    private string personSortOrder = "LastName"; // Default to last name sorting
     
     // Groups modal state
     private bool showGroupsModal = false;
@@ -517,9 +525,19 @@
     }
 
     private IEnumerable<PersonDto> FilteredPersons
-        => string.IsNullOrWhiteSpace(personSearch) || persons == null
-            ? persons ?? Enumerable.Empty<PersonDto>()
-            : persons.Where(p => MatchesPerson(p, personSearch));
+    {
+        get
+        {
+            var filtered = string.IsNullOrWhiteSpace(personSearch) || persons == null
+                ? persons ?? Enumerable.Empty<PersonDto>()
+                : persons.Where(p => MatchesPerson(p, personSearch));
+
+            // Apply sorting
+            return personSortOrder == "FirstName"
+                ? filtered.OrderBy(p => p.FirstName).ThenBy(p => p.Surname ?? "")
+                : filtered.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName);
+        }
+    }
 
     private static bool MatchesPerson(PersonDto p, string term)
     {
@@ -539,6 +557,12 @@
     private void ClearPersonSearch()
     {
         personSearch = "";
+    }
+
+    private void OnSortOrderChanged(ChangeEventArgs e)
+    {
+        personSortOrder = e.Value?.ToString() ?? "LastName";
+        StateHasChanged();
     }
 }
 

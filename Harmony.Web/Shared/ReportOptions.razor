@@ -62,6 +62,16 @@
 		</InputSelect>
 		<ValidationMessage For="@(() => Model.Orientation)" />
 	</div>
+
+	<!-- Sort Order -->
+	<div class="mb-3">
+		<label class="form-label">Sorteervolgorde *</label>
+		<InputSelect @bind-Value="Model.SortOrder" class="form-select w-auto">
+			<option value="LastName">Achternaam</option>
+			<option value="FirstName">Voornaam</option>
+		</InputSelect>
+		<ValidationMessage For="@(() => Model.SortOrder)" />
+	</div>
 }
 
 @code {

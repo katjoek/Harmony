@@ -19,4 +19,7 @@ public class ReportModel
 
     [Required(ErrorMessage = "Selecteer een oriëntatie")]
     public string Orientation { get; set; } = "Portrait"; // Portrait | Landscape
+
+    [Required(ErrorMessage = "Selecteer een sorteervolgorde")]
+    public string SortOrder { get; set; } = "LastName"; // FirstName | LastName
 }
