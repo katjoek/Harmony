@@ -4,6 +4,7 @@
 @using Harmony.ApplicationCore.Commands.Persons
 @using Harmony.Web.Models
 @using MediatR
+@using System.Linq
 
 <PageTitle>Personen - Harmony</PageTitle>
 
@@ -370,8 +371,14 @@
     private async Task RefreshGroupsState()
     {
         if (selectedPerson == null) return;
+        var selectedPersonId = selectedPerson.Id;
         await LoadPersons();
         await LoadGroups();
+        
+        // Find the updated selected person after refresh
+        selectedPerson = persons?.FirstOrDefault(p => p.Id == selectedPersonId);
+        if (selectedPerson == null) return;
+        
         LoadPersonGroups();
         UpdateAvailableGroups();
         StateHasChanged();

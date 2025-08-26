@@ -20,10 +20,10 @@
                         </select>
                     </div>
                     <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
-                        <button type="button" class="btn btn-outline-primary" title="Naar rechts" @onclick="MoveLeftSelectionToRight" disabled="@IsBusy || !selectedLeftIds.Any()">
+                        <button type="button" class="btn btn-outline-primary" title="Naar rechts" @onclick="MoveLeftSelectionToRight" disabled="@(IsBusy || !selectedLeftIds.Any())">
                             <i class="fas fa-arrow-right"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-primary" title="Naar links" @onclick="MoveRightSelectionToLeft" disabled="@IsBusy || !selectedRightIds.Any()">
+                        <button type="button" class="btn btn-outline-primary" title="Naar links" @onclick="MoveRightSelectionToLeft" disabled="@(IsBusy || !selectedRightIds.Any())">
                             <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
@@ -97,6 +97,7 @@
         {
             await MoveLeftToRight.InvokeAsync(selectedLeftIds.ToArray());
             selectedLeftIds.Clear();
+            StateHasChanged();
         }
     }
 
@@ -106,13 +107,29 @@
         {
             await MoveRightToLeft.InvokeAsync(selectedRightIds.ToArray());
             selectedRightIds.Clear();
+            StateHasChanged();
         }
     }
 
     private Task OnCloseClicked() => Close.InvokeAsync();
 
-    [JSInvokable] public Task OnLeftDblClick(string id) => MoveLeftToRight.InvokeAsync(new[] { id });
-    [JSInvokable] public Task OnRightDblClick(string id) => MoveRightToLeft.InvokeAsync(new[] { id });
+    [JSInvokable] 
+    public async Task OnLeftDblClick(string id) 
+    {
+        await MoveLeftToRight.InvokeAsync(new[] { id });
+        // Clear selections since the item was moved
+        selectedLeftIds.Clear();
+        StateHasChanged();
+    }
+
+    [JSInvokable] 
+    public async Task OnRightDblClick(string id) 
+    {
+        await MoveRightToLeft.InvokeAsync(new[] { id });
+        // Clear selections since the item was moved
+        selectedRightIds.Clear();
+        StateHasChanged();
+    }
 }
 
 
