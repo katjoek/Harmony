@@ -2,6 +2,7 @@ using Harmony.ApplicationCore.Interfaces;
 using Harmony.Infrastructure.Data;
 using Harmony.Infrastructure.Repositories;
 using Harmony.Web.Commands;
+using Harmony.Web.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,6 +43,7 @@ builder.Services.AddMediatR(cfg => {
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IMembershipService, Harmony.Infrastructure.Services.MembershipService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<DataSeeder>();
 builder.Services.AddScoped<SeedDataCommand>();
 

@@ -1,0 +1,373 @@
+@page "/rapporten"
+@using Harmony.ApplicationCore.DTOs
+@using Harmony.ApplicationCore.Queries.Groups
+@using Harmony.ApplicationCore.Queries.Persons
+@using Harmony.Web.Models
+@using MediatR
+@using System.Linq
+
+<PageTitle>Rapporten - Harmony</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Rapporten</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Rapport Genereren</h5>
+            </div>
+            <div class="card-body">
+                <EditForm Model="@reportModel" OnValidSubmit="@GenerateReport">
+                    <DataAnnotationsValidator />
+                    
+                    <!-- Group Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Groep selecteren *</label>
+                        <InputSelect @bind-Value="@SelectedGroupId" @bind-Value:event="onchange" class="form-select">
+                            <option value="">-- Selecteer een groep --</option>
+                            @if (groups != null)
+                            {
+                                @foreach (var group in groups)
+                                {
+                                    <option value="@group.Id">@group.Name (@group.MemberCount leden)</option>
+                                }
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => reportModel.SelectedGroupId)" />
+                    </div>
+
+                    <!-- Field Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Velden selecteren *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeFullName" id="includeFullName" disabled>
+                                    <label class="form-check-label" for="includeFullName">
+                                        Volledige naam (verplicht)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeDateOfBirth" @bind:event="onchange" id="includeDateOfBirth">
+                                    <label class="form-check-label" for="includeDateOfBirth">
+                                        Geboortedatum
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeAddress" @bind:event="onchange" id="includeAddress">
+                                    <label class="form-check-label" for="includeAddress">
+                                        Adres
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludePhoneNumber" @bind:event="onchange" id="includePhoneNumber">
+                                    <label class="form-check-label" for="includePhoneNumber">
+                                        Telefoonnummer
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" @bind="reportModel.IncludeEmailAddress" @bind:event="onchange" id="includeEmailAddress">
+                                    <label class="form-check-label" for="includeEmailAddress">
+                                        E-mailadres
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Output Format -->
+                    <div class="mb-3">
+                        <label class="form-label">Uitvoerformaat *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="outputFormat" @onchange="@(() => reportModel.OutputFormat = "PDF")" checked="@(reportModel.OutputFormat == "PDF")" id="formatPdf">
+                                    <label class="form-check-label" for="formatPdf">
+                                        <i class="fas fa-file-pdf me-2 text-danger"></i>PDF
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="outputFormat" @onchange="@(() => reportModel.OutputFormat = "Excel")" checked="@(reportModel.OutputFormat == "Excel")" id="formatExcel">
+                                    <label class="form-check-label" for="formatExcel">
+                                        <i class="fas fa-file-excel me-2 text-success"></i>Excel
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <ValidationMessage For="@(() => reportModel.OutputFormat)" />
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            @if (!string.IsNullOrEmpty(SelectedGroupId) && selectedGroup != null)
+                            {
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Dit rapport bevat @memberCount leden van groep "@selectedGroup.Name"
+                                </small>
+                            }
+                        </div>
+                        <button type="submit" class="btn btn-primary" disabled="@(isGenerating || string.IsNullOrEmpty(SelectedGroupId))">
+                            @if (isGenerating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <text>Genereren...</text>
+                            }
+                            else
+                            {
+                                <i class="fas fa-download me-2"></i>
+                                <text>Rapport Genereren</text>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Voorbeeld</h6>
+            </div>
+            <div class="card-body">
+                @if (selectedGroup != null)
+                {
+                    <h6>@selectedGroup.Name</h6>
+                    <p class="small text-muted mb-2">
+                        Gegenereerd op: @DateTime.Now.ToString("dd-MM-yyyy HH:mm")
+                    </p>
+                    @if (!string.IsNullOrEmpty(selectedGroup.CoordinatorName))
+                    {
+                        <p class="small mb-2">
+                            <strong>Coördinator:</strong> @selectedGroup.CoordinatorName
+                        </p>
+                    }
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Volledige naam</th>
+                                    @if (reportModel.IncludeDateOfBirth)
+                                    {
+                                        <th>Geboortedatum</th>
+                                    }
+                                    @if (reportModel.IncludeAddress)
+                                    {
+                                        <th>Adres</th>
+                                    }
+                                    @if (reportModel.IncludePhoneNumber)
+                                    {
+                                        <th>Telefoon</th>
+                                    }
+                                    @if (reportModel.IncludeEmailAddress)
+                                    {
+                                        <th>E-mail</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (groupMembers != null)
+                                {
+                                    @foreach (var member in groupMembers.Take(3))
+                                    {
+                                        <tr>
+                                            <td>@member.FullName</td>
+                                            @if (reportModel.IncludeDateOfBirth)
+                                            {
+                                                <td>@member.DateOfBirth?.ToString("dd-MM-yyyy")</td>
+                                            }
+                                            @if (reportModel.IncludeAddress)
+                                            {
+                                                <td>@member.FormattedAddress</td>
+                                            }
+                                            @if (reportModel.IncludePhoneNumber)
+                                            {
+                                                <td>@member.PhoneNumber</td>
+                                            }
+                                            @if (reportModel.IncludeEmailAddress)
+                                            {
+                                                <td>@member.EmailAddress</td>
+                                            }
+                                        </tr>
+                                    }
+                                    @if (groupMembers.Count > 3)
+                                    {
+                                        <tr>
+                                            <td colspan="@GetColumnCount()" class="text-center text-muted">
+                                                ... en @(groupMembers.Count - 3) meer
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Selecteer een groep om een voorbeeld te zien</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<GroupDto>? groups;
+    private List<PersonDto>? allPersons;
+    private List<PersonDto>? groupMembers;
+    private GroupDto? selectedGroup;
+    private ReportModel reportModel = new();
+    private bool isGenerating = false;
+    private int memberCount = 0;
+
+    private string? SelectedGroupId
+    {
+        get => reportModel.SelectedGroupId;
+        set
+        {
+            reportModel.SelectedGroupId = value;
+            OnGroupSelectionChanged(value);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var groupsTask = LoadGroups();
+        var personsTask = LoadPersons();
+        await Task.WhenAll(groupsTask, personsTask);
+    }
+
+    private async Task LoadGroups()
+    {
+        var query = new GetAllGroupsQuery();
+        groups = (await Mediator.Send(query)).ToList();
+        StateHasChanged();
+    }
+
+    private async Task LoadPersons()
+    {
+        var query = new GetAllPersonsQuery();
+        allPersons = (await Mediator.Send(query)).ToList();
+        StateHasChanged();
+    }
+
+    private void OnGroupSelectionChanged(string? groupId)
+    {
+        if (!string.IsNullOrEmpty(groupId) && groups != null && allPersons != null)
+        {
+            selectedGroup = groups.FirstOrDefault(g => g.Id == groupId);
+            groupMembers = allPersons.Where(p => p.GroupIds.Contains(groupId)).ToList();
+            memberCount = groupMembers.Count;
+        }
+        else
+        {
+            selectedGroup = null;
+            groupMembers = null;
+            memberCount = 0;
+        }
+        StateHasChanged();
+    }
+
+    private async Task GenerateReport()
+    {
+        if (selectedGroup == null || groupMembers == null) return;
+
+        try
+        {
+            isGenerating = true;
+            StateHasChanged();
+
+            var fileName = $"{selectedGroup.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}";
+            
+            if (reportModel.OutputFormat == "PDF")
+            {
+                await GeneratePdfReport(fileName);
+            }
+            else if (reportModel.OutputFormat == "Excel")
+            {
+                await GenerateExcelReport(fileName);
+            }
+
+            ShowSuccessMessage($"Rapport succesvol gegenereerd!");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij genereren rapport: {ex.Message}");
+        }
+        finally
+        {
+            isGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GeneratePdfReport(string fileName)
+    {
+        if (selectedGroup == null || groupMembers == null) return;
+
+        var reportData = await ReportService.GeneratePdfReportAsync(selectedGroup, groupMembers, reportModel);
+        await DownloadFile($"{fileName}.pdf", reportData, "application/pdf");
+    }
+
+    private async Task GenerateExcelReport(string fileName)
+    {
+        if (selectedGroup == null || groupMembers == null) return;
+
+        var reportData = await ReportService.GenerateExcelReportAsync(selectedGroup, groupMembers, reportModel);
+        await DownloadFile($"{fileName}.xlsx", reportData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+
+    private async Task DownloadFile(string fileName, byte[] data, string contentType)
+    {
+        try
+        {
+            var base64 = Convert.ToBase64String(data);
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, base64, contentType);
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij downloaden: {ex.Message}");
+        }
+    }
+
+    private int GetColumnCount()
+    {
+        int count = 1; // Always include full name
+        if (reportModel.IncludeDateOfBirth) count++;
+        if (reportModel.IncludeAddress) count++;
+        if (reportModel.IncludePhoneNumber) count++;
+        if (reportModel.IncludeEmailAddress) count++;
+        return count;
+    }
+
+    private void ShowSuccessMessage(string message)
+    {
+        Console.WriteLine($"SUCCESS: {message}");
+    }
+
+    private void ShowErrorMessage(string message)
+    {
+        Console.WriteLine($"ERROR: {message}");
+    }
+
+
+}
+
+@inject IMediator Mediator
+@inject IJSRuntime JSRuntime
+@inject Harmony.Web.Services.IReportService ReportService
