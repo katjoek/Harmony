@@ -8,13 +8,16 @@ public sealed class UpdateGroupCommandHandler : IRequestHandler<UpdateGroupComma
 {
     private readonly IGroupRepository _groupRepository;
     private readonly IPersonRepository _personRepository;
+    private readonly IMembershipService _membershipService;
 
     public UpdateGroupCommandHandler(
         IGroupRepository groupRepository,
-        IPersonRepository personRepository)
+        IPersonRepository personRepository,
+        IMembershipService membershipService)
     {
         _groupRepository = groupRepository ?? throw new ArgumentNullException(nameof(groupRepository));
         _personRepository = personRepository ?? throw new ArgumentNullException(nameof(personRepository));
+        _membershipService = membershipService ?? throw new ArgumentNullException(nameof(membershipService));
     }
 
     public async Task Handle(UpdateGroupCommand request, CancellationToken cancellationToken)
@@ -39,6 +42,12 @@ public sealed class UpdateGroupCommandHandler : IRequestHandler<UpdateGroupComma
             
             if (!coordinatorExists)
                 throw new InvalidOperationException($"Coordinator with ID {request.CoordinatorId} not found");
+
+            // Enforce domain rule: coordinator must be a current member of the group
+            var memberIds = await _membershipService.GetPersonIdsForGroupAsync(groupId, cancellationToken);
+            var isMember = memberIds.Contains(coordinatorId);
+            if (!isMember)
+                throw new InvalidOperationException("Coördinator moet een groepslid zijn voordat deze kan worden ingesteld.");
 
             group.SetCoordinator(coordinatorId);
         }

@@ -9,13 +9,16 @@ public sealed class CreateGroupCommandHandler : IRequestHandler<CreateGroupComma
 {
     private readonly IGroupRepository _groupRepository;
     private readonly IPersonRepository _personRepository;
+    private readonly IMembershipService _membershipService;
 
     public CreateGroupCommandHandler(
         IGroupRepository groupRepository,
-        IPersonRepository personRepository)
+        IPersonRepository personRepository,
+        IMembershipService membershipService)
     {
         _groupRepository = groupRepository ?? throw new ArgumentNullException(nameof(groupRepository));
         _personRepository = personRepository ?? throw new ArgumentNullException(nameof(personRepository));
+        _membershipService = membershipService ?? throw new ArgumentNullException(nameof(membershipService));
     }
 
     public async Task<string> Handle(CreateGroupCommand request, CancellationToken cancellationToken)

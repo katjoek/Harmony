@@ -38,6 +38,15 @@ public sealed class MembershipService : IMembershipService
         if (membership != null)
         {
             _context.PersonGroupMemberships.Remove(membership);
+
+            // If removed person is the group's coordinator, clear coordinator
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
+            if (group != null && group.CoordinatorId != null && group.CoordinatorId.Equals(personId))
+            {
+                group.SetCoordinator(null);
+                _context.Groups.Update(group);
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
         }
     }
