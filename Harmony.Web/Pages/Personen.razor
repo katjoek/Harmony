@@ -107,53 +107,23 @@
     </table>
 </div>
 
-<!-- Groups Membership Modal -->
-<div class="modal fade @(showGroupsModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Groepen van @(selectedPerson?.FullName)</h5>
-                <button type="button" class="btn-close" @onclick="CloseGroupsModal"></button>
-            </div>
-            <div class="modal-body">
-                @if (selectedPerson != null && personGroups != null && availableGroups != null)
-                {
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label class="form-label">Niet-lid van</label>
-                            <select id="person-available-groups" multiple size="10" class="form-select dual-list-select" @onchange="OnAvailableGroupsChange">
-                                @foreach (var g in availableGroups)
-                                {
-                                    <option value="@g.Id">@g.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
-                            <button type="button" class="btn btn-outline-primary" title="Naar rechts" @onclick="MoveSelectedAvailableGroupsToMember" disabled="@isProcessingGroups || !selectedAvailableGroupIds.Any()">
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-primary" title="Naar links" @onclick="MoveSelectedMemberGroupsToAvailable" disabled="@isProcessingGroups || !selectedMemberGroupIds.Any()">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label">Lid van (@personGroups.Count)</label>
-                            <select id="person-member-groups" multiple size="10" class="form-select dual-list-select" @onchange="OnMemberGroupsChange">
-                                @foreach (var g in personGroups)
-                                {
-                                    <option value="@g.Id">@g.Name</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" @onclick="CloseGroupsModal">Sluiten</button>
-            </div>
-        </div>
-    </div>
- </div>
+<!-- Groups Membership Modal Component -->
+@if (selectedPerson != null && personGroups != null && availableGroups != null)
+{
+    <DualListMembershipModal
+        Show="@showGroupsModal"
+        Title="@($"Groepen van {selectedPerson.FullName}")"
+        LeftLabel="Niet-lid van"
+        RightLabel="@($"Lid van")"
+        LeftSelectId="person-available-groups"
+        RightSelectId="person-member-groups"
+        LeftItems="@availableGroups.Select(g => new Harmony.Web.Models.DualListItem(g.Id, g.Name)).ToList()"
+        RightItems="@personGroups.Select(g => new Harmony.Web.Models.DualListItem(g.Id, g.Name)).ToList()"
+        IsBusy="@isProcessingGroups"
+        Close="@CloseGroupsModal"
+        MoveLeftToRight="@MoveAvailableGroupsToMember"
+        MoveRightToLeft="@MoveMemberGroupsToAvailable" />
+}
 
 <!-- Create/Edit Modal -->
 <div class="modal fade @(showPersonModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
@@ -306,10 +276,6 @@
         LoadPersonGroups();
         UpdateAvailableGroups();
         showGroupsModal = true;
-        // Register double-click handlers on next render
-        await Task.Yield();
-        await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", "person-available-groups", DotNetObjectReference.Create(this), nameof(OnAvailableGroupDblClick));
-        await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", "person-member-groups", DotNetObjectReference.Create(this), nameof(OnMemberGroupDblClick));
     }
 
     private void LoadPersonGroups()
@@ -337,17 +303,7 @@
         availableGroups = null;
         selectedAvailableGroupIds.Clear();
         selectedMemberGroupIds.Clear();
-        JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "person-available-groups");
-        JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "person-member-groups");
     }
-
-    [JSInvokable]
-    public Task OnAvailableGroupDblClick(string groupId)
-        => MoveAvailableGroupsToMember(new [] { groupId });
-
-    [JSInvokable]
-    public Task OnMemberGroupDblClick(string groupId)
-        => MoveMemberGroupsToAvailable(new [] { groupId });
 
     private async Task MoveSelectedAvailableGroupsToMember()
     {

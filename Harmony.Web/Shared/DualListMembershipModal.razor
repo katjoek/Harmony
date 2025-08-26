@@ -1,0 +1,118 @@
+@using Harmony.Web.Models
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade @(Show ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Title</h5>
+                <button type="button" class="btn-close" @onclick="OnCloseClicked"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-5">
+                        <label class="form-label">@LeftLabel</label>
+                        <select id="@LeftSelectId" multiple size="10" class="form-select dual-list-select" @onchange="OnLeftChange">
+                            @foreach (var item in LeftItems)
+                            {
+                                <option value="@item.Id">@item.Label</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-primary" title="Naar rechts" @onclick="MoveLeftSelectionToRight" disabled="@IsBusy || !selectedLeftIds.Any()">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" title="Naar links" @onclick="MoveRightSelectionToLeft" disabled="@IsBusy || !selectedRightIds.Any()">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">@RightLabel (@RightItems.Count)</label>
+                        <select id="@RightSelectId" multiple size="10" class="form-select dual-list-select" @onchange="OnRightChange">
+                            @foreach (var item in RightItems)
+                            {
+                                <option value="@item.Id">@item.Label</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="OnCloseClicked">Sluiten</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string LeftLabel { get; set; } = "Links";
+    [Parameter] public string RightLabel { get; set; } = "Rechts";
+    [Parameter] public string LeftSelectId { get; set; } = Guid.NewGuid().ToString("N");
+    [Parameter] public string RightSelectId { get; set; } = Guid.NewGuid().ToString("N");
+    [Parameter] public List<DualListItem> LeftItems { get; set; } = new();
+    [Parameter] public List<DualListItem> RightItems { get; set; } = new();
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public EventCallback Close { get; set; }
+    [Parameter] public EventCallback<IEnumerable<string>> MoveLeftToRight { get; set; }
+    [Parameter] public EventCallback<IEnumerable<string>> MoveRightToLeft { get; set; }
+
+    private List<string> selectedLeftIds = new();
+    private List<string> selectedRightIds = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Show)
+        {
+            // Register double click handling each time shown
+            await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", LeftSelectId, DotNetObjectReference.Create(this), nameof(OnLeftDblClick));
+            await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", RightSelectId, DotNetObjectReference.Create(this), nameof(OnRightDblClick));
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", LeftSelectId);
+            await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", RightSelectId);
+        }
+    }
+
+    private async Task OnLeftChange(ChangeEventArgs _)
+    {
+        var values = await JSRuntime.InvokeAsync<string[]>("selectUtils.getSelectedValues", LeftSelectId);
+        selectedLeftIds = values?.ToList() ?? new List<string>();
+        StateHasChanged();
+    }
+
+    private async Task OnRightChange(ChangeEventArgs _)
+    {
+        var values = await JSRuntime.InvokeAsync<string[]>("selectUtils.getSelectedValues", RightSelectId);
+        selectedRightIds = values?.ToList() ?? new List<string>();
+        StateHasChanged();
+    }
+
+    private async Task MoveLeftSelectionToRight()
+    {
+        if (selectedLeftIds.Any())
+        {
+            await MoveLeftToRight.InvokeAsync(selectedLeftIds.ToArray());
+            selectedLeftIds.Clear();
+        }
+    }
+
+    private async Task MoveRightSelectionToLeft()
+    {
+        if (selectedRightIds.Any())
+        {
+            await MoveRightToLeft.InvokeAsync(selectedRightIds.ToArray());
+            selectedRightIds.Clear();
+        }
+    }
+
+    private Task OnCloseClicked() => Close.InvokeAsync();
+
+    [JSInvokable] public Task OnLeftDblClick(string id) => MoveLeftToRight.InvokeAsync(new[] { id });
+    [JSInvokable] public Task OnRightDblClick(string id) => MoveRightToLeft.InvokeAsync(new[] { id });
+}
+
+
