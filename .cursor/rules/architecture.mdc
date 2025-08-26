@@ -1,0 +1,81 @@
+---
+description: Architecture ruels
+globs:
+alwaysApply: true
+---
+Architecture Rules
+
+Primary Goal: All new code and architectural advice should strictly adhere to Clean Architecture and Command Query Responsibility Segregation (CQRS) principles.
+Clean Architecture Principles
+
+    Separation of Concerns: Maintain a clear separation between business logic and infrastructure details.
+
+    Dependency Rule: All dependencies must point inwards. Code in outer layers (e.g., Infrastructure and UI/Presentation) must depend on code in inner layers (e.g., Domain and ApplicationCore).
+
+    Abstractions over Details: Infrastructure code should implement interfaces defined by the application's core business logic.
+
+Layer Definitions
+
+    Domain (Core Business Logic):
+
+        Purpose: Encapsulate the most general and high-level rules.
+
+        Content: Enterprise-wide business rules. These are pure data structures or objects without any dependencies on external frameworks or databases. This includes Entities, Aggregates, Interfaces, Domain Services, and Domain Events.
+
+        Instruction: Do not allow any async or infrastructure-specific code here.
+
+    ApplicationCore (Application Business Logic):
+
+        Purpose: Orchestrate the flow of data to and from the Domain Entities.
+
+        Content: Application-specific business rules. Define the application's behavior. This includes Use Cases, DTOs, interfaces (ports) for repositories and services, and specifications.
+
+        Instruction: Use interfaces (ports) to communicate with outer layers. Do not import or reference any database, framework, or UI-specific code directly. This project depends only on the Domain project.
+
+    Infrastructure (Ports & Adapters):
+
+        Purpose: Convert data from the inner layers to a format usable by the outer layers and vice versa.
+
+        Content: This is where you find concrete implementations of data access (e.g., Entity Framework Core), file system access, and external service clients. This project should reference the ApplicationCore project to implement the interfaces defined there.
+
+        Instruction: This project depends on ApplicationCore but is not referenced by ApplicationCore or Domain.
+
+    UI/Presentation (Frameworks & Drivers):
+
+        Purpose: The outermost layer and entry point for the application (e.g., an ASP.NET Core Web API or Razor Pages project).
+
+        Content: Contains controllers, views, view models, and configuration. This layer references the ApplicationCore and Infrastructure projects to set up dependency injection and orchestrate the application.
+
+        Instruction: The code in this layer should only know about the ApplicationCore and Infrastructure layers and should not contain any core business logic.
+
+CQRS Principles
+
+    Responsibility Segregation: Separate the application's write model (Commands) from its read model (Queries).
+
+    Command Model:
+
+        Purpose: Handle actions that change the state of the application.
+
+        Content: Commands are data-carrying objects representing an intent (e.g., CreateUserCommand). Command handlers execute business logic and persist changes.
+
+        Instruction: Commands should always represent an imperative action. Command handlers should not return data.
+
+    Query Model:
+
+        Purpose: Handle requests for data.
+
+        Content: Queries are data-carrying objects representing a request for information (e.g., GetUserByIdQuery). Query handlers retrieve data, often from a read-optimized data store.
+
+        Instruction: Queries should be read-only. Query handlers should not change the state of the application.
+
+AI Execution Rules
+
+    For all new features: First, define the Command or Query based on the user's request.
+
+    For write operations: Generate the Command and its corresponding CommandHandler in the ApplicationCore project. Define a Repository interface in ApplicationCore for persistence.
+
+    For read operations: Generate the Query and its corresponding QueryHandler in the ApplicationCore project. The handler can directly use a read-optimized data source (e.g., a dedicated DTO from the database).
+
+    Code Generation: Organize all generated code into a project structure with separate directories for each layer (Domain, ApplicationCore, Infrastructure, and UI/Presentation).
+
+    Review: When a user requests a change, first analyze it against these architectural rules before providing a solution.

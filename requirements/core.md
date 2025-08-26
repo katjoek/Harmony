@@ -1,0 +1,27 @@
+# Core features of the "Harmony" application to create:
+- Allow people running a church community to manage groups of people and create reports.
+- The source code should be using English names
+- The UI should be in Dutch 
+- The UI should be clean, look professional and be easy to use (as it will probably be used by elderly people who are not great at using computers).
+- Persons have:
+    - a name, consisting of a first name, prefix (of surname) and surname
+    - a date of birth
+    - an address, consisting of a street with house number, zip code and city
+    - a telephone number
+    - an email address
+- All Person properties are optional, except for the first name.
+- Groups have:
+    - a unique name, mandatory
+    - a "Coordinator" which is a Person, optional
+- A Person can be a mamber of any Group.
+- When editing or creating a person, it should be possible to:
+    - edit its properties
+    - see which groups that person belongs to
+    - add/remove that person to/from any group
+- When editing or creating a group, it should be possible to
+    - edit its properties
+    - see which persons belong to the group
+    - add/remove persons to/from a group.
+- When a Person is deleted, this should be a cascading delete
+- When a Group is deleted, this should NOT be a cascading delete
+- When a Person or Group is deleted, the user should be asked to confirm.

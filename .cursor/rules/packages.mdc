@@ -1,0 +1,12 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Use the following nuget packages and frameworks for this project:
+    - MediatR for implementing CQRS
+    - xUnit for testing
+    - NSubstitute for creating fake implementations of interfaces in unit tests
+    - Verify when needed to assert the correct state of more than 5 properties
+    - BootstrapBlazor for UI
+    - EF Core and SQLite for database access, using code-first migrations.
