@@ -107,6 +107,30 @@
                         <ValidationMessage For="@(() => reportModel.OutputFormat)" />
                     </div>
 
+                    <!-- Orientation -->
+                    <div class="mb-3">
+                        <label class="form-label">Oriëntatie *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="orientation" @onchange="@(() => reportModel.Orientation = "Portrait")" checked="@(reportModel.Orientation == "Portrait")" id="orientPortrait">
+                                    <label class="form-check-label" for="orientPortrait">
+                                        Staand (Portrait)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="orientation" @onchange="@(() => reportModel.Orientation = "Landscape")" checked="@(reportModel.Orientation == "Landscape")" id="orientLandscape">
+                                    <label class="form-check-label" for="orientLandscape">
+                                        Liggend (Landscape)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <ValidationMessage For="@(() => reportModel.Orientation)" />
+                    </div>
+
                     <!-- Generate Button -->
                     <div class="d-flex justify-content-between">
                         <div>

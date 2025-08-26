@@ -1,6 +1,7 @@
 using Harmony.ApplicationCore.DTOs;
 using Harmony.Web.Models;
 using iText.Kernel.Pdf;
+using iText.Kernel.Geom;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
@@ -19,6 +20,11 @@ public class ReportService : IReportService
             using var stream = new MemoryStream();
             using var writer = new PdfWriter(stream);
             using var pdf = new PdfDocument(writer);
+            // Apply page orientation before adding any content
+            var pageSize = string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
+                ? PageSize.A4.Rotate()
+                : PageSize.A4;
+            pdf.SetDefaultPageSize(pageSize);
             using var document = new Document(pdf);
 
             // Title
@@ -94,6 +100,12 @@ public class ReportService : IReportService
         
         using var package = new ExcelPackage();
         var worksheet = package.Workbook.Worksheets.Add($"Rapport {group.Name}");
+
+        // Apply orientation to printer settings
+        worksheet.PrinterSettings.Orientation =
+            string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
+                ? eOrientation.Landscape
+                : eOrientation.Portrait;
 
         var row = 1;
 

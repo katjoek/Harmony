@@ -15,4 +15,7 @@ public class ReportModel
     
     [Required(ErrorMessage = "Selecteer een uitvoerformaat")]
     public string OutputFormat { get; set; } = "PDF";
+
+    [Required(ErrorMessage = "Selecteer een oriëntatie")]
+    public string Orientation { get; set; } = "Portrait"; // Portrait | Landscape
 }
