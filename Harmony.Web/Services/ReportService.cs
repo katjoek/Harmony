@@ -14,68 +14,77 @@ public class ReportService : IReportService
 {
     public Task<byte[]> GeneratePdfReportAsync(GroupDto group, List<PersonDto> members, ReportModel config)
     {
-        using var stream = new MemoryStream();
-        using var writer = new PdfWriter(stream);
-        using var pdf = new PdfDocument(writer);
-        using var document = new Document(pdf);
-
-        // Title
-        var title = new Paragraph($"Groepsrapport: {group.Name}")
-            .SetTextAlignment(TextAlignment.CENTER)
-            .SetFontSize(20)
-            .SetBold();
-        document.Add(title);
-
-        // Timestamp
-        var timestamp = new Paragraph($"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}")
-            .SetTextAlignment(TextAlignment.CENTER)
-            .SetFontSize(10)
-            .SetFontColor(ColorConstants.GRAY);
-        document.Add(timestamp);
-
-        // Coordinator if present
-        if (!string.IsNullOrEmpty(group.CoordinatorName))
+        try
         {
-            var coordinator = new Paragraph($"Coördinator: {group.CoordinatorName}")
+            using var stream = new MemoryStream();
+            using var writer = new PdfWriter(stream);
+            using var pdf = new PdfDocument(writer);
+            using var document = new Document(pdf);
+
+            // Title
+            var title = new Paragraph($"Groepsrapport: {group.Name}")
                 .SetTextAlignment(TextAlignment.CENTER)
-                .SetFontSize(12)
-                .SetMarginTop(10);
-            document.Add(coordinator);
+                .SetFontSize(20)
+                .SetBold();
+            document.Add(title);
+
+            // Timestamp
+            var timestamp = new Paragraph($"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}")
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetFontSize(10)
+                .SetFontColor(ColorConstants.GRAY);
+            document.Add(timestamp);
+
+            // Coordinator if present
+            if (!string.IsNullOrEmpty(group.CoordinatorName))
+            {
+                var coordinator = new Paragraph($"Coördinator: {group.CoordinatorName}")
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontSize(12)
+                    .SetMarginTop(10);
+                document.Add(coordinator);
+            }
+
+            // Add some space
+            document.Add(new Paragraph("\n"));
+
+            // Create table
+            var columnCount = GetColumnCount(config);
+            var table = new Table(columnCount);
+            table.SetWidth(UnitValue.CreatePercentValue(100));
+
+            // Add headers
+            AddTableHeader(table, "Volledige naam");
+            if (config.IncludeDateOfBirth) AddTableHeader(table, "Geboortedatum");
+            if (config.IncludeAddress) AddTableHeader(table, "Adres");
+            if (config.IncludePhoneNumber) AddTableHeader(table, "Telefoon");
+            if (config.IncludeEmailAddress) AddTableHeader(table, "E-mail");
+
+            // Add member data
+            foreach (var member in members)
+            {
+                table.AddCell(new Cell().Add(new Paragraph(member.FullName ?? "")));
+                if (config.IncludeDateOfBirth) 
+                    table.AddCell(new Cell().Add(new Paragraph(member.DateOfBirth?.ToString("dd-MM-yyyy") ?? "")));
+                if (config.IncludeAddress) 
+                    table.AddCell(new Cell().Add(new Paragraph(member.FormattedAddress ?? "")));
+                if (config.IncludePhoneNumber) 
+                    table.AddCell(new Cell().Add(new Paragraph(member.PhoneNumber ?? "")));
+                if (config.IncludeEmailAddress) 
+                    table.AddCell(new Cell().Add(new Paragraph(member.EmailAddress ?? "")));
+            }
+
+            document.Add(table);
+            document.Close();
+
+            return Task.FromResult(stream.ToArray());
         }
-
-        // Add some space
-        document.Add(new Paragraph("\n"));
-
-        // Create table
-        var columnCount = GetColumnCount(config);
-        var table = new Table(columnCount);
-        table.SetWidth(UnitValue.CreatePercentValue(100));
-
-        // Add headers
-        AddTableHeader(table, "Volledige naam");
-        if (config.IncludeDateOfBirth) AddTableHeader(table, "Geboortedatum");
-        if (config.IncludeAddress) AddTableHeader(table, "Adres");
-        if (config.IncludePhoneNumber) AddTableHeader(table, "Telefoon");
-        if (config.IncludeEmailAddress) AddTableHeader(table, "E-mail");
-
-        // Add member data
-        foreach (var member in members)
+        catch (Exception ex)
         {
-            table.AddCell(new Cell().Add(new Paragraph(member.FullName ?? "")));
-            if (config.IncludeDateOfBirth) 
-                table.AddCell(new Cell().Add(new Paragraph(member.DateOfBirth?.ToString("dd-MM-yyyy") ?? "")));
-            if (config.IncludeAddress) 
-                table.AddCell(new Cell().Add(new Paragraph(member.FormattedAddress ?? "")));
-            if (config.IncludePhoneNumber) 
-                table.AddCell(new Cell().Add(new Paragraph(member.PhoneNumber ?? "")));
-            if (config.IncludeEmailAddress) 
-                table.AddCell(new Cell().Add(new Paragraph(member.EmailAddress ?? "")));
+            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
+            throw;
         }
-
-        document.Add(table);
-        document.Close();
-
-        return Task.FromResult(stream.ToArray());
     }
 
     public Task<byte[]> GenerateExcelReportAsync(GroupDto group, List<PersonDto> members, ReportModel config)

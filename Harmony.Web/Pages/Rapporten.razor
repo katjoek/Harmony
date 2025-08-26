@@ -292,7 +292,9 @@
             isGenerating = true;
             StateHasChanged();
 
-            var fileName = $"{selectedGroup.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}";
+            var adaptedGroupName = selectedGroup.Name.Replace(" ", "_");
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var fileName = $"{adaptedGroupName}_{timestamp}";
             
             if (reportModel.OutputFormat == "PDF")
             {
