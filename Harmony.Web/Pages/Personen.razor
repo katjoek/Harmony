@@ -21,13 +21,7 @@
                 </button>
             }
         </div>
-        <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-sort"></i></span>
-            <select class="form-select" @onchange="OnSortOrderChanged" style="width: auto;">
-                <option value="LastName" selected="@(personSortOrder == "LastName")">Achternaam</option>
-                <option value="FirstName" selected="@(personSortOrder == "FirstName")">Voornaam</option>
-            </select>
-        </div>
+
         <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
             <i class="fas fa-plus me-2"></i>
             Nieuwe Persoon
@@ -40,7 +34,19 @@
     <table class="table table-striped table-hover">
         <thead>
             <tr>
-                <th>Naam</th>
+                <th style="cursor: pointer; user-select: none;" @onclick="ToggleSortOrder" title="Klik om sorteervolgorde te wijzigen">
+                    <span>Naam (</span>
+                        <i class="fas fa-sort-alpha-down ms-1" style="font-size: 0.75em; color: #6c757d;"></i>
+                    @if (personSortOrder == "FirstName")
+                    {
+                        <span>V</span>
+                    }
+                    else
+                    {
+                        <span>A</span>
+                    }
+                    <span>)</span>
+                </th>
                 <th>Geboortedatum</th>
                 <th>Adres</th>
                 <th>Telefoon</th>
@@ -559,9 +565,9 @@
         personSearch = "";
     }
 
-    private void OnSortOrderChanged(ChangeEventArgs e)
+    private void ToggleSortOrder()
     {
-        personSortOrder = e.Value?.ToString() ?? "LastName";
+        personSortOrder = personSortOrder == "FirstName" ? "LastName" : "FirstName";
         StateHasChanged();
     }
 }
