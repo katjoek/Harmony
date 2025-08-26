@@ -17,26 +17,30 @@ public sealed class GetAllPersonsQueryHandler : IRequestHandler<GetAllPersonsQue
 
     public async Task<IReadOnlyList<PersonDto>> Handle(GetAllPersonsQuery request, CancellationToken cancellationToken)
     {
+        // Get all persons and their memberships in a single optimized query
         var persons = await _personRepository.GetAllAsync(cancellationToken);
-        var result = new List<PersonDto>();
+        
+        // Get all memberships in one query instead of N queries
+        var allMemberships = await _membershipService.GetAllMembershipsAsync(cancellationToken);
+        
+        // Group memberships by person ID for fast lookup
+        var membershipsByPerson = allMemberships
+            .GroupBy(m => m.PersonId)
+            .ToDictionary(g => g.Key, g => g.Select(m => m.GroupId.ToString()).ToList());
 
-        foreach (var person in persons)
-        {
-            var groupIds = await _membershipService.GetGroupIdsForPersonAsync(person.Id, cancellationToken);
-            
-            result.Add(new PersonDto(
-                person.Id.ToString(),
-                person.Name.FirstName,
-                person.Name.Prefix,
-                person.Name.Surname,
-                person.DateOfBirth,
-                person.Address?.Street,
-                person.Address?.ZipCode,
-                person.Address?.City,
-                person.PhoneNumber?.Value,
-                person.EmailAddress?.Value,
-                groupIds.Select(g => g.ToString()).ToList()));
-        }
+        // Build DTOs efficiently
+        var result = persons.Select(person => new PersonDto(
+            person.Id.ToString(),
+            person.Name.FirstName,
+            person.Name.Prefix,
+            person.Name.Surname,
+            person.DateOfBirth,
+            person.Address?.Street,
+            person.Address?.ZipCode,
+            person.Address?.City,
+            person.PhoneNumber?.Value,
+            person.EmailAddress?.Value,
+            membershipsByPerson.GetValueOrDefault(person.Id, new List<string>()))).ToList();
 
         return result;
     }

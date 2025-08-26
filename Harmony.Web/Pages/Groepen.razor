@@ -16,28 +16,51 @@
     </button>
 </div>
 
-@if (groups == null)
-{
-    <div class="text-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Laden...</span>
-        </div>
-        <p>Groepen laden...</p>
-    </div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
+<!-- Always show the table structure immediately for fast rendering -->
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Naam</th>
+                <th>Coördinator</th>
+                <th>Aantal Leden</th>
+                <th>Acties</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (groups == null)
+            {
+                <!-- Skeleton loading rows for instant feedback -->
+                @for (int i = 0; i < 5; i++)
+                {
+                    <tr>
+                        <td><div class="placeholder-glow"><span class="placeholder col-8"></span></div></td>
+                        <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+                        <td><div class="placeholder-glow"><span class="placeholder col-2"></span></div></td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                    <i class="fas fa-users"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else if (groups.Count == 0)
+            {
                 <tr>
-                    <th>Naam</th>
-                    <th>Coördinator</th>
-                    <th>Aantal Leden</th>
-                    <th>Acties</th>
+                    <td colspan="4" class="text-center text-muted">Geen groepen gevonden.</td>
                 </tr>
-            </thead>
-            <tbody>
+            }
+            else
+            {
                 @foreach (var group in groups)
                 {
                     <tr>
@@ -59,10 +82,10 @@ else
                         </td>
                     </tr>
                 }
-            </tbody>
-        </table>
-    </div>
-}
+            }
+        </tbody>
+    </table>
+</div>
 
 <!-- Create/Edit Modal -->
 <div class="modal fade @(showGroupModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
@@ -183,20 +206,35 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
+        // Start loading data in the background without blocking the initial render
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the page
+                Console.WriteLine($"Error loading data: {ex.Message}");
+            }
+        });
     }
 
     private async Task LoadData()
     {
-        await LoadGroups();
-        await LoadPersons();
+        // Load both in parallel for maximum performance
+        var groupsTask = LoadGroups();
+        var personsTask = LoadPersons();
+        
+        await Task.WhenAll(groupsTask, personsTask);
     }
 
     private async Task LoadGroups()
     {
         var query = new GetAllGroupsQuery();
         groups = (await Mediator.Send(query)).ToList();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadPersons()

@@ -15,30 +15,52 @@
     </button>
 </div>
 
-@if (persons == null)
-{
-    <div class="text-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Laden...</span>
-        </div>
-        <p>Personen laden...</p>
-    </div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
+<!-- Always show the table structure immediately for fast rendering -->
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Naam</th>
+                <th>Geboortedatum</th>
+                <th>Adres</th>
+                <th>Telefoon</th>
+                <th>E-mail</th>
+                <th>Acties</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (persons == null)
+            {
+                <!-- Skeleton loading rows for instant feedback -->
+                @for (int i = 0; i < 5; i++)
+                {
+                    <tr>
+                        <td><div class="placeholder-glow"><span class="placeholder col-8"></span></div></td>
+                        <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+                        <td><div class="placeholder-glow"><span class="placeholder col-10"></span></div></td>
+                        <td><div class="placeholder-glow"><span class="placeholder col-7"></span></div></td>
+                        <td><div class="placeholder-glow"><span class="placeholder col-9"></span></div></td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else if (persons.Count == 0)
+            {
                 <tr>
-                    <th>Naam</th>
-                    <th>Geboortedatum</th>
-                    <th>Adres</th>
-                    <th>Telefoon</th>
-                    <th>E-mail</th>
-                    <th>Acties</th>
+                    <td colspan="6" class="text-center text-muted">Geen personen gevonden.</td>
                 </tr>
-            </thead>
-            <tbody>
+            }
+            else
+            {
                 @foreach (var person in persons)
                 {
                     <tr>
@@ -59,10 +81,10 @@ else
                         </td>
                     </tr>
                 }
-            </tbody>
-        </table>
-    </div>
-}
+            }
+        </tbody>
+    </table>
+</div>
 
 <!-- Create/Edit Modal -->
 <div class="modal fade @(showPersonModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
@@ -160,14 +182,26 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadPersons();
+        // Start loading data in the background without blocking the initial render
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await LoadPersons();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the page
+                Console.WriteLine($"Error loading persons: {ex.Message}");
+            }
+        });
     }
 
     private async Task LoadPersons()
     {
         var query = new GetAllPersonsQuery();
         persons = (await Mediator.Send(query)).ToList();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void OpenCreateModal()

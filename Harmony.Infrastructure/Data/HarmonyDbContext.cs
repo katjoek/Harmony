@@ -74,6 +74,9 @@ public sealed class HarmonyDbContext : DbContext
                 value => value != null ? new EmailAddress(value) : null)
             .HasMaxLength(200);
 
+        // Add indexes for better search performance
+        personBuilder.HasIndex(p => p.EmailAddress);
+
         // For simplicity, we'll handle group membership through a separate join approach
         personBuilder.Ignore(p => p.GroupIds);
     }
@@ -122,6 +125,10 @@ public sealed class HarmonyDbContext : DbContext
             .HasConversion(
                 id => id.Value,
                 value => new GroupId(value));
+
+        // Add indexes for better query performance
+        membershipBuilder.HasIndex(m => m.PersonId);
+        membershipBuilder.HasIndex(m => m.GroupId);
     }
 }
 

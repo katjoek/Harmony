@@ -57,4 +57,11 @@ public sealed class MembershipService : IMembershipService
             .Select(m => m.PersonId)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<(PersonId PersonId, GroupId GroupId)>> GetAllMembershipsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.PersonGroupMemberships
+            .Select(m => ValueTuple.Create(m.PersonId, m.GroupId))
+            .ToListAsync(cancellationToken);
+    }
 }

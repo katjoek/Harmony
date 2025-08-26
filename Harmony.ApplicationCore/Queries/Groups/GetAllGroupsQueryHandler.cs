@@ -22,29 +22,31 @@ public sealed class GetAllGroupsQueryHandler : IRequestHandler<GetAllGroupsQuery
 
     public async Task<IReadOnlyList<GroupDto>> Handle(GetAllGroupsQuery request, CancellationToken cancellationToken)
     {
-        var groups = await _groupRepository.GetAllAsync(cancellationToken);
-        var result = new List<GroupDto>();
+        // Get all data in parallel for maximum performance
+        var groupsTask = _groupRepository.GetAllAsync(cancellationToken);
+        var allPersonsTask = _personRepository.GetAllAsync(cancellationToken);
+        var allMembershipsTask = _membershipService.GetAllMembershipsAsync(cancellationToken);
 
-        foreach (var group in groups)
-        {
-            string? coordinatorName = null;
-            if (group.CoordinatorId != null)
-            {
-                var coordinator = await _personRepository.GetByIdAsync(group.CoordinatorId, cancellationToken);
-                coordinatorName = coordinator?.Name.FullName;
-            }
+        await Task.WhenAll(groupsTask, allPersonsTask, allMembershipsTask);
 
-            // Get actual member IDs and count from the membership service
-            var memberIds = await _membershipService.GetPersonIdsForGroupAsync(group.Id, cancellationToken);
+        var groups = await groupsTask;
+        var allPersons = await allPersonsTask;
+        var allMemberships = await allMembershipsTask;
 
-            result.Add(new GroupDto(
-                group.Id.ToString(),
-                group.Name,
-                group.CoordinatorId?.ToString(),
-                coordinatorName,
-                memberIds.Select(m => m.ToString()).ToList(),
-                memberIds.Count));
-        }
+        // Create lookup dictionaries for fast access
+        var personLookup = allPersons.ToDictionary(p => p.Id, p => p.Name.FullName);
+        var membershipsByGroup = allMemberships
+            .GroupBy(m => m.GroupId)
+            .ToDictionary(g => g.Key, g => g.Select(m => m.PersonId.ToString()).ToList());
+
+        // Build DTOs efficiently
+        var result = groups.Select(group => new GroupDto(
+            group.Id.ToString(),
+            group.Name,
+            group.CoordinatorId?.ToString(),
+            group.CoordinatorId != null ? personLookup.GetValueOrDefault(group.CoordinatorId) : null,
+            membershipsByGroup.GetValueOrDefault(group.Id, new List<string>()),
+            membershipsByGroup.GetValueOrDefault(group.Id, new List<string>()).Count)).ToList();
 
         return result;
     }
