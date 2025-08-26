@@ -25,7 +25,11 @@
                     <!-- Group Selection -->
                     <div class="mb-3">
                         <label class="form-label">Groep selecteren *</label>
-                        <InputSelect @bind-Value="@SelectedGroupId" @bind-Value:event="onchange" class="form-select">
+                        <InputSelect TValue="string"
+                                     Value="@reportModel.SelectedGroupId"
+                                     ValueChanged="@OnSelectedGroupChanged"
+                                     ValueExpression="@(() => reportModel.SelectedGroupId)"
+                                     class="form-select">
                             <option value="">-- Selecteer een groep --</option>
                             @if (groups != null)
                             {
@@ -106,7 +110,7 @@
                     <!-- Generate Button -->
                     <div class="d-flex justify-content-between">
                         <div>
-                            @if (!string.IsNullOrEmpty(SelectedGroupId) && selectedGroup != null)
+                            @if (!string.IsNullOrEmpty(reportModel.SelectedGroupId) && selectedGroup != null)
                             {
                                 <small class="text-muted">
                                     <i class="fas fa-info-circle me-1"></i>
@@ -114,7 +118,7 @@
                                 </small>
                             }
                         </div>
-                        <button type="submit" class="btn btn-primary" disabled="@(isGenerating || string.IsNullOrEmpty(SelectedGroupId))">
+                        <button type="submit" class="btn btn-primary" disabled="@(isGenerating || string.IsNullOrEmpty(reportModel.SelectedGroupId))">
                             @if (isGenerating)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -230,16 +234,6 @@
     private bool isGenerating = false;
     private int memberCount = 0;
 
-    private string? SelectedGroupId
-    {
-        get => reportModel.SelectedGroupId;
-        set
-        {
-            reportModel.SelectedGroupId = value;
-            OnGroupSelectionChanged(value);
-        }
-    }
-
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
@@ -264,6 +258,12 @@
         var query = new GetAllPersonsQuery();
         allPersons = (await Mediator.Send(query)).ToList();
         StateHasChanged();
+    }
+
+    private void OnSelectedGroupChanged(string? value)
+    {
+        reportModel.SelectedGroupId = value;
+        OnGroupSelectionChanged(value);
     }
 
     private void OnGroupSelectionChanged(string? groupId)
@@ -364,8 +364,6 @@
     {
         Console.WriteLine($"ERROR: {message}");
     }
-
-
 }
 
 @inject IMediator Mediator
