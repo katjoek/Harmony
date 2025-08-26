@@ -10,10 +10,22 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Groepen</h1>
-    <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
-        <i class="fas fa-plus me-2"></i>
-        Nieuwe Groep
-    </button>
+    <div class="d-flex gap-2">
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input class="form-control" placeholder="Zoeken..." @bind="groupSearch" @bind:event="oninput" />
+            @if (!string.IsNullOrWhiteSpace(groupSearch))
+            {
+                <button type="button" class="btn btn-outline-secondary" title="Wissen" @onclick="ClearGroupSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            }
+        </div>
+        <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
+            <i class="fas fa-plus me-2"></i>
+            Nieuwe Groep
+        </button>
+    </div>
 </div>
 
 <!-- Always show the table structure immediately for fast rendering -->
@@ -59,9 +71,15 @@
                     <td colspan="4" class="text-center text-muted">Geen groepen gevonden.</td>
                 </tr>
             }
+            else if (!FilteredGroups.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Geen resultaten voor "@groupSearch".</td>
+                </tr>
+            }
             else
             {
-                @foreach (var group in groups)
+                @foreach (var group in FilteredGroups)
                 {
                     <tr>
                         <td>@group.Name</td>
@@ -203,6 +221,7 @@
     private string? selectedPersonId;
     private bool showGroupModal = false;
     private bool showMembersModal = false;
+    private string groupSearch = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -415,6 +434,27 @@
     private void ShowErrorMessage(string message)
     {
         Console.WriteLine($"ERROR: {message}");
+    }
+
+    private IEnumerable<GroupDto> FilteredGroups
+        => string.IsNullOrWhiteSpace(groupSearch) || groups == null
+            ? groups ?? Enumerable.Empty<GroupDto>()
+            : groups.Where(g => MatchesGroup(g, groupSearch));
+
+    private static bool MatchesGroup(GroupDto g, string term)
+    {
+        var t = term.Trim();
+        return ContainsInsensitive(g.Name, t)
+            || ContainsInsensitive(g.CoordinatorName, t)
+            || g.MemberCount.ToString().Contains(t, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ContainsInsensitive(string? haystack, string needle)
+        => !string.IsNullOrWhiteSpace(haystack) && haystack.Contains(needle, StringComparison.OrdinalIgnoreCase);
+
+    private void ClearGroupSearch()
+    {
+        groupSearch = "";
     }
 }
 
