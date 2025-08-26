@@ -1,0 +1,289 @@
+@page "/personen"
+@using Harmony.ApplicationCore.DTOs
+@using Harmony.ApplicationCore.Queries.Persons
+@using Harmony.ApplicationCore.Commands.Persons
+@using Harmony.Web.Models
+@using MediatR
+
+<PageTitle>Personen - Harmony</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Personen</h1>
+    <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
+        <i class="fas fa-plus me-2"></i>
+        Nieuwe Persoon
+    </button>
+</div>
+
+@if (persons == null)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Laden...</span>
+        </div>
+        <p>Personen laden...</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Geboortedatum</th>
+                    <th>Adres</th>
+                    <th>Telefoon</th>
+                    <th>E-mail</th>
+                    <th>Acties</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var person in persons)
+                {
+                    <tr>
+                        <td>@person.FullName</td>
+                        <td>@person.DateOfBirth?.ToString("dd-MM-yyyy")</td>
+                        <td>@person.FormattedAddress</td>
+                        <td>@person.PhoneNumber</td>
+                        <td>@person.EmailAddress</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-primary" @onclick="@(() => OpenEditModal(person))">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => DeletePerson(person))">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Create/Edit Modal -->
+<div class="modal fade @(showPersonModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@modalTitle</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+            </div>
+            <EditForm Model="@personModel" OnValidSubmit="@SavePerson">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Voornaam *</label>
+                                <InputText @bind-Value="@personModel.FirstName" class="form-control" />
+                                <ValidationMessage For="@(() => personModel.FirstName)" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Tussenvoegsel</label>
+                                <InputText @bind-Value="@personModel.Prefix" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Achternaam</label>
+                                <InputText @bind-Value="@personModel.Surname" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Geboortedatum</label>
+                                <InputDate @bind-Value="@personModel.DateOfBirth" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Telefoon</label>
+                                <InputText @bind-Value="@personModel.PhoneNumber" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">E-mail</label>
+                                <InputText @bind-Value="@personModel.EmailAddress" class="form-control" type="email" />
+                                <ValidationMessage For="@(() => personModel.EmailAddress)" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Straat en huisnummer</label>
+                                <InputText @bind-Value="@personModel.Street" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Postcode</label>
+                                <InputText @bind-Value="@personModel.ZipCode" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Plaats</label>
+                                <InputText @bind-Value="@personModel.City" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<PersonDto>? persons;
+    private PersonViewModel personModel = new();
+    private string modalTitle = "";
+    private bool isEditing = false;
+    private bool showPersonModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPersons();
+    }
+
+    private async Task LoadPersons()
+    {
+        var query = new GetAllPersonsQuery();
+        persons = (await Mediator.Send(query)).ToList();
+        StateHasChanged();
+    }
+
+    private void OpenCreateModal()
+    {
+        personModel = new PersonViewModel();
+        modalTitle = "Nieuwe Persoon";
+        isEditing = false;
+        showPersonModal = true;
+    }
+
+    private void OpenEditModal(PersonDto person)
+    {
+        personModel = new PersonViewModel
+        {
+            Id = person.Id,
+            FirstName = person.FirstName,
+            Prefix = person.Prefix,
+            Surname = person.Surname,
+            DateOfBirth = person.DateOfBirth,
+            Street = person.Street,
+            ZipCode = person.ZipCode,
+            City = person.City,
+            PhoneNumber = person.PhoneNumber,
+            EmailAddress = person.EmailAddress
+        };
+        modalTitle = "Persoon Bewerken";
+        isEditing = true;
+        showPersonModal = true;
+    }
+
+    private async Task SavePerson()
+    {
+        try
+        {
+            if (isEditing)
+            {
+                var command = new UpdatePersonCommand(
+                    personModel.Id!,
+                    personModel.FirstName!,
+                    personModel.Prefix,
+                    personModel.Surname,
+                    personModel.DateOfBirth,
+                    personModel.Street,
+                    personModel.ZipCode,
+                    personModel.City,
+                    personModel.PhoneNumber,
+                    personModel.EmailAddress);
+
+                await Mediator.Send(command);
+            }
+            else
+            {
+                var command = new CreatePersonCommand(
+                    personModel.FirstName!,
+                    personModel.Prefix,
+                    personModel.Surname,
+                    personModel.DateOfBirth,
+                    personModel.Street,
+                    personModel.ZipCode,
+                    personModel.City,
+                    personModel.PhoneNumber,
+                    personModel.EmailAddress);
+
+                await Mediator.Send(command);
+            }
+
+            await LoadPersons();
+            CloseModal();
+            ShowSuccessMessage("Persoon succesvol opgeslagen!");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij opslaan: {ex.Message}");
+        }
+    }
+
+    private async Task DeletePerson(PersonDto person)
+    {
+        if (await ShowConfirmDialog($"Weet u zeker dat u {person.FullName} wilt verwijderen?"))
+        {
+            try
+            {
+                var command = new DeletePersonCommand(person.Id);
+                await Mediator.Send(command);
+                await LoadPersons();
+                ShowSuccessMessage("Persoon succesvol verwijderd!");
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage($"Fout bij verwijderen: {ex.Message}");
+            }
+        }
+    }
+
+    private void CloseModal()
+    {
+        showPersonModal = false;
+    }
+
+    private async Task<bool> ShowConfirmDialog(string message)
+    {
+        return await JSRuntime.InvokeAsync<bool>("confirm", message);
+    }
+
+    private void ShowSuccessMessage(string message)
+    {
+        // Simple console log for now - can be replaced with a proper notification system
+        Console.WriteLine($"SUCCESS: {message}");
+    }
+
+    private void ShowErrorMessage(string message)
+    {
+        // Simple console log for now - can be replaced with a proper notification system
+        Console.WriteLine($"ERROR: {message}");
+    }
+}
+
+@inject IMediator Mediator
+@inject IJSRuntime JSRuntime

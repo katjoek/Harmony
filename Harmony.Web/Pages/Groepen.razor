@@ -1,0 +1,384 @@
+@page "/groepen"
+@using Harmony.ApplicationCore.DTOs
+@using Harmony.ApplicationCore.Queries.Groups
+@using Harmony.ApplicationCore.Queries.Persons
+@using Harmony.ApplicationCore.Commands.Groups
+@using Harmony.Web.Models
+@using MediatR
+
+<PageTitle>Groepen - Harmony</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Groepen</h1>
+    <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
+        <i class="fas fa-plus me-2"></i>
+        Nieuwe Groep
+    </button>
+</div>
+
+@if (groups == null)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Laden...</span>
+        </div>
+        <p>Groepen laden...</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Coördinator</th>
+                    <th>Aantal Leden</th>
+                    <th>Acties</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var group in groups)
+                {
+                    <tr>
+                        <td>@group.Name</td>
+                        <td>@group.CoordinatorName</td>
+                        <td>@group.MemberCount</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-info" @onclick="@(() => OpenMembersModal(group))">
+                                    <i class="fas fa-users"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary" @onclick="@(() => OpenEditModal(group))">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => DeleteGroup(group))">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Create/Edit Modal -->
+<div class="modal fade @(showGroupModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@modalTitle</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+            </div>
+            <EditForm Model="@groupModel" OnValidSubmit="@SaveGroup">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Groepsnaam *</label>
+                        <InputText @bind-Value="@groupModel.Name" class="form-control" />
+                        <ValidationMessage For="@(() => groupModel.Name)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Coördinator</label>
+                        <InputSelect @bind-Value="@groupModel.CoordinatorId" class="form-select">
+                            <option value="">Geen coördinator</option>
+                            @if (allPersons != null)
+                            {
+                                @foreach (var person in allPersons)
+                                {
+                                    <option value="@person.Id">@person.FullName</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<!-- Members Modal -->
+<div class="modal fade @(showMembersModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Leden van @(selectedGroup?.Name)</h5>
+                <button type="button" class="btn-close" @onclick="CloseMembersModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (selectedGroup != null && groupMembers != null)
+                {
+                    <div class="mb-3">
+                        <h6>Huidige Leden (@groupMembers.Count)</h6>
+                        @if (groupMembers.Any())
+                        {
+                            <div class="list-group">
+                                @foreach (var member in groupMembers)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@member.FullName</span>
+                                        <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => RemoveMemberFromGroup(member.Id))">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">Geen leden in deze groep.</p>
+                        }
+                    </div>
+
+                    <div>
+                        <h6>Persoon Toevoegen</h6>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <select @bind="selectedPersonId" class="form-select">
+                                    <option value="">Selecteer persoon...</option>
+                                    @if (availablePersons != null)
+                                    {
+                                        @foreach (var person in availablePersons)
+                                        {
+                                            <option value="@person.Id">@person.FullName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-success" @onclick="AddMemberToGroup" disabled="@string.IsNullOrEmpty(selectedPersonId)">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Toevoegen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseMembersModal">Sluiten</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<GroupDto>? groups;
+    private List<PersonDto>? allPersons;
+    private List<PersonDto>? groupMembers;
+    private List<PersonDto>? availablePersons;
+    private GroupViewModel groupModel = new();
+    private GroupDto? selectedGroup;
+    private string modalTitle = "";
+    private bool isEditing = false;
+    private string? selectedPersonId;
+    private bool showGroupModal = false;
+    private bool showMembersModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        await LoadGroups();
+        await LoadPersons();
+    }
+
+    private async Task LoadGroups()
+    {
+        var query = new GetAllGroupsQuery();
+        groups = (await Mediator.Send(query)).ToList();
+        StateHasChanged();
+    }
+
+    private async Task LoadPersons()
+    {
+        var query = new GetAllPersonsQuery();
+        allPersons = (await Mediator.Send(query)).ToList();
+    }
+
+    private void OpenCreateModal()
+    {
+        groupModel = new GroupViewModel();
+        modalTitle = "Nieuwe Groep";
+        isEditing = false;
+        showGroupModal = true;
+    }
+
+    private void OpenEditModal(GroupDto group)
+    {
+        groupModel = new GroupViewModel
+        {
+            Id = group.Id,
+            Name = group.Name,
+            CoordinatorId = group.CoordinatorId
+        };
+        modalTitle = "Groep Bewerken";
+        isEditing = true;
+        showGroupModal = true;
+    }
+
+    private async Task OpenMembersModal(GroupDto group)
+    {
+        selectedGroup = group;
+        // Ensure we have the latest data before opening the modal
+        await LoadPersons();
+        await LoadGroupMembers(group.Id);
+        UpdateAvailablePersons();
+        showMembersModal = true;
+    }
+
+    private Task LoadGroupMembers(string groupId)
+    {
+        if (allPersons == null) return Task.CompletedTask;
+        
+        groupMembers = allPersons.Where(p => p.GroupIds.Contains(groupId)).ToList();
+        return Task.CompletedTask;
+    }
+
+    private void UpdateAvailablePersons()
+    {
+        if (allPersons == null || groupMembers == null) return;
+
+        var memberIds = groupMembers.Select(m => m.Id).ToHashSet();
+        availablePersons = allPersons.Where(p => !memberIds.Contains(p.Id)).ToList();
+        selectedPersonId = null;
+    }
+
+    private async Task SaveGroup()
+    {
+        try
+        {
+            if (isEditing)
+            {
+                var command = new UpdateGroupCommand(
+                    groupModel.Id!,
+                    groupModel.Name!,
+                    string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId);
+
+                await Mediator.Send(command);
+            }
+            else
+            {
+                var command = new CreateGroupCommand(
+                    groupModel.Name!,
+                    string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId);
+
+                await Mediator.Send(command);
+            }
+
+            await LoadGroups();
+            CloseModal();
+            ShowSuccessMessage("Groep succesvol opgeslagen!");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij opslaan: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteGroup(GroupDto group)
+    {
+        if (await ShowConfirmDialog($"Weet u zeker dat u groep '{group.Name}' wilt verwijderen?"))
+        {
+            try
+            {
+                var command = new DeleteGroupCommand(group.Id);
+                await Mediator.Send(command);
+                await LoadGroups();
+                ShowSuccessMessage("Groep succesvol verwijderd!");
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage($"Fout bij verwijderen: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task AddMemberToGroup()
+    {
+        if (string.IsNullOrEmpty(selectedPersonId) || selectedGroup == null) return;
+
+        try
+        {
+            var command = new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(
+                selectedPersonId, selectedGroup.Id);
+            await Mediator.Send(command);
+            
+            // Reload both persons and groups to get updated membership information
+            await LoadPersons();
+            await LoadGroups();
+            await LoadGroupMembers(selectedGroup.Id);
+            UpdateAvailablePersons();
+            StateHasChanged();
+            ShowSuccessMessage("Persoon toegevoegd aan groep!");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij toevoegen: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveMemberFromGroup(string personId)
+    {
+        if (selectedGroup == null) return;
+
+        try
+        {
+            var command = new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(
+                personId, selectedGroup.Id);
+            await Mediator.Send(command);
+            
+            // Reload both persons and groups to get updated membership information
+            await LoadPersons();
+            await LoadGroups();
+            await LoadGroupMembers(selectedGroup.Id);
+            UpdateAvailablePersons();
+            StateHasChanged();
+            ShowSuccessMessage("Persoon verwijderd uit groep!");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij verwijderen: {ex.Message}");
+        }
+    }
+
+    private void CloseModal()
+    {
+        showGroupModal = false;
+    }
+
+    private void CloseMembersModal()
+    {
+        showMembersModal = false;
+        selectedGroup = null;
+        groupMembers = null;
+        availablePersons = null;
+    }
+
+    private async Task<bool> ShowConfirmDialog(string message)
+    {
+        return await JSRuntime.InvokeAsync<bool>("confirm", message);
+    }
+
+    private void ShowSuccessMessage(string message)
+    {
+        Console.WriteLine($"SUCCESS: {message}");
+    }
+
+    private void ShowErrorMessage(string message)
+    {
+        Console.WriteLine($"ERROR: {message}");
+    }
+}
+
+@inject IMediator Mediator
+@inject IJSRuntime JSRuntime

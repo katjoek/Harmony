@@ -1,0 +1,47 @@
+@page "/"
+
+<PageTitle>Home - Harmony</PageTitle>
+
+<div class="text-center">
+    <h1 class="display-4">Welkom bij Harmony</h1>
+    <p class="lead">Beheer uw kerkgemeenschap eenvoudig en efficiënt</p>
+    
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users me-2"></i>
+                        Personen Beheer
+                    </h5>
+                    <p class="card-text">
+                        Beheer alle personen in uw gemeenschap. Voeg nieuwe leden toe, 
+                        bewerk hun gegevens en organiseer hen in groepen.
+                    </p>
+                    <button type="button" class="btn btn-primary" @onclick="@(() => NavigationManager.NavigateTo("/personen"))">
+                        Naar Personen
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-user-friends me-2"></i>
+                        Groepen Beheer
+                    </h5>
+                    <p class="card-text">
+                        Organiseer uw gemeenschap in groepen. Maak nieuwe groepen aan, 
+                        wijs coördinatoren toe en beheer lidmaatschappen.
+                    </p>
+                    <button type="button" class="btn btn-primary" @onclick="@(() => NavigationManager.NavigateTo("/groepen"))">
+                        Naar Groepen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@inject NavigationManager NavigationManager
