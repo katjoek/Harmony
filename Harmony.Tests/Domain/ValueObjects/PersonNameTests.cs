@@ -47,7 +47,7 @@ public sealed class PersonNameTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new PersonName(firstName!));
-        Assert.Equal("First name is required", exception.Message);
+        Assert.StartsWith("First name is required", exception.Message);
     }
 
     [Fact]

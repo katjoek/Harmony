@@ -9,13 +9,16 @@ public sealed class GetGroupByIdQueryHandler : IRequestHandler<GetGroupByIdQuery
 {
     private readonly IGroupRepository _groupRepository;
     private readonly IPersonRepository _personRepository;
+    private readonly IMembershipService _membershipService;
 
     public GetGroupByIdQueryHandler(
         IGroupRepository groupRepository,
-        IPersonRepository personRepository)
+        IPersonRepository personRepository,
+        IMembershipService membershipService)
     {
         _groupRepository = groupRepository ?? throw new ArgumentNullException(nameof(groupRepository));
         _personRepository = personRepository ?? throw new ArgumentNullException(nameof(personRepository));
+        _membershipService = membershipService ?? throw new ArgumentNullException(nameof(membershipService));
     }
 
     public async Task<GroupDto?> Handle(GetGroupByIdQuery request, CancellationToken cancellationToken)
@@ -33,12 +36,15 @@ public sealed class GetGroupByIdQueryHandler : IRequestHandler<GetGroupByIdQuery
             coordinatorName = coordinator?.Name.FullName;
         }
 
+        // Get actual member IDs and count from the membership service
+        var memberIds = await _membershipService.GetPersonIdsForGroupAsync(group.Id, cancellationToken);
+
         return new GroupDto(
             group.Id.ToString(),
             group.Name,
             group.CoordinatorId?.ToString(),
             coordinatorName,
-            group.MemberIds.Select(m => m.ToString()).ToList(),
-            group.MemberCount);
+            memberIds.Select(m => m.ToString()).ToList(),
+            memberIds.Count);
     }
 }

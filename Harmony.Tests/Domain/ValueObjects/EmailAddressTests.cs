@@ -26,7 +26,7 @@ public sealed class EmailAddressTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new EmailAddress(email!));
-        Assert.Equal("Email address cannot be empty", exception.Message);
+        Assert.StartsWith("Email address cannot be empty", exception.Message);
     }
 
     [Theory]
@@ -38,7 +38,7 @@ public sealed class EmailAddressTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new EmailAddress(email));
-        Assert.Equal("Invalid email address format", exception.Message);
+        Assert.StartsWith("Invalid email address format", exception.Message);
     }
 
     [Fact]

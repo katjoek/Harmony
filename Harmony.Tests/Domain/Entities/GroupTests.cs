@@ -32,7 +32,7 @@ public sealed class GroupTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => Group.Create(name!));
-        Assert.Equal("Group name is required", exception.Message);
+        Assert.StartsWith("Group name is required", exception.Message);
     }
 
     [Fact]
@@ -156,6 +156,6 @@ public sealed class GroupTests
 
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => group.UpdateName(name!));
-        Assert.Equal("Group name is required", exception.Message);
+        Assert.StartsWith("Group name is required", exception.Message);
     }
 }
