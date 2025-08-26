@@ -89,6 +89,9 @@
                         <td>@person.EmailAddress</td>
                         <td>
                             <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-info" title="Groepen" @onclick="@(() => OpenGroupsModal(person))">
+                                    <i class="fas fa-users"></i>
+                                </button>
                                 <button type="button" class="btn btn-sm btn-primary" @onclick="@(() => OpenEditModal(person))">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -103,6 +106,54 @@
         </tbody>
     </table>
 </div>
+
+<!-- Groups Membership Modal -->
+<div class="modal fade @(showGroupsModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Groepen van @(selectedPerson?.FullName)</h5>
+                <button type="button" class="btn-close" @onclick="CloseGroupsModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (selectedPerson != null && personGroups != null && availableGroups != null)
+                {
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label class="form-label">Niet-lid van</label>
+                            <select id="person-available-groups" multiple size="10" class="form-select dual-list-select" @onchange="OnAvailableGroupsChange">
+                                @foreach (var g in availableGroups)
+                                {
+                                    <option value="@g.Id">@g.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-primary" title="Naar rechts" @onclick="MoveSelectedAvailableGroupsToMember" disabled="@isProcessingGroups || !selectedAvailableGroupIds.Any()">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" title="Naar links" @onclick="MoveSelectedMemberGroupsToAvailable" disabled="@isProcessingGroups || !selectedMemberGroupIds.Any()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Lid van (@personGroups.Count)</label>
+                            <select id="person-member-groups" multiple size="10" class="form-select dual-list-select" @onchange="OnMemberGroupsChange">
+                                @foreach (var g in personGroups)
+                                {
+                                    <option value="@g.Id">@g.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseGroupsModal">Sluiten</button>
+            </div>
+        </div>
+    </div>
+ </div>
 
 <!-- Create/Edit Modal -->
 <div class="modal fade @(showPersonModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
@@ -198,8 +249,18 @@
     private bool isEditing = false;
     private bool showPersonModal = false;
     private string personSearch = "";
+    
+    // Groups modal state
+    private bool showGroupsModal = false;
+    private PersonDto? selectedPerson;
+    private List<GroupDto>? allGroups;
+    private List<GroupDto>? personGroups;
+    private List<GroupDto>? availableGroups;
+    private List<string> selectedAvailableGroupIds = new();
+    private List<string> selectedMemberGroupIds = new();
+    private bool isProcessingGroups = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         // Start loading data in the background without blocking the initial render
         _ = Task.Run(async () =>
@@ -214,6 +275,7 @@
                 Console.WriteLine($"Error loading persons: {ex.Message}");
             }
         });
+        return Task.CompletedTask;
     }
 
     private async Task LoadPersons()
@@ -223,12 +285,166 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task LoadGroups()
+    {
+        var query = new Harmony.ApplicationCore.Queries.Groups.GetAllGroupsQuery();
+        allGroups = (await Mediator.Send(query)).ToList();
+    }
+
     private void OpenCreateModal()
     {
         personModel = new PersonViewModel();
         modalTitle = "Nieuwe Persoon";
         isEditing = false;
         showPersonModal = true;
+    }
+
+    private async Task OpenGroupsModal(PersonDto person)
+    {
+        selectedPerson = person;
+        await LoadGroups();
+        LoadPersonGroups();
+        UpdateAvailableGroups();
+        showGroupsModal = true;
+        // Register double-click handlers on next render
+        await Task.Yield();
+        await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", "person-available-groups", DotNetObjectReference.Create(this), nameof(OnAvailableGroupDblClick));
+        await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", "person-member-groups", DotNetObjectReference.Create(this), nameof(OnMemberGroupDblClick));
+    }
+
+    private void LoadPersonGroups()
+    {
+        if (allGroups == null || selectedPerson == null) return;
+        var set = selectedPerson.GroupIds.ToHashSet();
+        personGroups = allGroups.Where(g => set.Contains(g.Id)).ToList();
+    }
+
+    private void UpdateAvailableGroups()
+    {
+        if (allGroups == null || personGroups == null) return;
+        var member = personGroups.Select(g => g.Id).ToHashSet();
+        availableGroups = allGroups.Where(g => !member.Contains(g.Id)).ToList();
+        selectedAvailableGroupIds.Clear();
+        selectedMemberGroupIds.Clear();
+    }
+
+    private void CloseGroupsModal()
+    {
+        showGroupsModal = false;
+        selectedPerson = null;
+        allGroups = null;
+        personGroups = null;
+        availableGroups = null;
+        selectedAvailableGroupIds.Clear();
+        selectedMemberGroupIds.Clear();
+        JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "person-available-groups");
+        JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "person-member-groups");
+    }
+
+    [JSInvokable]
+    public Task OnAvailableGroupDblClick(string groupId)
+        => MoveAvailableGroupsToMember(new [] { groupId });
+
+    [JSInvokable]
+    public Task OnMemberGroupDblClick(string groupId)
+        => MoveMemberGroupsToAvailable(new [] { groupId });
+
+    private async Task MoveSelectedAvailableGroupsToMember()
+    {
+        await MoveAvailableGroupsToMember(selectedAvailableGroupIds.ToArray());
+    }
+
+    private async Task MoveSelectedMemberGroupsToAvailable()
+    {
+        await MoveMemberGroupsToAvailable(selectedMemberGroupIds.ToArray());
+    }
+
+    private async Task MoveAvailableGroupsToMember(IEnumerable<string> groupIds)
+    {
+        if (selectedPerson == null) return;
+        var ids = groupIds?.ToArray() ?? Array.Empty<string>();
+        if (ids.Length == 0) return;
+        try
+        {
+            isProcessingGroups = true;
+            foreach (var gid in ids)
+            {
+                var cmd = new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(selectedPerson.Id, gid);
+                await Mediator.Send(cmd);
+            }
+            await RefreshGroupsState();
+            ShowSuccessMessage("Persoon aan groepen toegevoegd.");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij toevoegen: {ex.Message}");
+        }
+        finally
+        {
+            isProcessingGroups = false;
+        }
+    }
+
+    private async Task MoveMemberGroupsToAvailable(IEnumerable<string> groupIds)
+    {
+        if (selectedPerson == null) return;
+        var ids = groupIds?.ToArray() ?? Array.Empty<string>();
+        if (ids.Length == 0) return;
+        try
+        {
+            isProcessingGroups = true;
+            foreach (var gid in ids)
+            {
+                var cmd = new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(selectedPerson.Id, gid);
+                await Mediator.Send(cmd);
+            }
+            await RefreshGroupsState();
+            ShowSuccessMessage("Persoon uit groepen verwijderd.");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"Fout bij verwijderen: {ex.Message}");
+        }
+        finally
+        {
+            isProcessingGroups = false;
+        }
+    }
+
+    private async Task RefreshGroupsState()
+    {
+        if (selectedPerson == null) return;
+        await LoadPersons();
+        await LoadGroups();
+        LoadPersonGroups();
+        UpdateAvailableGroups();
+        StateHasChanged();
+    }
+
+    private async void OnAvailableGroupsChange(ChangeEventArgs _)
+    {
+        try
+        {
+            var values = await JSRuntime.InvokeAsync<string[]>("selectUtils.getSelectedValues", "person-available-groups");
+            selectedAvailableGroupIds = values?.ToList() ?? new List<string>();
+        }
+        catch
+        {
+            selectedAvailableGroupIds.Clear();
+        }
+    }
+
+    private async void OnMemberGroupsChange(ChangeEventArgs _)
+    {
+        try
+        {
+            var values = await JSRuntime.InvokeAsync<string[]>("selectUtils.getSelectedValues", "person-member-groups");
+            selectedMemberGroupIds = values?.ToList() ?? new List<string>();
+        }
+        catch
+        {
+            selectedMemberGroupIds.Clear();
+        }
     }
 
     private void OpenEditModal(PersonDto person)

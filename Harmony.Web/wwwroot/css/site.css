@@ -75,3 +75,10 @@ a, .btn-link {
 .btn-group .btn:last-child {
     margin-right: 0;
 }
+
+/* Ensure list boxes are scrollable and consistent height */
+.dual-list-select {
+    min-height: 14rem;
+    max-height: 20rem;
+    overflow-y: auto;
+}

@@ -153,51 +153,34 @@
                 <button type="button" class="btn-close" @onclick="CloseMembersModal"></button>
             </div>
             <div class="modal-body">
-                @if (selectedGroup != null && groupMembers != null)
+                @if (selectedGroup != null && groupMembers != null && availablePersons != null)
                 {
-                    <div class="mb-3">
-                        <h6>Huidige Leden (@groupMembers.Count)</h6>
-                        @if (groupMembers.Any())
-                        {
-                            <div class="list-group">
-                                @foreach (var member in groupMembers)
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label class="form-label">Niet-leden</label>
+                            <select id="group-available" multiple size="10" class="form-select dual-list-select" @onchange="OnAvailableChange">
+                                @foreach (var p in availablePersons)
                                 {
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>@member.FullName</span>
-                                        <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => RemoveMemberFromGroup(member.Id))">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
+                                    <option value="@p.Id">@p.FullName</option>
                                 }
-                            </div>
-                        }
-                        else
-                        {
-                            <p class="text-muted">Geen leden in deze groep.</p>
-                        }
-                    </div>
-
-                    <div>
-                        <h6>Persoon Toevoegen</h6>
-                        <div class="row">
-                            <div class="col-md-8">
-                                <select @bind="selectedPersonId" class="form-select">
-                                    <option value="">Selecteer persoon...</option>
-                                    @if (availablePersons != null)
-                                    {
-                                        @foreach (var person in availablePersons)
-                                        {
-                                            <option value="@person.Id">@person.FullName</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="button" class="btn btn-success" @onclick="AddMemberToGroup" disabled="@string.IsNullOrEmpty(selectedPersonId)">
-                                    <i class="fas fa-plus me-2"></i>
-                                    Toevoegen
-                                </button>
-                            </div>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-primary" title="Naar rechts" @onclick="MoveSelectedAvailableToMembers" disabled="@isProcessing || !selectedAvailableIds.Any()">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" title="Naar links" @onclick="MoveSelectedMembersToAvailable" disabled="@isProcessing || !selectedMemberIds.Any()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Leden (@groupMembers.Count)</label>
+                            <select id="group-members" multiple size="10" class="form-select dual-list-select" @onchange="OnMemberChange">
+                                @foreach (var p in groupMembers)
+                                {
+                                    <option value="@p.Id">@p.FullName</option>
+                                }
+                            </select>
                         </div>
                     </div>
                 }
@@ -218,12 +201,14 @@
     private GroupDto? selectedGroup;
     private string modalTitle = "";
     private bool isEditing = false;
-    private string? selectedPersonId;
+    private List<string> selectedAvailableIds = new();
+    private List<string> selectedMemberIds = new();
     private bool showGroupModal = false;
     private bool showMembersModal = false;
     private string groupSearch = "";
+    private bool isProcessing = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         // Start loading data in the background without blocking the initial render
         _ = Task.Run(async () =>
@@ -238,6 +223,7 @@
                 Console.WriteLine($"Error loading data: {ex.Message}");
             }
         });
+        return Task.CompletedTask;
     }
 
     private async Task LoadData()
@@ -291,6 +277,10 @@
         await LoadGroupMembers(group.Id);
         UpdateAvailablePersons();
         showMembersModal = true;
+        // Register double-click handlers on next render
+        await Task.Yield();
+        await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", "group-available", DotNetObjectReference.Create(this), nameof(OnAvailableDblClick));
+        await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", "group-members", DotNetObjectReference.Create(this), nameof(OnMembersDblClick));
     }
 
     private Task LoadGroupMembers(string groupId)
@@ -307,7 +297,8 @@
 
         var memberIds = groupMembers.Select(m => m.Id).ToHashSet();
         availablePersons = allPersons.Where(p => !memberIds.Contains(p.Id)).ToList();
-        selectedPersonId = null;
+        selectedAvailableIds.Clear();
+        selectedMemberIds.Clear();
     }
 
     private async Task SaveGroup()
@@ -360,52 +351,80 @@
         }
     }
 
-    private async Task AddMemberToGroup()
+    private async Task MoveSelectedAvailableToMembers()
     {
-        if (string.IsNullOrEmpty(selectedPersonId) || selectedGroup == null) return;
+        await MoveAvailableToMembers(selectedAvailableIds.ToArray());
+    }
+
+    private async Task MoveSelectedMembersToAvailable()
+    {
+        await MoveMembersToAvailable(selectedMemberIds.ToArray());
+    }
+
+    private async Task MoveAvailableToMembers(IEnumerable<string> personIds)
+    {
+        if (selectedGroup == null) return;
+        var ids = personIds?.ToArray() ?? Array.Empty<string>();
+        if (ids.Length == 0) return;
 
         try
         {
-            var command = new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(
-                selectedPersonId, selectedGroup.Id);
-            await Mediator.Send(command);
-            
-            // Reload both persons and groups to get updated membership information
-            await LoadPersons();
-            await LoadGroups();
-            await LoadGroupMembers(selectedGroup.Id);
-            UpdateAvailablePersons();
-            StateHasChanged();
-            ShowSuccessMessage("Persoon toegevoegd aan groep!");
+            isProcessing = true;
+            foreach (var pid in ids)
+            {
+                var command = new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(pid, selectedGroup.Id);
+                await Mediator.Send(command);
+            }
+
+            await RefreshMembershipState();
+            ShowSuccessMessage("Toegevoegd aan groep.");
         }
         catch (Exception ex)
         {
             ShowErrorMessage($"Fout bij toevoegen: {ex.Message}");
         }
+        finally
+        {
+            isProcessing = false;
+        }
     }
 
-    private async Task RemoveMemberFromGroup(string personId)
+    private async Task MoveMembersToAvailable(IEnumerable<string> personIds)
     {
         if (selectedGroup == null) return;
+        var ids = personIds?.ToArray() ?? Array.Empty<string>();
+        if (ids.Length == 0) return;
 
         try
         {
-            var command = new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(
-                personId, selectedGroup.Id);
-            await Mediator.Send(command);
-            
-            // Reload both persons and groups to get updated membership information
-            await LoadPersons();
-            await LoadGroups();
-            await LoadGroupMembers(selectedGroup.Id);
-            UpdateAvailablePersons();
-            StateHasChanged();
-            ShowSuccessMessage("Persoon verwijderd uit groep!");
+            isProcessing = true;
+            foreach (var pid in ids)
+            {
+                var command = new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(pid, selectedGroup.Id);
+                await Mediator.Send(command);
+            }
+
+            await RefreshMembershipState();
+            ShowSuccessMessage("Verwijderd uit groep.");
         }
         catch (Exception ex)
         {
             ShowErrorMessage($"Fout bij verwijderen: {ex.Message}");
         }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task RefreshMembershipState()
+    {
+        if (selectedGroup == null) return;
+        await LoadPersons();
+        await LoadGroups();
+        await LoadGroupMembers(selectedGroup.Id);
+        UpdateAvailablePersons();
+        StateHasChanged();
     }
 
     private void CloseModal()
@@ -419,6 +438,44 @@
         selectedGroup = null;
         groupMembers = null;
         availablePersons = null;
+        selectedAvailableIds.Clear();
+        selectedMemberIds.Clear();
+        JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "group-available");
+        JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "group-members");
+    }
+
+    [JSInvokable]
+    public Task OnAvailableDblClick(string personId)
+        => MoveAvailableToMembers(new [] { personId });
+
+    [JSInvokable]
+    public Task OnMembersDblClick(string personId)
+        => MoveMembersToAvailable(new [] { personId });
+
+    private async void OnAvailableChange(ChangeEventArgs _)
+    {
+        try
+        {
+            var values = await JSRuntime.InvokeAsync<string[]>("selectUtils.getSelectedValues", "group-available");
+            selectedAvailableIds = values?.ToList() ?? new List<string>();
+        }
+        catch
+        {
+            selectedAvailableIds.Clear();
+        }
+    }
+
+    private async void OnMemberChange(ChangeEventArgs _)
+    {
+        try
+        {
+            var values = await JSRuntime.InvokeAsync<string[]>("selectUtils.getSelectedValues", "group-members");
+            selectedMemberIds = values?.ToList() ?? new List<string>();
+        }
+        catch
+        {
+            selectedMemberIds.Clear();
+        }
     }
 
     private async Task<bool> ShowConfirmDialog(string message)
