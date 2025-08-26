@@ -1,6 +1,6 @@
-# Harmony - Kerkgemeenschap Beheer
+# Harmony - (Kerk-)gemeenschap Beheer
 
-Een moderne webapplicatie voor het beheren van personen en groepen binnen een kerkgemeenschap, gebouwd met Clean Architecture en CQRS principes.
+Een moderne webapplicatie voor het beheren van personen en groepen binnen een (kerk-)gemeenschap, gebouwd met Clean Architecture en CQRS principes.
 
 ## 🏗️ Architectuur
 
