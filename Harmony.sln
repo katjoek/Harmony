@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -11,6 +11,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmony.Web", "Harmony.Web\Harmony.Web.csproj", "{D4E5F6G7-H8I9-0123-DEF4-56789012345A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmony.Tests", "Harmony.Tests\Harmony.Tests.csproj", "{E5F6G7H8-I9J0-1234-EF56-789012345ABC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmony.Seeder", "Harmony.Seeder\Harmony.Seeder.csproj", "{A7921744-A753-4DEF-8EC9-BA31AFE2B1FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,5 +40,9 @@ Global
 		{E5F6G7H8-I9J0-1234-EF56-789012345ABC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E5F6G7H8-I9J0-1234-EF56-789012345ABC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5F6G7H8-I9J0-1234-EF56-789012345ABC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7921744-A753-4DEF-8EC9-BA31AFE2B1FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7921744-A753-4DEF-8EC9-BA31AFE2B1FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7921744-A753-4DEF-8EC9-BA31AFE2B1FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7921744-A753-4DEF-8EC9-BA31AFE2B1FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
