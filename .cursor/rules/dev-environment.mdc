@@ -1,0 +1,6 @@
+---
+description: The development environment
+globs:
+alwaysApply: true
+---
+You are running on a Windows computer. So there is no "cat" command, for instance.

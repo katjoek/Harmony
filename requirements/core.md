@@ -25,3 +25,4 @@
 - When a Person is deleted, this should be a cascading delete
 - When a Group is deleted, this should NOT be a cascading delete
 - When a Person or Group is deleted, the user should be asked to confirm.
+- The main menu should have entries for Persons and Groups (in Dutch)

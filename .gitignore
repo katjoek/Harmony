@@ -1,0 +1,81 @@
+# .NET / Visual Studio
+bin/
+obj/
+.vs/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+
+# IDE settings
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Packages / NuGet
+packages/
+.nuget/
+*.nupkg
+*.snupkg
+
+# Build outputs (safety)
+*.dll
+*.exe
+*.pdb
+*.mdb
+
+# Logs
+*.log
+
+# Test / Coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+# Publish / tooling outputs
+out/
+publish/
+
+# OS files
+[Dd]esktop.ini
+[Tt]humbs.db
+*.DS_Store
+
+# SQLite local database files
+*.db
+*.db-shm
+*.db-wal
+
+# Node
+node_modules/
+
+# ReSharper / Rider
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+*.iml
+
+# Temp files
+*.tmp
+~$*
+
+# Env / secrets (keep appsettings.Development.json tracked)
+.env
+.env.*.local
+secrets.json
+
+# NOTE: EF Core migrations are source and should be committed.
+
