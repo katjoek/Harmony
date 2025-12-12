@@ -31,7 +31,21 @@ public sealed class RelayCommand : ICommand
     {
         if (_asyncExecute != null)
         {
-            _asyncExecute(parameter).ConfigureAwait(false);
+            // Fire-and-forget async operation with proper exception handling
+            // Since ICommand.Execute is synchronous, we can't await here
+            // Use ContinueWith to handle exceptions and prevent unhandled task exceptions
+            _asyncExecute(parameter).ContinueWith(task =>
+            {
+                if (task.IsFaulted && task.Exception != null)
+                {
+                    // Log exception - the ViewModel should handle exceptions in the async method
+                    // but this prevents unhandled task exceptions from crashing the app
+                    System.Diagnostics.Debug.WriteLine($"Unhandled exception in async command: {task.Exception.GetBaseException()}");
+                    
+                    // The exception is already handled in StartImportAsync, but we ensure
+                    // any unhandled exceptions don't crash the application
+                }
+            }, TaskContinuationOptions.OnlyOnFaulted);
         }
         else
         {
