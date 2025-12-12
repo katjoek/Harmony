@@ -11,6 +11,18 @@ window.selectUtils = {
   registerDblClick: function (id, dotNetRef, methodName) {
     const el = document.getElementById(id);
     if (!el) return;
+    
+    // Always unregister any existing handler first to prevent duplicates
+    if (el._harmonyDblHandler) {
+      el.removeEventListener('dblclick', el._harmonyDblHandler);
+      el._harmonyDblHandler = null;
+    }
+    if (el._harmonyDotNetRef) {
+      try { el._harmonyDotNetRef.dispose(); } catch {}
+      el._harmonyDotNetRef = null;
+    }
+    
+    // Register the new handler
     const handler = function (e) {
       const target = e.target;
       if (target && target.tagName === 'OPTION') {

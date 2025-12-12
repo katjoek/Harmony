@@ -1,5 +1,6 @@
 @using Harmony.Web.Models
 @inject IJSRuntime JSRuntime
+@implements IDisposable
 
 <div class="modal fade @(Show ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
     <div class="modal-dialog modal-lg">
@@ -61,19 +62,63 @@
 
     private List<string> selectedLeftIds = new();
     private List<string> selectedRightIds = new();
+    private bool _handlersRegistered = false;
+    private bool _previousShowState = false;
+    private DotNetObjectReference<DualListMembershipModal>? _dotNetRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Show)
+        // Only register/unregister handlers when Show state changes, not on every render
+        if (_previousShowState != Show)
         {
-            // Register double click handling each time shown
-            await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", LeftSelectId, DotNetObjectReference.Create(this), nameof(OnLeftDblClick));
-            await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", RightSelectId, DotNetObjectReference.Create(this), nameof(OnRightDblClick));
+            _previousShowState = Show;
+            
+            if (Show && !_handlersRegistered)
+            {
+                // Dispose previous reference if it exists
+                if (_dotNetRef != null)
+                {
+                    _dotNetRef.Dispose();
+                }
+                
+                // Create new DotNetObjectReference for this instance
+                _dotNetRef = DotNetObjectReference.Create(this);
+                
+                // Always unregister first (defensive) before registering
+                await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", LeftSelectId);
+                await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", RightSelectId);
+                
+                // Register handlers
+                await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", LeftSelectId, _dotNetRef, nameof(OnLeftDblClick));
+                await JSRuntime.InvokeVoidAsync("selectUtils.registerDblClick", RightSelectId, _dotNetRef, nameof(OnRightDblClick));
+                
+                _handlersRegistered = true;
+            }
+            else if (!Show && _handlersRegistered)
+            {
+                // Unregister handlers
+                await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", LeftSelectId);
+                await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", RightSelectId);
+                
+                // Dispose DotNetObjectReference
+                if (_dotNetRef != null)
+                {
+                    _dotNetRef.Dispose();
+                    _dotNetRef = null;
+                }
+                
+                _handlersRegistered = false;
+            }
         }
-        else
+    }
+
+    public void Dispose()
+    {
+        // Clean up when component is disposed
+        if (_dotNetRef != null)
         {
-            await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", LeftSelectId);
-            await JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", RightSelectId);
+            _dotNetRef.Dispose();
+            _dotNetRef = null;
         }
     }
 
