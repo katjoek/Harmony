@@ -83,12 +83,8 @@ public partial class App : Application
 
         _serviceProvider = services.BuildServiceProvider();
 
-        // Ensure database is created
-        using (var scope = _serviceProvider.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
-            dbContext.Database.EnsureCreated();
-        }
+        // Database will be initialized lazily when import starts (after backup)
+        // This prevents file locking issues during backup
 
         // Create and show main window
         var mainWindow = new MainWindow();

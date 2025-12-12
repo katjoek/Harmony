@@ -5,7 +5,10 @@ using Harmony.ApplicationCore.DTOs;
 using Harmony.ApplicationCore.Queries.Groups;
 using Harmony.ApplicationCore.Queries.Persons;
 using Harmony.Import.Models;
+using Harmony.Infrastructure.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Harmony.Import.Services;
 
@@ -14,15 +17,18 @@ public sealed class ImportService : IImportService
     private readonly IMediator _mediator;
     private readonly ICsvParserService _csvParser;
     private readonly IDatabaseBackupService _databaseBackup;
+    private readonly IServiceProvider _serviceProvider;
 
     public ImportService(
         IMediator mediator,
         ICsvParserService csvParser,
-        IDatabaseBackupService databaseBackup)
+        IDatabaseBackupService databaseBackup,
+        IServiceProvider serviceProvider)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _csvParser = csvParser ?? throw new ArgumentNullException(nameof(csvParser));
         _databaseBackup = databaseBackup ?? throw new ArgumentNullException(nameof(databaseBackup));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
     public async Task ImportAsync(string sheet1Path, string sheet2Path, Action<string> logCallback)
@@ -38,6 +44,15 @@ public sealed class ImportService : IImportService
             return;
         }
         logCallback("Database backup completed.");
+
+        // Step 1.5: Initialize fresh database (after backup, file is no longer locked)
+        logCallback("Initializing fresh database...");
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
+            dbContext.Database.EnsureCreated();
+        }
+        logCallback("Database initialized.");
 
         // Step 2: Parse CSV files
         logCallback("Parsing CSV files...");
