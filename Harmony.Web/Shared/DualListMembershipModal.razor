@@ -142,6 +142,7 @@
         {
             await MoveLeftToRight.InvokeAsync(selectedLeftIds.ToArray());
             selectedLeftIds.Clear();
+            await JSRuntime.InvokeVoidAsync("selectUtils.clearSelection", LeftSelectId);
             StateHasChanged();
         }
     }
@@ -152,6 +153,7 @@
         {
             await MoveRightToLeft.InvokeAsync(selectedRightIds.ToArray());
             selectedRightIds.Clear();
+            await JSRuntime.InvokeVoidAsync("selectUtils.clearSelection", RightSelectId);
             StateHasChanged();
         }
     }

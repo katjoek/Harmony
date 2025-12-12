@@ -8,6 +8,13 @@ window.selectUtils = {
       .filter(o => o.selected)
       .map(o => o.value);
   },
+  clearSelection: function (id) {
+    const select = document.getElementById(id);
+    if (select) {
+      // This works for multi-select to clear all selections.
+      select.selectedIndex = -1;
+    }
+  },
   registerDblClick: function (id, dotNetRef, methodName) {
     const el = document.getElementById(id);
     if (!el) return;
