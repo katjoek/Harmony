@@ -61,6 +61,10 @@ public sealed class HarmonyDbContext : DbContext
             addressBuilder.Property(a => a.City)
                 .HasMaxLength(100);
         });
+        
+        // Configure Address navigation as optional to resolve EF Core warning
+        personBuilder.Navigation(p => p.Address)
+            .IsRequired(false);
 
         personBuilder.Property(p => p.PhoneNumber)
             .HasConversion(
