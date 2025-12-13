@@ -95,7 +95,7 @@
             {
                 @foreach (var group in FilteredGroups)
                 {
-                    <tr>
+                    <tr title="@GetGroupMembersTooltip(group)">
                         <td>@group.Name</td>
                         <td>@group.CoordinatorName</td>
                         <td>@group.MemberCount</td>
@@ -262,6 +262,7 @@
         var query = new GetAllPersonsQuery();
         allPersons = (await Mediator.Send(query)).ToList();
         UpdateCoordinatorCandidatesForCurrentModel();
+        await InvokeAsync(StateHasChanged); // Update UI so tooltips work
     }
 
     private void OpenCreateModal()
@@ -460,6 +461,26 @@
         selectedMemberIds.Clear();
         JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "group-available");
         JSRuntime.InvokeVoidAsync("selectUtils.unregisterDblClick", "group-members");
+    }
+
+    private string GetGroupMembersTooltip(GroupDto group)
+    {
+        // Return empty string if data not yet loaded - no tooltip will be shown
+        if (allPersons == null)
+            return string.Empty;
+
+        if (!group.MemberIds.Any())
+            return "Geen leden";
+
+        var memberNames = allPersons
+            .Where(p => group.MemberIds.Contains(p.Id))
+            .Select(p => p.FullName)
+            .OrderBy(n => n)
+            .ToList();
+
+        return memberNames.Any() 
+            ? $"Leden: {string.Join(", ", memberNames)}"
+            : "Geen leden";
     }
 
     private void UpdateCoordinatorCandidatesForCurrentModel()

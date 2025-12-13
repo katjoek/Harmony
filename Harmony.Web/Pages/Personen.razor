@@ -289,11 +289,16 @@
     {
         var query = new Harmony.ApplicationCore.Queries.Groups.GetAllGroupsQuery();
         allGroups = (await Mediator.Send(query)).ToList();
+        await InvokeAsync(StateHasChanged); // Update UI so tooltips work
     }
 
     private string GetPersonGroupsTooltip(PersonDto person)
     {
-        if (allGroups == null || !person.GroupIds.Any())
+        // Return empty string if data not yet loaded - no tooltip will be shown
+        if (allGroups == null)
+            return string.Empty;
+
+        if (!person.GroupIds.Any())
             return "Geen groepen";
 
         var groupNames = allGroups
