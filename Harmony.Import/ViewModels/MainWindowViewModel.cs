@@ -129,8 +129,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         try
         {
+            // Run import on background thread to keep UI responsive
             var importService = _serviceProvider.GetRequiredService<IImportService>();
-            await importService.ImportAsync(Sheet1FilePath, Sheet2FilePath, LogMessage);
+            await Task.Run(async () =>
+            {
+                await importService.ImportAsync(Sheet1FilePath, Sheet2FilePath, LogMessage).ConfigureAwait(false);
+            }).ConfigureAwait(true); // Return to UI thread for final status update
+            
             StatusText = "Import completed successfully!";
         }
         catch (Exception ex)
@@ -150,17 +155,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
         var logEntry = $"[{timestamp}] {message}\n";
         
-        // Ensure UI updates happen on the UI thread
+        // Ensure UI updates happen on the UI thread using BeginInvoke for non-blocking updates
         if (Application.Current.Dispatcher.CheckAccess())
         {
             LogText += logEntry;
         }
         else
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            // Use BeginInvoke instead of Invoke to avoid blocking the background thread
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 LogText += logEntry;
-            });
+            }), System.Windows.Threading.DispatcherPriority.Normal);
         }
     }
 
