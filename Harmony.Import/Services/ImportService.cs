@@ -76,15 +76,20 @@ public sealed class ImportService : IImportService
         // Step 3: Create groups (without coordinators first)
         logCallback("Creating groups...");
         var groupCodeToIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var groupNameToIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         
         foreach (var group in groups)
         {
             try
             {
                 var command = new CreateGroupCommand(group.Name, null);
-                var groupId = await _mediator.Send(command);
+                var groupId = await _mediator.Send(command).ConfigureAwait(false);
                 groupCodeToIdMap[group.Code] = groupId;
+                groupNameToIdMap[group.Name] = groupId;
                 logCallback($"Created group: {group.Name} (Code: {group.Code})");
+                
+                // Yield to allow UI updates
+                await Task.Yield();
             }
             catch (Exception ex)
             {
@@ -113,7 +118,7 @@ public sealed class ImportService : IImportService
                     personData.PhoneNumber,
                     personData.EmailAddress);
 
-                var personId = await _mediator.Send(command);
+                var personId = await _mediator.Send(command).ConfigureAwait(false);
                 
                 var fullName = GetFullName(personData.FirstName, personData.Prefix, personData.Surname);
                 personNameToIdMap[fullName] = personId;
@@ -124,6 +129,12 @@ public sealed class ImportService : IImportService
                 }
 
                 logCallback($"Created person: {fullName}");
+                
+                // Yield periodically to allow UI updates (every 10 persons)
+                if (personNameToIdMap.Count % 10 == 0)
+                {
+                    await Task.Yield();
+                }
             }
             catch (Exception ex)
             {
@@ -145,23 +156,27 @@ public sealed class ImportService : IImportService
                 continue;
             }
 
-            foreach (var groupCode in personData.GroupCodes)
+            foreach (var groupName in personData.GroupCodes)
             {
                 try
                 {
-                    if (!groupCodeToIdMap.TryGetValue(groupCode, out var groupId))
+                    // Match by group name (full name from Sheet 1, not abbreviation)
+                    if (!groupNameToIdMap.TryGetValue(groupName, out var groupId))
                     {
-                        logCallback($"WARNING: Group code '{groupCode}' not found for person '{fullName}'");
+                        logCallback($"WARNING: Group '{groupName}' not found for person '{fullName}'");
                         continue;
                     }
 
                     var membershipCommand = new AddPersonToGroupCommand(personId, groupId);
-                    await _mediator.Send(membershipCommand);
-                    logCallback($"Added '{fullName}' to group '{groupCode}'");
+                    await _mediator.Send(membershipCommand).ConfigureAwait(false);
+                    logCallback($"Added '{fullName}' to group '{groupName}'");
+                    
+                    // Yield periodically to allow UI updates
+                    await Task.Yield();
                 }
                 catch (Exception ex)
                 {
-                    logCallback($"ERROR adding '{fullName}' to group '{groupCode}': {ex.Message}");
+                    logCallback($"ERROR adding '{fullName}' to group '{groupName}': {ex.Message}");
                     // Continue with other memberships
                 }
             }
@@ -195,7 +210,7 @@ public sealed class ImportService : IImportService
                 try
                 {
                     var membershipCommand = new AddPersonToGroupCommand(coordinatorId, groupId);
-                    await _mediator.Send(membershipCommand);
+                    await _mediator.Send(membershipCommand).ConfigureAwait(false);
                     logCallback($"Ensured coordinator '{group.CoordinatorName}' is a member of group: {group.Name}");
                 }
                 catch
@@ -205,8 +220,11 @@ public sealed class ImportService : IImportService
 
                 // Update group to set coordinator
                 var updateCommand = new UpdateGroupCommand(groupId, group.Name, coordinatorId);
-                await _mediator.Send(updateCommand);
+                await _mediator.Send(updateCommand).ConfigureAwait(false);
                 logCallback($"Set coordinator '{group.CoordinatorName}' for group: {group.Name}");
+                
+                // Yield to allow UI updates
+                await Task.Yield();
             }
             catch (Exception ex)
             {

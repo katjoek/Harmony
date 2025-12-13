@@ -12,17 +12,29 @@ public sealed class CsvParserService : ICsvParserService
         if (lines.Length < 3)
             throw new InvalidOperationException("Sheet 1 must have at least 3 rows (header, column names, and at least one person)");
 
-        // Row 2 contains column headers - find group code columns
-        var headerRow = lines[1].Split(';');
-        var groupCodeColumns = new Dictionary<int, string>();
+        // Row 1 (index 0) contains full group names
+        var groupNamesRow = lines[0].Split(';');
         
-        // Find columns that contain group codes (AA, AR, AV, etc.)
-        for (int i = 0; i < headerRow.Length; i++)
+        // Row 2 (index 1) contains column headers with abbreviations - find group code columns
+        var headerRow = lines[1].Split(';');
+        
+        // Map column index to full group name (for columns that contain group abbreviations)
+        var groupColumnIndexToNameMap = new Dictionary<int, string>();
+        
+        // Map abbreviations to full group names by matching column positions
+        for (int i = 0; i < headerRow.Length && i < groupNamesRow.Length; i++)
         {
-            var header = headerRow[i].Trim();
-            if (header.Length == 2 && char.IsLetter(header[0]) && char.IsLetter(header[1]))
+            var abbreviation = headerRow[i].Trim();
+            var fullName = groupNamesRow[i].Trim();
+            
+            // Check if this is a group code column (2-letter abbreviation)
+            if (abbreviation.Length == 2 && char.IsLetter(abbreviation[0]) && char.IsLetter(abbreviation[1]))
             {
-                groupCodeColumns[i] = header.ToUpperInvariant();
+                // Map the column index to the full name from row 1
+                if (!string.IsNullOrWhiteSpace(fullName))
+                {
+                    groupColumnIndexToNameMap[i] = fullName;
+                }
             }
         }
 
@@ -61,22 +73,32 @@ public sealed class CsvParserService : ICsvParserService
             var phoneNumber = string.IsNullOrWhiteSpace(columns[5]) ? null : columns[5].Trim();
             var emailAddress = string.IsNullOrWhiteSpace(columns[6]) ? null : columns[6].Trim();
 
-            // Extract group memberships
-            var groupCodes = new List<string>();
-            foreach (var kvp in groupCodeColumns)
+            // Extract group memberships - map abbreviations to full names
+            var groupNames = new List<string>();
+            
+            // Iterate through group columns to find memberships
+            foreach (var kvp in groupColumnIndexToNameMap)
             {
-                if (kvp.Key < columns.Length)
+                var colIndex = kvp.Key;
+                var fullGroupName = kvp.Value;
+                
+                if (colIndex < columns.Length)
                 {
-                    var cellValue = columns[kvp.Key].Trim();
+                    var cellValue = columns[colIndex].Trim();
                     // Check if cell contains the group code (case-insensitive, handle whitespace)
                     // The cell might contain just the code, or the code with extra text
                     if (!string.IsNullOrWhiteSpace(cellValue))
                     {
+                        // Get the abbreviation from the header row to match against cell value
+                        var abbreviation = colIndex < headerRow.Length ? headerRow[colIndex].Trim() : string.Empty;
+                        
                         // Check if cell starts with or equals the group code
-                        if (cellValue.Equals(kvp.Value, StringComparison.OrdinalIgnoreCase) ||
-                            cellValue.StartsWith(kvp.Value, StringComparison.OrdinalIgnoreCase))
+                        if (!string.IsNullOrWhiteSpace(abbreviation) &&
+                            (cellValue.Equals(abbreviation, StringComparison.OrdinalIgnoreCase) ||
+                             cellValue.StartsWith(abbreviation, StringComparison.OrdinalIgnoreCase)))
                         {
-                            groupCodes.Add(kvp.Value);
+                            // Add the full group name (not the abbreviation)
+                            groupNames.Add(fullGroupName);
                         }
                     }
                 }
@@ -92,7 +114,7 @@ public sealed class CsvParserService : ICsvParserService
                 city,
                 phoneNumber,
                 emailAddress,
-                groupCodes));
+                groupNames));
         }
 
         return persons;
