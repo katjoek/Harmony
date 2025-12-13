@@ -109,7 +109,7 @@
             {
                 @foreach (var person in FilteredPersons)
                 {
-                    <tr>
+                    <tr title="@GetPersonGroupsTooltip(person)">
                         <td>@person.FullName</td>
                         <td>@person.DateOfBirth?.ToString("dd-MM-yyyy")</td>
                         <td>@person.FormattedAddress</td>
@@ -267,6 +267,7 @@
             try
             {
                 await LoadPersons();
+                await LoadGroups(); // Load groups for tooltips
             }
             catch (Exception ex)
             {
@@ -288,6 +289,22 @@
     {
         var query = new Harmony.ApplicationCore.Queries.Groups.GetAllGroupsQuery();
         allGroups = (await Mediator.Send(query)).ToList();
+    }
+
+    private string GetPersonGroupsTooltip(PersonDto person)
+    {
+        if (allGroups == null || !person.GroupIds.Any())
+            return "Geen groepen";
+
+        var groupNames = allGroups
+            .Where(g => person.GroupIds.Contains(g.Id))
+            .Select(g => g.Name)
+            .OrderBy(n => n)
+            .ToList();
+
+        return groupNames.Any() 
+            ? $"Groepen: {string.Join(", ", groupNames)}"
+            : "Geen groepen";
     }
 
     private void OpenCreateModal()
@@ -327,7 +344,7 @@
     {
         showGroupsModal = false;
         selectedPerson = null;
-        allGroups = null;
+        // Don't clear allGroups here - it's needed for tooltips
         personGroups = null;
         availableGroups = null;
         selectedAvailableGroupIds.Clear();
