@@ -54,6 +54,11 @@ public sealed class CsvParserService : ICsvParserService
             if (string.IsNullOrWhiteSpace(firstName))
                 continue; // Skip rows without first name
 
+            // Skip rows where the first name is "aantal personen" (case-insensitive)
+            // This is typically a summary row, not an actual person
+            if (firstName.Equals("aantal personen", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             var prefix = string.IsNullOrWhiteSpace(columns[2]) ? null : columns[2].Trim();
             var surname = string.IsNullOrWhiteSpace(columns[3]) ? null : columns[3].Trim();
             
