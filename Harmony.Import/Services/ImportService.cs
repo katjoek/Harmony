@@ -189,6 +189,7 @@ public sealed class ImportService : IImportService
         }
 
         // Step 6: Ensure coordinators are members, then set them as coordinators
+        // This happens AFTER all persons and memberships are created
         logCallback("Coördinatoren instellen voor groepen...");
         foreach (var group in groups)
         {
@@ -212,29 +213,44 @@ public sealed class ImportService : IImportService
                     continue;
                 }
 
-                // Ensure coordinator is a member of the group
+                // Ensure coordinator is a member of the group (required by domain rule)
                 try
                 {
                     var membershipCommand = new AddPersonToGroupCommand(coordinatorId, groupId);
                     await _mediator.Send(membershipCommand).ConfigureAwait(false);
-                    logCallback($"Coördinator '{group.CoordinatorName}' is lid van groep: {group.Name}");
+                    logCallback($"Coördinator '{group.CoordinatorName}' toegevoegd als lid van groep: {group.Name}");
                 }
-                catch
+                catch (Exception membershipEx)
                 {
-                    // Already a member, that's fine
+                    // Check if it's because they're already a member (that's fine)
+                    // Otherwise, log the error but continue - UpdateGroupCommand will fail if they're not a member
+                    if (!membershipEx.Message.Contains("already", StringComparison.OrdinalIgnoreCase) &&
+                        !membershipEx.Message.Contains("al lid", StringComparison.OrdinalIgnoreCase))
+                    {
+                        logCallback($"WAARSCHUWING: Kon coördinator '{group.CoordinatorName}' niet toevoegen als lid: {membershipEx.Message}");
+                    }
                 }
 
-                // Update group to set coordinator
-                var updateCommand = new UpdateGroupCommand(groupId, group.Name, coordinatorId);
-                await _mediator.Send(updateCommand).ConfigureAwait(false);
-                logCallback($"Coördinator '{group.CoordinatorName}' ingesteld voor groep: {group.Name}");
+                // Update group to set coordinator (this will fail if coordinator is not a member)
+                try
+                {
+                    var updateCommand = new UpdateGroupCommand(groupId, group.Name, coordinatorId);
+                    await _mediator.Send(updateCommand).ConfigureAwait(false);
+                    logCallback($"Coördinator '{group.CoordinatorName}' ingesteld voor groep: {group.Name}");
+                }
+                catch (Exception updateEx)
+                {
+                    logCallback($"FOUT bij instellen coördinator '{group.CoordinatorName}' voor groep {group.Name}: {updateEx.Message}");
+                    // Continue with other groups
+                    continue;
+                }
                 
                 // Yield to allow UI updates
                 await Task.Yield();
             }
             catch (Exception ex)
             {
-                logCallback($"FOUT bij instellen coördinator voor groep {group.Name}: {ex.Message}");
+                logCallback($"FOUT bij verwerken coördinator voor groep {group.Name}: {ex.Message}");
                 // Continue with other groups
             }
         }

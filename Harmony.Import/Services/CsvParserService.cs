@@ -149,8 +149,9 @@ public sealed class CsvParserService : ICsvParserService
 
             var code = columns[0].Trim();
             var name = columns[1].Trim();
-            var coordinatorName = columns.Length > 2 && !string.IsNullOrWhiteSpace(columns[2]) 
-                ? columns[2].Trim() 
+            // Coordinator name is in column 3 (index 3), column 2 is empty
+            var coordinatorName = columns.Length > 3 && !string.IsNullOrWhiteSpace(columns[3]) 
+                ? columns[3].Trim() 
                 : null;
 
             if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
