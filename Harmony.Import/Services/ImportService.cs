@@ -64,7 +64,13 @@ public sealed class ImportService : IImportService
             groups = _csvParser.ParseSheet2(sheet2Path);
             logCallback($"Found {groups.Count} groups in Sheet 2.");
             
-            persons = _csvParser.ParseSheet1(sheet1Path);
+            // Create mapping of abbreviation to group name from Sheet 2
+            var abbreviationToGroupNameMap = groups.ToDictionary(
+                g => g.Code, 
+                g => g.Name, 
+                StringComparer.OrdinalIgnoreCase);
+            
+            persons = _csvParser.ParseSheet1(sheet1Path, abbreviationToGroupNameMap);
             logCallback($"Found {persons.Count} persons in Sheet 1.");
         }
         catch (Exception ex)

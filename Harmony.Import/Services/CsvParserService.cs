@@ -6,34 +6,30 @@ namespace Harmony.Import.Services;
 
 public sealed class CsvParserService : ICsvParserService
 {
-    public IReadOnlyList<PersonData> ParseSheet1(string filePath)
+    public IReadOnlyList<PersonData> ParseSheet1(string filePath, IReadOnlyDictionary<string, string> abbreviationToGroupNameMap)
     {
         var lines = File.ReadAllLines(filePath);
         if (lines.Length < 3)
             throw new InvalidOperationException("Sheet 1 must have at least 3 rows (header, column names, and at least one person)");
 
-        // Row 1 (index 0) contains full group names
-        var groupNamesRow = lines[0].Split(';');
-        
         // Row 2 (index 1) contains column headers with abbreviations - find group code columns
         var headerRow = lines[1].Split(';');
         
-        // Map column index to full group name (for columns that contain group abbreviations)
+        // Map column index to group name using abbreviations from Sheet 2
         var groupColumnIndexToNameMap = new Dictionary<int, string>();
         
-        // Map abbreviations to full group names by matching column positions
-        for (int i = 0; i < headerRow.Length && i < groupNamesRow.Length; i++)
+        // Map abbreviations to full group names from Sheet 2 (groups CSV)
+        for (int i = 0; i < headerRow.Length; i++)
         {
             var abbreviation = headerRow[i].Trim();
-            var fullName = groupNamesRow[i].Trim();
             
             // Check if this is a group code column (2-letter abbreviation)
             if (abbreviation.Length == 2 && char.IsLetter(abbreviation[0]) && char.IsLetter(abbreviation[1]))
             {
-                // Map the column index to the full name from row 1
-                if (!string.IsNullOrWhiteSpace(fullName))
+                // Look up the group name from Sheet 2 using the abbreviation
+                if (abbreviationToGroupNameMap.TryGetValue(abbreviation, out var groupName))
                 {
-                    groupColumnIndexToNameMap[i] = fullName;
+                    groupColumnIndexToNameMap[i] = groupName;
                 }
             }
         }
