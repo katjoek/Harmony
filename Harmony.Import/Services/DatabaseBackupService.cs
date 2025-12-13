@@ -79,14 +79,14 @@ public sealed class DatabaseBackupService : IDatabaseBackupService
 
         // Extract numbers from existing backups (e.g., "harmony.db.old.1" -> 1)
         var numbers = new List<int>();
+        
+        // Explicitly add 0 for the base backup file since it exists (we checked above)
+        // The pattern "harmony.db.old.*" doesn't match "harmony.db.old" itself
+        numbers.Add(0);
+        
         foreach (var backup in existingBackups)
         {
-            if (backup == baseFileName)
-            {
-                // This is the base backup (harmony.db.old), treat as number 0
-                numbers.Add(0);
-            }
-            else if (backup.StartsWith(baseFileName + ".", StringComparison.OrdinalIgnoreCase))
+            if (backup.StartsWith(baseFileName + ".", StringComparison.OrdinalIgnoreCase))
             {
                 // Extract the number after the base filename
                 var numberPart = backup.Substring(baseFileName.Length + 1);
