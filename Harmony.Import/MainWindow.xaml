@@ -16,41 +16,41 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Sheet 1 File Selection -->
+        <!-- Persons Sheet File Selection -->
         <Grid Grid.Row="0" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="Sheet 1 (Personen):" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <TextBox Grid.Column="1" Text="{Binding Sheet1FilePath, UpdateSourceTrigger=PropertyChanged}" 
+            <Label Grid.Column="0" Content="Gegevens tabsheet bestand:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox Grid.Column="1" Text="{Binding PersonsSheetFilePath, UpdateSourceTrigger=PropertyChanged}" 
                      VerticalAlignment="Center" Margin="0,0,10,0" IsReadOnly="True"/>
-            <Button Grid.Column="2" Content="Browse..." Command="{Binding BrowseSheet1Command}" 
+            <Button Grid.Column="2" Content="Bladeren..." Command="{Binding BrowsePersonsSheetCommand}" 
                     Padding="10,5" MinWidth="80"/>
         </Grid>
 
-        <!-- Sheet 2 File Selection -->
+        <!-- Groups & Coordinators Sheet File Selection -->
         <Grid Grid.Row="1" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="Sheet 2 (Groepen):" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <TextBox Grid.Column="1" Text="{Binding Sheet2FilePath, UpdateSourceTrigger=PropertyChanged}" 
+            <Label Grid.Column="0" Content="Groepen &amp; Coördinatoren tabsheet bestand:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox Grid.Column="1" Text="{Binding GroupsAndCoordinatorsSheetFilePath, UpdateSourceTrigger=PropertyChanged}" 
                      VerticalAlignment="Center" Margin="0,0,10,0" IsReadOnly="True"/>
-            <Button Grid.Column="2" Content="Browse..." Command="{Binding BrowseSheet2Command}" 
+            <Button Grid.Column="2" Content="Bladeren..." Command="{Binding BrowseGroupsAndCoordinatorsSheetCommand}" 
                     Padding="10,5" MinWidth="80"/>
         </Grid>
 
         <!-- Start Import Button -->
-        <Button Grid.Row="2" Content="Start Import" Command="{Binding StartImportCommand}" 
+        <Button Grid.Row="2" Content="Import starten" Command="{Binding StartImportCommand}" 
                 Padding="20,10" FontSize="14" FontWeight="Bold" Margin="0,0,0,10"
                 IsEnabled="{Binding CanStartImport}"/>
 
         <!-- Log Display -->
-        <GroupBox Grid.Row="3" Header="Import Log" Margin="0,0,0,10">
+        <GroupBox Grid.Row="3" Header="Importlogboek" Margin="0,0,0,10">
             <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                 <TextBox x:Name="LogTextBox" Text="{Binding LogText, Mode=OneWay}" 
                          IsReadOnly="True" 

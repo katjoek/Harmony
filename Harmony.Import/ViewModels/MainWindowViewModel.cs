@@ -10,42 +10,42 @@ namespace Harmony.Import.ViewModels;
 public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly IServiceProvider _serviceProvider;
-    private string _sheet1FilePath = string.Empty;
-    private string _sheet2FilePath = string.Empty;
+    private string _personsSheetFilePath = string.Empty;
+    private string _groupsAndCoordinatorsSheetFilePath = string.Empty;
     private string _logText = string.Empty;
-    private string _statusText = "Ready";
+    private string _statusText = "Klaar";
     private bool _canStartImport = true;
 
     public MainWindowViewModel(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        BrowseSheet1Command = new RelayCommand(_ => BrowseFile(true));
-        BrowseSheet2Command = new RelayCommand(_ => BrowseFile(false));
+        BrowsePersonsSheetCommand = new RelayCommand(_ => BrowseFile(true));
+        BrowseGroupsAndCoordinatorsSheetCommand = new RelayCommand(_ => BrowseFile(false));
         StartImportCommand = new RelayCommand(async _ => await StartImportAsync(), _ => CanStartImport);
     }
 
-    public string Sheet1FilePath
+    public string PersonsSheetFilePath
     {
-        get => _sheet1FilePath;
+        get => _personsSheetFilePath;
         set
         {
-            if (_sheet1FilePath != value)
+            if (_personsSheetFilePath != value)
             {
-                _sheet1FilePath = value;
+                _personsSheetFilePath = value;
                 OnPropertyChanged();
                 UpdateCanStartImport();
             }
         }
     }
 
-    public string Sheet2FilePath
+    public string GroupsAndCoordinatorsSheetFilePath
     {
-        get => _sheet2FilePath;
+        get => _groupsAndCoordinatorsSheetFilePath;
         set
         {
-            if (_sheet2FilePath != value)
+            if (_groupsAndCoordinatorsSheetFilePath != value)
             {
-                _sheet2FilePath = value;
+                _groupsAndCoordinatorsSheetFilePath = value;
                 OnPropertyChanged();
                 UpdateCanStartImport();
             }
@@ -92,40 +92,40 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public ICommand BrowseSheet1Command { get; }
-    public ICommand BrowseSheet2Command { get; }
+    public ICommand BrowsePersonsSheetCommand { get; }
+    public ICommand BrowseGroupsAndCoordinatorsSheetCommand { get; }
     public ICommand StartImportCommand { get; }
 
-    private void BrowseFile(bool isSheet1)
+    private void BrowseFile(bool isPersonsSheet)
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
-            Title = isSheet1 ? "Select Sheet 1 CSV file (Personen)" : "Select Sheet 2 CSV file (Groepen)"
+            Title = isPersonsSheet ? "Selecteer Personenbestand CSV" : "Selecteer Groepen & Coördinatorenbestand CSV"
         };
 
         if (dialog.ShowDialog() == true)
         {
-            if (isSheet1)
-                Sheet1FilePath = dialog.FileName;
+            if (isPersonsSheet)
+                PersonsSheetFilePath = dialog.FileName;
             else
-                Sheet2FilePath = dialog.FileName;
+                GroupsAndCoordinatorsSheetFilePath = dialog.FileName;
         }
     }
 
     private void UpdateCanStartImport()
     {
-        CanStartImport = !string.IsNullOrWhiteSpace(Sheet1FilePath) &&
-                        !string.IsNullOrWhiteSpace(Sheet2FilePath) &&
-                        System.IO.File.Exists(Sheet1FilePath) &&
-                        System.IO.File.Exists(Sheet2FilePath);
+        CanStartImport = !string.IsNullOrWhiteSpace(PersonsSheetFilePath) &&
+                        !string.IsNullOrWhiteSpace(GroupsAndCoordinatorsSheetFilePath) &&
+                        System.IO.File.Exists(PersonsSheetFilePath) &&
+                        System.IO.File.Exists(GroupsAndCoordinatorsSheetFilePath);
     }
 
     private async Task StartImportAsync()
     {
         CanStartImport = false;
         LogText = string.Empty;
-        StatusText = "Starting import...";
+        StatusText = "Import starten...";
 
         try
         {
@@ -133,16 +133,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             var importService = _serviceProvider.GetRequiredService<IImportService>();
             await Task.Run(async () =>
             {
-                await importService.ImportAsync(Sheet1FilePath, Sheet2FilePath, LogMessage).ConfigureAwait(false);
+                await importService.ImportAsync(PersonsSheetFilePath, GroupsAndCoordinatorsSheetFilePath, LogMessage).ConfigureAwait(false);
             }).ConfigureAwait(true); // Return to UI thread for final status update
             
-            StatusText = "Import completed successfully!";
+            StatusText = "Import succesvol voltooid!";
         }
         catch (Exception ex)
         {
-            LogMessage($"ERROR: {ex.Message}");
+            LogMessage($"FOUT: {ex.Message}");
             LogMessage($"Stack trace: {ex.StackTrace}");
-            StatusText = "Import failed. Check log for details.";
+            StatusText = "Import mislukt. Controleer het log voor details.";
         }
         finally
         {

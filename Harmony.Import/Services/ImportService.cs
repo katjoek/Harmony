@@ -31,56 +31,56 @@ public sealed class ImportService : IImportService
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
-    public async Task ImportAsync(string sheet1Path, string sheet2Path, Action<string> logCallback)
+    public async Task ImportAsync(string personsSheetPath, string groupsAndCoordinatorsSheetPath, Action<string> logCallback)
     {
-        logCallback("Starting import process...");
+        logCallback("Importproces starten...");
 
         // Step 1: Backup database
-        logCallback("Backing up existing database...");
+        logCallback("Database back-uppen...");
         var backupSuccess = await _databaseBackup.BackupDatabaseAsync();
         if (!backupSuccess)
         {
-            logCallback("Import cancelled by user.");
+            logCallback("Import geannuleerd door gebruiker.");
             return;
         }
-        logCallback("Database backup completed.");
+        logCallback("Database back-up voltooid.");
 
         // Step 1.5: Initialize fresh database (after backup, file is no longer locked)
-        logCallback("Initializing fresh database...");
+        logCallback("Database initialiseren...");
         using (var scope = _serviceProvider.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
             dbContext.Database.EnsureCreated();
         }
-        logCallback("Database initialized.");
+        logCallback("Database geïnitialiseerd.");
 
         // Step 2: Parse CSV files
-        logCallback("Parsing CSV files...");
+        logCallback("CSV-bestanden inlezen...");
         IReadOnlyList<GroupDefinition> groups;
         IReadOnlyList<PersonData> persons;
 
         try
         {
-            groups = _csvParser.ParseSheet2(sheet2Path);
-            logCallback($"Found {groups.Count} groups in Sheet 2.");
+            groups = _csvParser.ParseGroupsAndCoordinatorsSheet(groupsAndCoordinatorsSheetPath);
+            logCallback($"{groups.Count} groepen gevonden in het Groepen & Coördinatorenbestand.");
             
-            // Create mapping of abbreviation to group name from Sheet 2
+            // Create mapping of abbreviation to group name from Groups & Coordinators sheet
             var abbreviationToGroupNameMap = groups.ToDictionary(
                 g => g.Code, 
                 g => g.Name, 
                 StringComparer.OrdinalIgnoreCase);
             
-            persons = _csvParser.ParseSheet1(sheet1Path, abbreviationToGroupNameMap);
-            logCallback($"Found {persons.Count} persons in Sheet 1.");
+            persons = _csvParser.ParsePersonsSheet(personsSheetPath, abbreviationToGroupNameMap);
+            logCallback($"{persons.Count} personen gevonden in het Personenbestand.");
         }
         catch (Exception ex)
         {
-            logCallback($"ERROR parsing CSV files: {ex.Message}");
+            logCallback($"FOUT bij het inlezen van CSV-bestanden: {ex.Message}");
             throw;
         }
 
         // Step 3: Create groups (without coordinators first)
-        logCallback("Creating groups...");
+        logCallback("Groepen aanmaken...");
         var groupCodeToIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var groupNameToIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         
@@ -92,20 +92,20 @@ public sealed class ImportService : IImportService
                 var groupId = await _mediator.Send(command).ConfigureAwait(false);
                 groupCodeToIdMap[group.Code] = groupId;
                 groupNameToIdMap[group.Name] = groupId;
-                logCallback($"Created group: {group.Name} (Code: {group.Code})");
+                logCallback($"Groep aangemaakt: {group.Name} (Code: {group.Code})");
                 
                 // Yield to allow UI updates
                 await Task.Yield();
             }
             catch (Exception ex)
             {
-                logCallback($"ERROR creating group {group.Name}: {ex.Message}");
+                logCallback($"FOUT bij aanmaken groep {group.Name}: {ex.Message}");
                 // Continue with other groups
             }
         }
 
         // Step 4: Create persons
-        logCallback("Creating persons...");
+        logCallback("Personen aanmaken...");
         var personEmailToIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var personNameToIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -134,7 +134,7 @@ public sealed class ImportService : IImportService
                     personEmailToIdMap[personData.EmailAddress] = personId;
                 }
 
-                logCallback($"Created person: {fullName}");
+                logCallback($"Persoon aangemaakt: {fullName}");
                 
                 // Yield periodically to allow UI updates (every 10 persons)
                 if (personNameToIdMap.Count % 10 == 0)
@@ -145,20 +145,20 @@ public sealed class ImportService : IImportService
             catch (Exception ex)
             {
                 var fullName = GetFullName(personData.FirstName, personData.Prefix, personData.Surname);
-                logCallback($"ERROR creating person {fullName}: {ex.Message}");
+                logCallback($"FOUT bij aanmaken persoon {fullName}: {ex.Message}");
                 // Continue with other persons
             }
         }
 
         // Step 5: Create memberships
-        logCallback("Creating group memberships...");
+        logCallback("Groepslidmaatschappen aanmaken...");
         foreach (var personData in persons)
         {
             var fullName = GetFullName(personData.FirstName, personData.Prefix, personData.Surname);
             
             if (!personNameToIdMap.TryGetValue(fullName, out var personId))
             {
-                logCallback($"WARNING: Person '{fullName}' not found when creating memberships");
+                logCallback($"WAARSCHUWING: Persoon '{fullName}' niet gevonden bij aanmaken lidmaatschappen");
                 continue;
             }
 
@@ -166,30 +166,30 @@ public sealed class ImportService : IImportService
             {
                 try
                 {
-                    // Match by group name (full name from Sheet 1, not abbreviation)
+                    // Match by group name (full name from Persons sheet, not abbreviation)
                     if (!groupNameToIdMap.TryGetValue(groupName, out var groupId))
                     {
-                        logCallback($"WARNING: Group '{groupName}' not found for person '{fullName}'");
+                        logCallback($"WAARSCHUWING: Groep '{groupName}' niet gevonden voor persoon '{fullName}'");
                         continue;
                     }
 
                     var membershipCommand = new AddPersonToGroupCommand(personId, groupId);
                     await _mediator.Send(membershipCommand).ConfigureAwait(false);
-                    logCallback($"Added '{fullName}' to group '{groupName}'");
+                    logCallback($"'{fullName}' toegevoegd aan groep '{groupName}'");
                     
                     // Yield periodically to allow UI updates
                     await Task.Yield();
                 }
                 catch (Exception ex)
                 {
-                    logCallback($"ERROR adding '{fullName}' to group '{groupName}': {ex.Message}");
+                    logCallback($"FOUT bij toevoegen '{fullName}' aan groep '{groupName}': {ex.Message}");
                     // Continue with other memberships
                 }
             }
         }
 
         // Step 6: Ensure coordinators are members, then set them as coordinators
-        logCallback("Setting coordinators for groups...");
+        logCallback("Coördinatoren instellen voor groepen...");
         foreach (var group in groups)
         {
             if (string.IsNullOrWhiteSpace(group.CoordinatorName))
@@ -202,13 +202,13 @@ public sealed class ImportService : IImportService
                 
                 if (coordinatorId == null)
                 {
-                    logCallback($"WARNING: Coordinator '{group.CoordinatorName}' not found for group {group.Name}");
+                    logCallback($"WAARSCHUWING: Coördinator '{group.CoordinatorName}' niet gevonden voor groep {group.Name}");
                     continue;
                 }
 
                 if (!groupCodeToIdMap.TryGetValue(group.Code, out var groupId))
                 {
-                    logCallback($"WARNING: Group code '{group.Code}' not found when setting coordinator");
+                    logCallback($"WAARSCHUWING: Groepcode '{group.Code}' niet gevonden bij instellen coördinator");
                     continue;
                 }
 
@@ -217,7 +217,7 @@ public sealed class ImportService : IImportService
                 {
                     var membershipCommand = new AddPersonToGroupCommand(coordinatorId, groupId);
                     await _mediator.Send(membershipCommand).ConfigureAwait(false);
-                    logCallback($"Ensured coordinator '{group.CoordinatorName}' is a member of group: {group.Name}");
+                    logCallback($"Coördinator '{group.CoordinatorName}' is lid van groep: {group.Name}");
                 }
                 catch
                 {
@@ -227,19 +227,19 @@ public sealed class ImportService : IImportService
                 // Update group to set coordinator
                 var updateCommand = new UpdateGroupCommand(groupId, group.Name, coordinatorId);
                 await _mediator.Send(updateCommand).ConfigureAwait(false);
-                logCallback($"Set coordinator '{group.CoordinatorName}' for group: {group.Name}");
+                logCallback($"Coördinator '{group.CoordinatorName}' ingesteld voor groep: {group.Name}");
                 
                 // Yield to allow UI updates
                 await Task.Yield();
             }
             catch (Exception ex)
             {
-                logCallback($"ERROR setting coordinator for group {group.Name}: {ex.Message}");
+                logCallback($"FOUT bij instellen coördinator voor groep {group.Name}: {ex.Message}");
                 // Continue with other groups
             }
         }
 
-        logCallback("Import completed successfully!");
+        logCallback("Import succesvol voltooid!");
     }
 
     private static string GetFullName(string firstName, string? prefix, string? surname)
