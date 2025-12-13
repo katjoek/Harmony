@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
 using Harmony.Import.Models;
 
 namespace Harmony.Import.Services;
@@ -8,7 +10,7 @@ public sealed class CsvParserService : ICsvParserService
 {
     public IReadOnlyList<PersonData> ParsePersonsSheet(string filePath, IReadOnlyDictionary<string, string> abbreviationToGroupNameMap)
     {
-        var lines = File.ReadAllLines(filePath);
+        var lines = ReadCsvFile(filePath);
         if (lines.Length < 3)
             throw new InvalidOperationException("Het Personenbestand moet minimaal 3 rijen bevatten (header, kolomnamen en ten minste één persoon)");
 
@@ -118,7 +120,7 @@ public sealed class CsvParserService : ICsvParserService
 
     public IReadOnlyList<GroupDefinition> ParseGroupsAndCoordinatorsSheet(string filePath)
     {
-        var lines = File.ReadAllLines(filePath);
+        var lines = ReadCsvFile(filePath);
         if (lines.Length < 3)
             throw new InvalidOperationException("Het Groepen & Coördinatorenbestand moet minimaal 3 rijen bevatten");
 
@@ -153,6 +155,37 @@ public sealed class CsvParserService : ICsvParserService
         }
 
         return groups;
+    }
+
+    private static string[] ReadCsvFile(string filePath)
+    {
+        // Excel on Windows with Dutch regional settings saves CSV files as Windows-1252
+        // Try Windows-1252 first, then fall back to UTF-8 if needed
+        try
+        {
+            // Windows-1252 encoding (Western European, includes Dutch characters like é, ë, etc.)
+            var windows1252 = Encoding.GetEncoding(1252);
+            return File.ReadAllLines(filePath, windows1252);
+        }
+        catch (ArgumentException)
+        {
+            // Code page 1252 not available (shouldn't happen after registering provider, but handle gracefully)
+            // Fall back to UTF-8
+            return File.ReadAllLines(filePath, Encoding.UTF8);
+        }
+        catch
+        {
+            // Any other error reading with Windows-1252, try UTF-8
+            try
+            {
+                return File.ReadAllLines(filePath, Encoding.UTF8);
+            }
+            catch
+            {
+                // Last resort: use system default encoding
+                return File.ReadAllLines(filePath, Encoding.Default);
+            }
+        }
     }
 
     private static DateOnly? ParseDateOfBirth(string dateString)

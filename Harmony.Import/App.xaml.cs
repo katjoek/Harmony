@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 using System.Windows;
 using Harmony.ApplicationCore.Interfaces;
 using Harmony.Import.Services;
@@ -20,6 +21,9 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Register code page encodings (required for Windows-1252 and other code page encodings in .NET Core/.NET 5+)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // Build configuration
         var configuration = new ConfigurationBuilder()
