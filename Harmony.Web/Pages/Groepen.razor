@@ -28,6 +28,20 @@
     </div>
 </div>
 
+@if (groups != null)
+{
+    <div class="mb-2">
+        @if (string.IsNullOrWhiteSpace(groupSearch))
+        {
+            <span class="text-muted">@groups.Count @(groups.Count == 1 ? "groep" : "groepen")</span>
+        }
+        else
+        {
+            <span class="text-muted">@FilteredGroups.Count() @(FilteredGroups.Count() == 1 ? "groep" : "groepen") gevonden</span>
+        }
+    </div>
+}
+
 <!-- Always show the table structure immediately for fast rendering -->
 <div class="table-responsive">
     <table class="table table-striped table-hover">

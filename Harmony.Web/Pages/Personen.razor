@@ -29,6 +29,20 @@
     </div>
 </div>
 
+@if (persons != null)
+{
+    <div class="mb-2">
+        @if (string.IsNullOrWhiteSpace(personSearch))
+        {
+            <span class="text-muted">@persons.Count @(persons.Count == 1 ? "persoon" : "personen")</span>
+        }
+        else
+        {
+            <span class="text-muted">@FilteredPersons.Count() @(FilteredPersons.Count() == 1 ? "persoon" : "personen") gevonden</span>
+        }
+    </div>
+}
+
 <!-- Always show the table structure immediately for fast rendering -->
 <div class="table-responsive">
     <table class="table table-striped table-hover">
