@@ -17,7 +17,7 @@ public sealed record EmailAddress
 
         var trimmedValue = value.Trim();
         if (!EmailRegex.IsMatch(trimmedValue))
-            throw new ArgumentException("Invalid email address format", nameof(value));
+            throw new ArgumentException($"Invalid email address format: '{trimmedValue}'.", nameof(value));
 
         Value = trimmedValue.ToLowerInvariant();
     }

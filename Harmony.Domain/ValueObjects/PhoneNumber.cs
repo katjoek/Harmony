@@ -4,9 +4,6 @@ namespace Harmony.Domain.ValueObjects;
 
 public sealed record PhoneNumber
 {
-    private static readonly Regex PhoneRegex = new(
-        @"^[\+]?[\d\s\-\(\)\.]{10,}$",
-        RegexOptions.Compiled);
 
     public string Value { get; }
 
@@ -15,11 +12,7 @@ public sealed record PhoneNumber
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Phone number cannot be empty", nameof(value));
 
-        var trimmedValue = value.Trim();
-        if (!PhoneRegex.IsMatch(trimmedValue))
-            throw new ArgumentException("Invalid phone number format", nameof(value));
-
-        Value = trimmedValue;
+        Value = value.Trim();
     }
 
     public static PhoneNumber? FromString(string? value)

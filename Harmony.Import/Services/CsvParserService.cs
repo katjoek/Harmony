@@ -67,11 +67,11 @@ public sealed class CsvParserService : ICsvParserService
                 dateOfBirth = ParseDateOfBirth(dobString);
             }
 
-            var street = string.IsNullOrWhiteSpace(columns[7]) ? null : columns[7].Trim();
-            var zipCode = string.IsNullOrWhiteSpace(columns[8]) ? null : columns[8].Trim();
-            var city = string.IsNullOrWhiteSpace(columns[9]) ? null : columns[9].Trim();
-            var phoneNumber = string.IsNullOrWhiteSpace(columns[5]) ? null : columns[5].Trim();
-            var emailAddress = string.IsNullOrWhiteSpace(columns[6]) ? null : columns[6].Trim();
+            var street = string.IsNullOrWhiteSpace(columns[8]) ? null : columns[8].Trim();
+            var zipCode = string.IsNullOrWhiteSpace(columns[9]) ? null : columns[9].Trim();
+            var city = string.IsNullOrWhiteSpace(columns[10]) ? null : columns[10].Trim();
+            var phoneNumber = string.IsNullOrWhiteSpace(columns[6]) ? null : columns[6].Trim();
+            var emailAddress = string.IsNullOrWhiteSpace(columns[7]) ? null : columns[7].Trim();
 
             // Extract group memberships - map abbreviations to full names
             var groupNames = new List<string>();
