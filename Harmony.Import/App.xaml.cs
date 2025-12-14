@@ -79,7 +79,7 @@ public partial class App : Application
 
         // Add import services
         services.AddSingleton<ICsvParserService, CsvParserService>();
-        services.AddSingleton<IDatabaseBackupService>(sp => new DatabaseBackupService(databasePath));
+        services.AddSingleton<Harmony.Import.Services.IDatabaseBackupService>(sp => new Harmony.Import.Services.DatabaseBackupService(databasePath));
         services.AddScoped<IImportService, ImportService>();
 
         // Add ViewModels

@@ -12,6 +12,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
+const int maxFileSize = 10 * 1024 * 1024;
+
+// Configure file upload size limits (for database backup uploads)
+// Default is 500 KB, increase to 100 MB to accommodate database backups
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = maxFileSize;
+    options.ValueLengthLimit = maxFileSize;
+    options.ValueCountLimit = 10; // Maximum number of form values
+});
+
+// Configure Kestrel server limits for larger request bodies
+builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = maxFileSize;
+});
+
+// Configure Blazor Server hub options for larger messages
+builder.Services.Configure<Microsoft.AspNetCore.SignalR.HubOptions>(options =>
+{
+    options.MaximumReceiveMessageSize = maxFileSize;
+});
+
 // Register settings service as singleton (file-based, shared across requests)
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
@@ -24,7 +47,9 @@ builder.Services.AddScoped<IDatabaseConnectionStringProvider, Harmony.Infrastruc
 builder.Services.AddScoped<HarmonyDbContext>(serviceProvider =>
 {
     var connectionStringProvider = serviceProvider.GetRequiredService<IDatabaseConnectionStringProvider>();
-    var connectionString = connectionStringProvider.GetConnectionString();
+    // During service registration, we can use GetAwaiter().GetResult() safely
+    // as we're not in a Blazor Server synchronization context
+    var connectionString = connectionStringProvider.GetConnectionStringAsync().GetAwaiter().GetResult();
     
     var optionsBuilder = new DbContextOptionsBuilder<HarmonyDbContext>();
     optionsBuilder.UseSqlite(connectionString);
@@ -40,8 +65,9 @@ builder.Services.AddMediatR(cfg => {
 // Add repositories and services
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
-builder.Services.AddScoped<IMembershipService, Harmony.Infrastructure.Services.MembershipService>();
+builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+ builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
 builder.Services.AddScoped<DataSeeder>();
 builder.Services.AddScoped<SeedDataCommand>();
 

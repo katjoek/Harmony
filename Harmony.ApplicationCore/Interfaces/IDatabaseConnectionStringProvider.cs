@@ -2,5 +2,5 @@ namespace Harmony.ApplicationCore.Interfaces;
 
 public interface IDatabaseConnectionStringProvider
 {
-    string GetConnectionString();
+    Task<string> GetConnectionStringAsync(CancellationToken cancellationToken = default);
 }

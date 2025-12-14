@@ -14,10 +14,10 @@ public sealed class DatabaseConnectionStringProvider : IDatabaseConnectionString
         _configuration = configuration;
     }
 
-    public string GetConnectionString()
+    public async Task<string> GetConnectionStringAsync(CancellationToken cancellationToken = default)
     {
         // Try to get database directory from settings
-        var databaseDirectory = _settingsService.GetDatabaseDirectoryAsync().GetAwaiter().GetResult();
+        var databaseDirectory = await _settingsService.GetDatabaseDirectoryAsync(cancellationToken);
         
         if (string.IsNullOrWhiteSpace(databaseDirectory))
         {
