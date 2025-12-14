@@ -1,4 +1,4 @@
-using MediatR;
+using LiteBus.Commands.Abstractions;
 
 namespace Harmony.ApplicationCore.Commands.Persons;
 
@@ -12,4 +12,4 @@ public sealed record UpdatePersonCommand(
     string? ZipCode,
     string? City,
     string? PhoneNumber,
-    string? EmailAddress) : IRequest;
+    string? EmailAddress) : ICommand;

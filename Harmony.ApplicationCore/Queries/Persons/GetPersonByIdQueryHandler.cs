@@ -1,11 +1,11 @@
 using Harmony.ApplicationCore.DTOs;
 using Harmony.ApplicationCore.Interfaces;
 using Harmony.Domain.ValueObjects;
-using MediatR;
+using LiteBus.Queries.Abstractions;
 
 namespace Harmony.ApplicationCore.Queries.Persons;
 
-public sealed class GetPersonByIdQueryHandler : IRequestHandler<GetPersonByIdQuery, PersonDto?>
+public sealed class GetPersonByIdQueryHandler : IQueryHandler<GetPersonByIdQuery, PersonDto?>
 {
     private readonly IPersonRepository _personRepository;
 
@@ -14,9 +14,9 @@ public sealed class GetPersonByIdQueryHandler : IRequestHandler<GetPersonByIdQue
         _personRepository = personRepository ?? throw new ArgumentNullException(nameof(personRepository));
     }
 
-    public async Task<PersonDto?> Handle(GetPersonByIdQuery request, CancellationToken cancellationToken)
+    public async Task<PersonDto?> HandleAsync(GetPersonByIdQuery query, CancellationToken cancellationToken)
     {
-        var personId = PersonId.From(request.Id);
+        var personId = PersonId.From(query.Id);
         var person = await _personRepository.GetByIdAsync(personId, cancellationToken);
 
         if (person == null)

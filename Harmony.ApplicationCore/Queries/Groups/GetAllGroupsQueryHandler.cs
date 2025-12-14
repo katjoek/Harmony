@@ -1,10 +1,10 @@
 using Harmony.ApplicationCore.DTOs;
 using Harmony.ApplicationCore.Interfaces;
-using MediatR;
+using LiteBus.Queries.Abstractions;
 
 namespace Harmony.ApplicationCore.Queries.Groups;
 
-public sealed class GetAllGroupsQueryHandler : IRequestHandler<GetAllGroupsQuery, IReadOnlyList<GroupDto>>
+public sealed class GetAllGroupsQueryHandler : IQueryHandler<GetAllGroupsQuery, IReadOnlyList<GroupDto>>
 {
     private readonly IGroupRepository _groupRepository;
     private readonly IPersonRepository _personRepository;
@@ -20,7 +20,7 @@ public sealed class GetAllGroupsQueryHandler : IRequestHandler<GetAllGroupsQuery
         _membershipService = membershipService ?? throw new ArgumentNullException(nameof(membershipService));
     }
 
-    public async Task<IReadOnlyList<GroupDto>> Handle(GetAllGroupsQuery request, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<GroupDto>> HandleAsync(GetAllGroupsQuery query, CancellationToken cancellationToken)
     {
         // Get all data in parallel for maximum performance
         var groupsTask = _groupRepository.GetAllAsync(cancellationToken);

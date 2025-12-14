@@ -1,7 +1,7 @@
-using MediatR;
+using LiteBus.Commands.Abstractions;
 
 namespace Harmony.ApplicationCore.Commands.Membership;
 
 public sealed record RemovePersonFromGroupCommand(
     string PersonId,
-    string GroupId) : IRequest;
+    string GroupId) : ICommand;

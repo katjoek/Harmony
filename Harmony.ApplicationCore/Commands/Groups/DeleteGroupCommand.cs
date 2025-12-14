@@ -1,5 +1,5 @@
-using MediatR;
+using LiteBus.Commands.Abstractions;
 
 namespace Harmony.ApplicationCore.Commands.Groups;
 
-public sealed record DeleteGroupCommand(string Id) : IRequest;
+public sealed record DeleteGroupCommand(string Id) : ICommand;

@@ -6,7 +6,7 @@ using Harmony.ApplicationCore.Queries.Groups;
 using Harmony.ApplicationCore.Queries.Persons;
 using Harmony.Import.Models;
 using Harmony.Infrastructure.Data;
-using MediatR;
+using LiteBus.Commands.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,18 +14,18 @@ namespace Harmony.Import.Services;
 
 public sealed class ImportService : IImportService
 {
-    private readonly IMediator _mediator;
+    private readonly ICommandMediator _commandMediator;
     private readonly ICsvParserService _csvParser;
     private readonly IDatabaseBackupService _databaseBackup;
     private readonly IServiceProvider _serviceProvider;
 
     public ImportService(
-        IMediator mediator,
+        ICommandMediator commandMediator,
         ICsvParserService csvParser,
         IDatabaseBackupService databaseBackup,
         IServiceProvider serviceProvider)
     {
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _commandMediator = commandMediator ?? throw new ArgumentNullException(nameof(commandMediator));
         _csvParser = csvParser ?? throw new ArgumentNullException(nameof(csvParser));
         _databaseBackup = databaseBackup ?? throw new ArgumentNullException(nameof(databaseBackup));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
@@ -89,7 +89,7 @@ public sealed class ImportService : IImportService
             try
             {
                 var command = new CreateGroupCommand(group.Name, null);
-                var groupId = await _mediator.Send(command).ConfigureAwait(false);
+                var groupId = await _commandMediator.SendAsync(command).ConfigureAwait(false);
                 groupCodeToIdMap[group.Code] = groupId;
                 groupNameToIdMap[group.Name] = groupId;
                 logCallback($"Groep aangemaakt: {group.Name} (Code: {group.Code})");
@@ -124,7 +124,7 @@ public sealed class ImportService : IImportService
                     personData.PhoneNumber,
                     personData.EmailAddress);
 
-                var personId = await _mediator.Send(command).ConfigureAwait(false);
+                var personId = await _commandMediator.SendAsync(command).ConfigureAwait(false);
                 
                 var fullName = GetFullName(personData.FirstName, personData.Prefix, personData.Surname);
                 personNameToIdMap[fullName] = personId;
@@ -174,7 +174,7 @@ public sealed class ImportService : IImportService
                     }
 
                     var membershipCommand = new AddPersonToGroupCommand(personId, groupId);
-                    await _mediator.Send(membershipCommand).ConfigureAwait(false);
+                    await _commandMediator.SendAsync(membershipCommand).ConfigureAwait(false);
                     logCallback($"'{fullName}' toegevoegd aan groep '{groupName}'");
                     
                     // Yield periodically to allow UI updates
@@ -217,7 +217,7 @@ public sealed class ImportService : IImportService
                 try
                 {
                     var membershipCommand = new AddPersonToGroupCommand(coordinatorId, groupId);
-                    await _mediator.Send(membershipCommand).ConfigureAwait(false);
+                    await _commandMediator.SendAsync(membershipCommand).ConfigureAwait(false);
                     logCallback($"Coördinator '{group.CoordinatorName}' toegevoegd als lid van groep: {group.Name}");
                 }
                 catch (Exception membershipEx)
@@ -235,7 +235,7 @@ public sealed class ImportService : IImportService
                 try
                 {
                     var updateCommand = new UpdateGroupCommand(groupId, group.Name, coordinatorId);
-                    await _mediator.Send(updateCommand).ConfigureAwait(false);
+                    await _commandMediator.SendAsync(updateCommand).ConfigureAwait(false);
                     logCallback($"Coördinator '{group.CoordinatorName}' ingesteld voor groep: {group.Name}");
                 }
                 catch (Exception updateEx)

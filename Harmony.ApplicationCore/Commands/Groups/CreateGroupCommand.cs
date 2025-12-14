@@ -1,7 +1,7 @@
-using MediatR;
+using LiteBus.Commands.Abstractions;
 
 namespace Harmony.ApplicationCore.Commands.Groups;
 
 public sealed record CreateGroupCommand(
     string Name,
-    string? CoordinatorId) : IRequest<string>;
+    string? CoordinatorId) : ICommand<string>;

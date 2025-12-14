@@ -1,11 +1,11 @@
 using Harmony.ApplicationCore.DTOs;
 using Harmony.ApplicationCore.Interfaces;
 using Harmony.Domain.ValueObjects;
-using MediatR;
+using LiteBus.Queries.Abstractions;
 
 namespace Harmony.ApplicationCore.Queries.Groups;
 
-public sealed class GetGroupByIdQueryHandler : IRequestHandler<GetGroupByIdQuery, GroupDto?>
+public sealed class GetGroupByIdQueryHandler : IQueryHandler<GetGroupByIdQuery, GroupDto?>
 {
     private readonly IGroupRepository _groupRepository;
     private readonly IPersonRepository _personRepository;
@@ -21,9 +21,9 @@ public sealed class GetGroupByIdQueryHandler : IRequestHandler<GetGroupByIdQuery
         _membershipService = membershipService ?? throw new ArgumentNullException(nameof(membershipService));
     }
 
-    public async Task<GroupDto?> Handle(GetGroupByIdQuery request, CancellationToken cancellationToken)
+    public async Task<GroupDto?> HandleAsync(GetGroupByIdQuery query, CancellationToken cancellationToken)
     {
-        var groupId = GroupId.From(request.Id);
+        var groupId = GroupId.From(query.Id);
         var group = await _groupRepository.GetByIdAsync(groupId, cancellationToken);
 
         if (group == null)

@@ -9,3 +9,4 @@ public interface IDatabaseBackupService
     Task<string> GetDatabasePathAsync(CancellationToken cancellationToken = default);
     Task DeleteBackupAsync(string backupFileName, CancellationToken cancellationToken = default);
 }
+

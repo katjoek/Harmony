@@ -3,7 +3,8 @@
 @using Harmony.ApplicationCore.Queries.Persons
 @using Harmony.ApplicationCore.Commands.Persons
 @using Harmony.Web.Models
-@using MediatR
+@using LiteBus.Commands.Abstractions
+@using LiteBus.Queries.Abstractions
 @using System.Linq
 
 <PageTitle>Personen - Harmony</PageTitle>
@@ -281,14 +282,14 @@
     private async Task LoadPersons()
     {
         var query = new GetAllPersonsQuery();
-        persons = (await Mediator.Send(query)).ToList();
+        persons = (await QueryMediator.QueryAsync(query)).ToList();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadGroups()
     {
         var query = new Harmony.ApplicationCore.Queries.Groups.GetAllGroupsQuery();
-        allGroups = (await Mediator.Send(query)).ToList();
+        allGroups = (await QueryMediator.QueryAsync(query)).ToList();
         await InvokeAsync(StateHasChanged); // Update UI so tooltips work
     }
 
@@ -403,7 +404,7 @@
             foreach (var gid in ids)
             {
                 var cmd = new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(selectedPerson.Id, gid);
-                await Mediator.Send(cmd);
+                await CommandMediator.SendAsync(cmd);
             }
             await RefreshGroupsState();
             ShowSuccessMessage("Persoon uit groepen verwijderd.");
@@ -498,7 +499,7 @@
                     personModel.PhoneNumber,
                     personModel.EmailAddress);
 
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
             }
             else
             {
@@ -513,7 +514,7 @@
                     personModel.PhoneNumber,
                     personModel.EmailAddress);
 
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
             }
 
             await LoadPersons();
@@ -533,7 +534,7 @@
             try
             {
                 var command = new DeletePersonCommand(person.Id);
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
                 await LoadPersons();
                 ShowSuccessMessage("Persoon succesvol verwijderd!");
             }
@@ -608,5 +609,4 @@
     }
 }
 
-@inject IMediator Mediator
 @inject IJSRuntime JSRuntime

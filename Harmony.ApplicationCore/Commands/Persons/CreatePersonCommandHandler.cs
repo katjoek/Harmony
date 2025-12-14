@@ -1,11 +1,11 @@
 using Harmony.ApplicationCore.Interfaces;
 using Harmony.Domain.Entities;
 using Harmony.Domain.ValueObjects;
-using MediatR;
+using LiteBus.Commands.Abstractions;
 
 namespace Harmony.ApplicationCore.Commands.Persons;
 
-public sealed class CreatePersonCommandHandler : IRequestHandler<CreatePersonCommand, string>
+public sealed class CreatePersonCommandHandler : ICommandHandler<CreatePersonCommand, string>
 {
     private readonly IPersonRepository _personRepository;
 
@@ -14,31 +14,31 @@ public sealed class CreatePersonCommandHandler : IRequestHandler<CreatePersonCom
         _personRepository = personRepository ?? throw new ArgumentNullException(nameof(personRepository));
     }
 
-    public async Task<string> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
+    public async Task<string> HandleAsync(CreatePersonCommand command, CancellationToken cancellationToken)
     {
-        var name = new PersonName(request.FirstName, request.Prefix, request.Surname);
+        var name = new PersonName(command.FirstName, command.Prefix, command.Surname);
         var person = Person.Create(name);
 
-        if (request.DateOfBirth.HasValue)
-            person.UpdateDateOfBirth(request.DateOfBirth.Value);
+        if (command.DateOfBirth.HasValue)
+            person.UpdateDateOfBirth(command.DateOfBirth.Value);
 
-        if (!string.IsNullOrWhiteSpace(request.Street) || 
-            !string.IsNullOrWhiteSpace(request.ZipCode) || 
-            !string.IsNullOrWhiteSpace(request.City))
+        if (!string.IsNullOrWhiteSpace(command.Street) || 
+            !string.IsNullOrWhiteSpace(command.ZipCode) || 
+            !string.IsNullOrWhiteSpace(command.City))
         {
-            var address = new Address(request.Street, request.ZipCode, request.City);
+            var address = new Address(command.Street, command.ZipCode, command.City);
             person.UpdateAddress(address);
         }
 
-        if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+        if (!string.IsNullOrWhiteSpace(command.PhoneNumber))
         {
-            var phoneNumber = PhoneNumber.FromString(request.PhoneNumber);
+            var phoneNumber = PhoneNumber.FromString(command.PhoneNumber);
             person.UpdatePhoneNumber(phoneNumber);
         }
 
-        if (!string.IsNullOrWhiteSpace(request.EmailAddress))
+        if (!string.IsNullOrWhiteSpace(command.EmailAddress))
         {
-            var emailAddress = EmailAddress.FromString(request.EmailAddress);
+            var emailAddress = EmailAddress.FromString(command.EmailAddress);
             person.UpdateEmailAddress(emailAddress);
         }
 

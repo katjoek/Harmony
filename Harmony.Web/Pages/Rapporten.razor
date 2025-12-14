@@ -3,7 +3,7 @@
 @using Harmony.ApplicationCore.Queries.Groups
 @using Harmony.ApplicationCore.Queries.Persons
 @using Harmony.Web.Models
-@using MediatR
+@using LiteBus.Queries.Abstractions
 @using System.Linq
 
 <PageTitle>Rapporten - Harmony</PageTitle>
@@ -291,14 +291,14 @@
     private async Task LoadGroups()
     {
         var query = new GetAllGroupsQuery();
-        groups = (await Mediator.Send(query)).ToList();
+        groups = (await QueryMediator.QueryAsync(query)).ToList();
         StateHasChanged();
     }
 
     private async Task LoadPersons()
     {
         var query = new GetAllPersonsQuery();
-        allPersons = (await Mediator.Send(query)).ToList();
+        allPersons = (await QueryMediator.QueryAsync(query)).ToList();
         StateHasChanged();
     }
 
@@ -470,6 +470,6 @@
     }
 }
 
-@inject IMediator Mediator
+@inject IQueryMediator QueryMediator
 @inject IJSRuntime JSRuntime
 @inject Harmony.Web.Services.IReportService ReportService

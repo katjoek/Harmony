@@ -33,7 +33,7 @@ public sealed class CreatePersonCommandHandlerTests
             "jan@example.com");
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -69,7 +69,7 @@ public sealed class CreatePersonCommandHandlerTests
             null);
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -104,7 +104,7 @@ public sealed class CreatePersonCommandHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() => 
-            _handler.Handle(command, CancellationToken.None));
+            _handler.HandleAsync(command, CancellationToken.None));
     }
 
     [Fact]
@@ -124,6 +124,6 @@ public sealed class CreatePersonCommandHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() => 
-            _handler.Handle(command, CancellationToken.None));
+            _handler.HandleAsync(command, CancellationToken.None));
     }
 }

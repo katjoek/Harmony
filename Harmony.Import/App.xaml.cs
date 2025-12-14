@@ -7,6 +7,7 @@ using Harmony.Import.ViewModels;
 using Harmony.Infrastructure.Data;
 using Harmony.Infrastructure.Repositories;
 using Harmony.Infrastructure.Services;
+using LiteBus.Runtime.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,17 +60,19 @@ public partial class App : Application
 
         services.AddDbContext<HarmonyDbContext>(options => options.UseSqlite(expandedConnectionString));
 
-        // Add logging (required by MediatR)
+        // Add logging
         services.AddLogging(builder =>
         {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information);
         });
 
-        // Add MediatR
-        services.AddMediatR(cfg =>
+        // Add LiteBus
+        services.AddLiteBus(liteBus =>
         {
-            cfg.RegisterServicesFromAssembly(typeof(Harmony.ApplicationCore.Commands.Persons.CreatePersonCommand).Assembly);
+            var appAssembly = typeof(Harmony.ApplicationCore.Commands.Persons.CreatePersonCommand).Assembly;
+            liteBus.AddCommandModule(module => module.RegisterFromAssembly(appAssembly));
+            liteBus.AddQueryModule(module => module.RegisterFromAssembly(appAssembly));
         });
 
         // Add repositories and services

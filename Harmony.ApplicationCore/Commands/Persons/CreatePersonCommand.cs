@@ -1,4 +1,4 @@
-using MediatR;
+using LiteBus.Commands.Abstractions;
 
 namespace Harmony.ApplicationCore.Commands.Persons;
 
@@ -11,4 +11,4 @@ public sealed record CreatePersonCommand(
     string? ZipCode,
     string? City,
     string? PhoneNumber,
-    string? EmailAddress) : IRequest<string>;
+    string? EmailAddress) : ICommand<string>;

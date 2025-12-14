@@ -157,3 +157,4 @@ public sealed class DatabaseBackupService : IDatabaseBackupService
         await Task.Run(() => File.Delete(backupPath), cancellationToken);
     }
 }
+

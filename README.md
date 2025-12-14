@@ -19,7 +19,7 @@ Het project volgt Clean Architecture principes met de volgende lagen:
 - **BootstrapBlazor**: UI componenten
 - **Entity Framework Core**: ORM voor database toegang
 - **SQLite**: Embedded database
-- **MediatR**: CQRS implementatie
+- **LiteBus**: CQRS implementatie
 - **xUnit**: Unit testing framework
 
 ## 🎯 Functionaliteiten

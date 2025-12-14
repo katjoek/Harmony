@@ -1,6 +1,6 @@
 using Harmony.ApplicationCore.DTOs;
-using MediatR;
+using LiteBus.Queries.Abstractions;
 
 namespace Harmony.ApplicationCore.Queries.Persons;
 
-public sealed record GetPersonByIdQuery(string Id) : IRequest<PersonDto?>;
+public sealed record GetPersonByIdQuery(string Id) : IQuery<PersonDto?>;

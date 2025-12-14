@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="LiteBus.Commands" Version="3.0.0" />
+    <PackageReference Include="LiteBus.Queries" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>

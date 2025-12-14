@@ -4,7 +4,8 @@
 @using Harmony.ApplicationCore.Queries.Persons
 @using Harmony.ApplicationCore.Commands.Groups
 @using Harmony.Web.Models
-@using MediatR
+@using LiteBus.Commands.Abstractions
+@using LiteBus.Queries.Abstractions
 
 <PageTitle>Groepen - Harmony</PageTitle>
 
@@ -253,14 +254,14 @@
     private async Task LoadGroups()
     {
         var query = new GetAllGroupsQuery();
-        groups = (await Mediator.Send(query)).ToList();
+        groups = (await QueryMediator.QueryAsync(query)).ToList();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadPersons()
     {
         var query = new GetAllPersonsQuery();
-        allPersons = (await Mediator.Send(query)).ToList();
+        allPersons = (await QueryMediator.QueryAsync(query)).ToList();
         UpdateCoordinatorCandidatesForCurrentModel();
         await InvokeAsync(StateHasChanged); // Update UI so tooltips work
     }
@@ -331,7 +332,7 @@
                     groupModel.Name!,
                     string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId);
 
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
             }
             else
             {
@@ -339,7 +340,7 @@
                     groupModel.Name!,
                     string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId);
 
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
             }
 
             await LoadGroups();
@@ -392,7 +393,7 @@
             foreach (var pid in ids)
             {
                 var command = new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(pid, selectedGroup.Id);
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
             }
 
             await RefreshMembershipState();
@@ -420,7 +421,7 @@
             foreach (var pid in ids)
             {
                 var command = new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(pid, selectedGroup.Id);
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
             }
 
             await RefreshMembershipState();
@@ -583,5 +584,6 @@
     }
 }
 
-@inject IMediator Mediator
+@inject ICommandMediator CommandMediator
+@inject IQueryMediator QueryMediator
 @inject IJSRuntime JSRuntime

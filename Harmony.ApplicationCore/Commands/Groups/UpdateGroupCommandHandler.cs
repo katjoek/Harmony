@@ -1,10 +1,10 @@
 using Harmony.ApplicationCore.Interfaces;
 using Harmony.Domain.ValueObjects;
-using MediatR;
+using LiteBus.Commands.Abstractions;
 
 namespace Harmony.ApplicationCore.Commands.Groups;
 
-public sealed class UpdateGroupCommandHandler : IRequestHandler<UpdateGroupCommand>
+public sealed class UpdateGroupCommandHandler : ICommandHandler<UpdateGroupCommand>
 {
     private readonly IGroupRepository _groupRepository;
     private readonly IPersonRepository _personRepository;
@@ -20,28 +20,28 @@ public sealed class UpdateGroupCommandHandler : IRequestHandler<UpdateGroupComma
         _membershipService = membershipService ?? throw new ArgumentNullException(nameof(membershipService));
     }
 
-    public async Task Handle(UpdateGroupCommand request, CancellationToken cancellationToken)
+    public async Task HandleAsync(UpdateGroupCommand command, CancellationToken cancellationToken)
     {
-        var groupId = GroupId.From(request.Id);
+        var groupId = GroupId.From(command.Id);
         var group = await _groupRepository.GetByIdAsync(groupId, cancellationToken);
         
         if (group == null)
-            throw new InvalidOperationException($"Group with ID {request.Id} not found");
+            throw new InvalidOperationException($"Group with ID {command.Id} not found");
 
         // Check if name is unique (excluding current group)
-        var isNameUnique = await _groupRepository.IsNameUniqueAsync(request.Name, groupId, cancellationToken);
+        var isNameUnique = await _groupRepository.IsNameUniqueAsync(command.Name, groupId, cancellationToken);
         if (!isNameUnique)
-            throw new InvalidOperationException($"A group with the name '{request.Name}' already exists");
+            throw new InvalidOperationException($"A group with the name '{command.Name}' already exists");
 
-        group.UpdateName(request.Name);
+        group.UpdateName(command.Name);
 
-        if (!string.IsNullOrWhiteSpace(request.CoordinatorId))
+        if (!string.IsNullOrWhiteSpace(command.CoordinatorId))
         {
-            var coordinatorId = PersonId.From(request.CoordinatorId);
+            var coordinatorId = PersonId.From(command.CoordinatorId);
             var coordinatorExists = await _personRepository.ExistsAsync(coordinatorId, cancellationToken);
             
             if (!coordinatorExists)
-                throw new InvalidOperationException($"Coordinator with ID {request.CoordinatorId} not found");
+                throw new InvalidOperationException($"Coordinator with ID {command.CoordinatorId} not found");
 
             // Enforce domain rule: coordinator must be a current member of the group
             var memberIds = await _membershipService.GetPersonIdsForGroupAsync(groupId, cancellationToken);

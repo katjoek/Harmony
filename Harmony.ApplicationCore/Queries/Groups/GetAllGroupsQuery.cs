@@ -1,6 +1,6 @@
 using Harmony.ApplicationCore.DTOs;
-using MediatR;
+using LiteBus.Queries.Abstractions;
 
 namespace Harmony.ApplicationCore.Queries.Groups;
 
-public sealed record GetAllGroupsQuery : IRequest<IReadOnlyList<GroupDto>>;
+public sealed record GetAllGroupsQuery : IQuery<IReadOnlyList<GroupDto>>;
