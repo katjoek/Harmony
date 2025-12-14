@@ -1,0 +1,60 @@
+@using Harmony.ApplicationCore.Interfaces
+@inject NavigationManager NavigationManager
+@inject ISettingsService SettingsService
+
+@if (isChecking)
+{
+    <div class="d-flex justify-content-center align-items-center min-vh-100">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Laden...</span>
+            </div>
+            <p class="mt-3 text-muted">Initialiseren...</p>
+        </div>
+    </div>
+}
+else if (needsConfiguration && !IsDatabaseDirectoryPage())
+{
+    <RedirectToDatabaseDirectory />
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool isChecking = true;
+    private bool needsConfiguration = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Allow database-directory page to load without checking
+        if (IsDatabaseDirectoryPage())
+        {
+            isChecking = false;
+            return;
+        }
+
+        try
+        {
+            var isConfigured = await SettingsService.IsDatabaseDirectoryConfiguredAsync();
+            needsConfiguration = !isConfigured;
+        }
+        catch
+        {
+            needsConfiguration = true;
+        }
+        finally
+        {
+            isChecking = false;
+        }
+    }
+
+    private bool IsDatabaseDirectoryPage()
+    {
+        var uri = NavigationManager.Uri;
+        return uri.Contains("/database-directory", StringComparison.OrdinalIgnoreCase);
+    }
+}

@@ -1,0 +1,231 @@
+@page "/database-directory"
+@using Harmony.ApplicationCore.Interfaces
+
+<PageTitle>Database Locatie - Harmony</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        Selecteer Database Locatie
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Kies waar de Harmony database moet worden opgeslagen. Deze keuze bepaalt wie toegang heeft tot de database.
+                    </p>
+
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessage
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="directoryOption" id="optionUserHome" checked="@(selectedOption == "userhome")" @onchange="@(() => selectedOption = "userhome")" />
+                            <label class="form-check-label" for="optionUserHome">
+                                <strong>Gebruikersmap</strong>
+                            </label>
+                            <div class="ms-4 mt-1">
+                                <small class="text-muted">
+                                    <code>@userHomePath</code>
+                                </small>
+                                <p class="text-muted small mb-0 mt-1">
+                                    Alleen de huidige gebruiker heeft toegang tot deze database. Andere gebruikers op deze computer kunnen deze database niet gebruiken.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="directoryOption" id="optionSystem" checked="@(selectedOption == "system")" @onchange="@(() => selectedOption = "system")" />
+                            <label class="form-check-label" for="optionSystem">
+                                <strong>Systeemmap</strong>
+                            </label>
+                            <div class="ms-4 mt-1">
+                                <small class="text-muted">
+                                    <code>C:\HarmonyData</code>
+                                </small>
+                                <p class="text-muted small mb-0 mt-1">
+                                    Alle gebruikers op deze computer hebben toegang tot deze database. Geschikt voor gedeeld gebruik.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="directoryOption" id="optionCustom" checked="@(selectedOption == "custom")" @onchange="@(() => selectedOption = "custom")" />
+                            <label class="form-check-label" for="optionCustom">
+                                <strong>Aangepaste locatie</strong>
+                            </label>
+                            <div class="ms-4 mt-2">
+                                <input type="text" class="form-control" @bind="customDirectory" placeholder="Bijvoorbeeld: D:\Data\Harmony" disabled="@(selectedOption != "custom")" />
+                                <p class="text-muted small mb-0 mt-1">
+                                    Geef een aangepaste map op waar de database moet worden opgeslagen.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-primary" @onclick="SaveDirectory" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Opslaan...</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-save me-2"></i>
+                                <span>Opslaan</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+
+    private string selectedOption = "userhome";
+    private string customDirectory = "";
+    private string errorMessage = "";
+    private bool isSaving = false;
+    private string userHomePath = "";
+
+    protected override void OnInitialized()
+    {
+        userHomePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "HarmonyData");
+    }
+
+    private async Task SaveDirectory()
+    {
+        errorMessage = "";
+        isSaving = true;
+
+        try
+        {
+            string directory;
+
+            switch (selectedOption)
+            {
+                case "userhome":
+                    directory = userHomePath;
+                    break;
+                case "system":
+                    directory = @"C:\HarmonyData";
+                    break;
+                case "custom":
+                    if (string.IsNullOrWhiteSpace(customDirectory))
+                    {
+                        errorMessage = "Geef een aangepaste map op.";
+                        isSaving = false;
+                        return;
+                    }
+                    directory = customDirectory.Trim();
+                    break;
+                default:
+                    errorMessage = "Selecteer een optie.";
+                    isSaving = false;
+                    return;
+            }
+
+            // Validate directory path
+            if (!IsValidDirectoryPath(directory))
+            {
+                errorMessage = "Ongeldig pad. Geef een geldig pad op.";
+                isSaving = false;
+                return;
+            }
+
+            // Check if directory exists
+            if (!Directory.Exists(directory))
+            {
+                var shouldCreate = await JSRuntime.InvokeAsync<bool>("confirm", 
+                    $"De map '{directory}' bestaat niet. Wilt u deze aanmaken?");
+                
+                if (!shouldCreate)
+                {
+                    isSaving = false;
+                    return;
+                }
+
+                try
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Kan de map niet aanmaken: {ex.Message}. Selecteer een andere locatie.";
+                    isSaving = false;
+                    return;
+                }
+            }
+
+            // Verify write access
+            if (!HasWriteAccess(directory))
+            {
+                errorMessage = "Geen schrijfrechten voor deze map. Selecteer een andere locatie.";
+                isSaving = false;
+                return;
+            }
+
+            // Save the directory
+            await SettingsService.SetDatabaseDirectoryAsync(directory);
+
+            // Note: Database will be created on next request when DbContext is accessed
+            // The connection string provider will use the new directory
+
+            // Redirect to home page with force reload to ensure new connection string is used
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fout bij opslaan: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private static bool IsValidDirectoryPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        try
+        {
+            var fullPath = Path.GetFullPath(path);
+            return !string.IsNullOrWhiteSpace(fullPath);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool HasWriteAccess(string directory)
+    {
+        try
+        {
+            var testFile = Path.Combine(directory, $"test_write_{Guid.NewGuid()}.tmp");
+            File.WriteAllText(testFile, "test");
+            File.Delete(testFile);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}

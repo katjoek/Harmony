@@ -1,6 +1,7 @@
 using Harmony.ApplicationCore.Interfaces;
 using Harmony.Infrastructure.Data;
 using Harmony.Infrastructure.Repositories;
+using Harmony.Infrastructure.Services;
 using Harmony.Web.Commands;
 using Harmony.Web.Services;
 using Microsoft.EntityFrameworkCore;
@@ -11,27 +12,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
-// Add Entity Framework
-builder.Services.AddDbContext<HarmonyDbContext>(options =>
+// Register settings service as singleton (file-based, shared across requests)
+builder.Services.AddSingleton<ISettingsService, SettingsService>();
+
+// Register connection string provider
+builder.Services.AddScoped<IDatabaseConnectionStringProvider, Harmony.Infrastructure.Services.DatabaseConnectionStringProvider>();
+
+// Add Entity Framework with dynamic connection string from settings (resolved per request)
+// Register DbContext using a factory pattern to defer connection string resolution
+// until the DbContext is actually created (prevents database access if directory not configured)
+builder.Services.AddScoped<HarmonyDbContext>(serviceProvider =>
 {
-    var raw = builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Data Source=%APPDATA%\\Harmony\\harmony.db";
-    var expanded = Environment.ExpandEnvironmentVariables(raw);
-
-    // Ensure directory exists for the SQLite file
-    var dataSourcePrefix = "Data Source=";
-    var idx = expanded.IndexOf(dataSourcePrefix, StringComparison.OrdinalIgnoreCase);
-    if (idx >= 0)
-    {
-        var pathPart = expanded.Substring(idx + dataSourcePrefix.Length).Trim();
-        var directory = Path.GetDirectoryName(pathPart);
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-    }
-
-    options.UseSqlite(expanded);
+    var connectionStringProvider = serviceProvider.GetRequiredService<IDatabaseConnectionStringProvider>();
+    var connectionString = connectionStringProvider.GetConnectionString();
+    
+    var optionsBuilder = new DbContextOptionsBuilder<HarmonyDbContext>();
+    optionsBuilder.UseSqlite(connectionString);
+    
+    return new HarmonyDbContext(optionsBuilder.Options);
 });
 
 // Add MediatR
@@ -65,18 +63,34 @@ app.MapRazorPages();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-// Ensure database is created
+// Ensure database is created (only if directory is configured)
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
-    context.Database.EnsureCreated();
+    var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+    var isConfigured = await settingsService.IsDatabaseDirectoryConfiguredAsync();
+    
+    if (isConfigured)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
+        context.Database.EnsureCreated();
+    }
 }
 
 // Check for seed command line argument
 if (args.Length > 0 && args[0] == "seed")
 {
-    Console.WriteLine("Seeding database...");
     using var scope = app.Services.CreateScope();
+    var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+    var isConfigured = await settingsService.IsDatabaseDirectoryConfiguredAsync();
+    
+    if (!isConfigured)
+    {
+        Console.WriteLine("ERROR: Database directory is not configured. Please configure the database directory first.");
+        Console.WriteLine("Run the application and configure the database directory through the web interface.");
+        return;
+    }
+    
+    Console.WriteLine("Seeding database...");
     var seedCommand = scope.ServiceProvider.GetRequiredService<SeedDataCommand>();
     await seedCommand.ExecuteAsync();
     Console.WriteLine("Seeding completed. Exiting application.");
