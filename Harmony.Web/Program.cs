@@ -4,7 +4,9 @@ using Harmony.Infrastructure.Repositories;
 using Harmony.Infrastructure.Services;
 using Harmony.Web.Commands;
 using Harmony.Web.Services;
-using LiteBus.Runtime.Extensions.Microsoft.DependencyInjection;
+using LiteBus.Messaging.Extensions.MicrosoftDependencyInjection;
+using LiteBus.Commands.Extensions.MicrosoftDependencyInjection;
+using LiteBus.Queries.Extensions.MicrosoftDependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,11 +61,11 @@ builder.Services.AddScoped<HarmonyDbContext>(serviceProvider =>
 });
 
 // Add LiteBus
-builder.Services.AddLiteBus(liteBus =>
+builder.Services.AddLiteBus(config =>
 {
     var appAssembly = typeof(Harmony.ApplicationCore.Commands.Persons.CreatePersonCommand).Assembly;
-    liteBus.AddCommandModule(module => module.RegisterFromAssembly(appAssembly));
-    liteBus.AddQueryModule(module => module.RegisterFromAssembly(appAssembly));
+    config.AddCommandModule(module => module.RegisterFromAssembly(appAssembly));
+    config.AddQueryModule(module => module.RegisterFromAssembly(appAssembly));
 });
 
 // Add repositories and services

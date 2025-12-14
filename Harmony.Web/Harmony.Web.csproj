@@ -10,9 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LiteBus.Commands.Extensions.Microsoft.DependencyInjection" Version="4.2.0" />
-    <PackageReference Include="LiteBus.Queries.Extensions.Microsoft.DependencyInjection" Version="4.2.0" />
-    <PackageReference Include="LiteBus.Runtime.Extensions.Microsoft.DependencyInjection" Version="4.2.0" />
+    <PackageReference Include="LiteBus.Extensions.MicrosoftDependencyInjection" Version="3.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
     <PackageReference Include="iText7" Version="8.0.5" />
     <PackageReference Include="EPPlus" Version="7.2.2" />

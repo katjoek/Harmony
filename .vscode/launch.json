@@ -14,7 +14,7 @@
             "stopAtEntry": false
         },
         {
-            "name": ".NET Core Launch (web)",
+            "name": "Harmony.Web Debug",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",

@@ -7,7 +7,9 @@ using Harmony.Import.ViewModels;
 using Harmony.Infrastructure.Data;
 using Harmony.Infrastructure.Repositories;
 using Harmony.Infrastructure.Services;
-using LiteBus.Runtime.Extensions.Microsoft.DependencyInjection;
+using LiteBus.Messaging.Extensions.MicrosoftDependencyInjection;
+using LiteBus.Commands.Extensions.MicrosoftDependencyInjection;
+using LiteBus.Queries.Extensions.MicrosoftDependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,11 +70,11 @@ public partial class App : Application
         });
 
         // Add LiteBus
-        services.AddLiteBus(liteBus =>
+        services.AddLiteBus(builder =>
         {
             var appAssembly = typeof(Harmony.ApplicationCore.Commands.Persons.CreatePersonCommand).Assembly;
-            liteBus.AddCommandModule(module => module.RegisterFromAssembly(appAssembly));
-            liteBus.AddQueryModule(module => module.RegisterFromAssembly(appAssembly));
+            builder.AddCommandModule(module => module.RegisterFromAssembly(appAssembly));
+            builder.AddQueryModule(module => module.RegisterFromAssembly(appAssembly));
         });
 
         // Add repositories and services

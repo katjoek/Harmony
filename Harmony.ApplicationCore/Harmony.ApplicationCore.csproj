@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LiteBus.Commands" Version="3.0.0" />
-    <PackageReference Include="LiteBus.Queries" Version="3.0.0" />
+    <PackageReference Include="LiteBus.Commands" Version="3.1.0" />
+    <PackageReference Include="LiteBus.Queries" Version="3.1.0" />
   </ItemGroup>
 
   <ItemGroup>

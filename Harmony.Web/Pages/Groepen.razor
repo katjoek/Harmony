@@ -360,7 +360,7 @@
             try
             {
                 var command = new DeleteGroupCommand(group.Id);
-                await Mediator.Send(command);
+                await CommandMediator.SendAsync(command);
                 await LoadGroups();
                 ShowSuccessMessage("Groep succesvol verwijderd!");
             }

@@ -378,7 +378,7 @@
             foreach (var gid in ids)
             {
                 var cmd = new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(selectedPerson.Id, gid);
-                await Mediator.Send(cmd);
+                await CommandMediator.SendAsync(cmd);
             }
             await RefreshGroupsState();
             ShowSuccessMessage("Persoon aan groepen toegevoegd.");
@@ -609,4 +609,6 @@
     }
 }
 
+@inject ICommandMediator CommandMediator
+@inject IQueryMediator QueryMediator
 @inject IJSRuntime JSRuntime
