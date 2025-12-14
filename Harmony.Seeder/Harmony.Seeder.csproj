@@ -2,10 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Common properties are inherited from Directory.Build.props -->
+    <!-- TreatWarningsAsErrors and ImplicitUsings are overridden in Directory.Build.props for this project -->
   </PropertyGroup>
 
   <ItemGroup>
