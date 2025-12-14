@@ -158,7 +158,13 @@
         }
     }
 
-    private Task OnCloseClicked() => Close.InvokeAsync();
+    private async Task OnCloseClicked()
+    {
+        if (Close.HasDelegate)
+        {
+            await Close.InvokeAsync();
+        }
+    }
 
     [JSInvokable] 
     public async Task OnLeftDblClick(string id) 
