@@ -54,8 +54,15 @@ window.selectUtils = {
   }
 };
 
-window.downloadFile = function (fileName, contentType, byteArray) {
-  const blob = new Blob([byteArray], { type: contentType });
+window.downloadFile = function (fileName, base64Data, contentType) {
+  // Decode base64 string to binary
+  const binaryString = window.atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  const blob = new Blob([bytes], { type: contentType });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
