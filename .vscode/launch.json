@@ -9,8 +9,8 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Harmony.Import/bin/Debug/net9.0/win-x64/Harmony.Import.dll",
-            "cwd": "${workspaceFolder}/Harmony.Import",
+            "program": "${workspaceFolder}/tools/Harmony.Import/bin/Debug/net9.0-windows/win-x64/Harmony.Import.dll",
+            "cwd": "${workspaceFolder}/tools/Harmony.Import",
             "stopAtEntry": false
         },
         {
@@ -18,9 +18,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Harmony.Web/bin/Debug/net9.0/win-x64/Harmony.Web.dll",
+            "program": "${workspaceFolder}/src/Harmony.Web/bin/Debug/net9.0/win-x64/Harmony.Web.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Harmony.Web",
+            "cwd": "${workspaceFolder}/src/Harmony.Web",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
