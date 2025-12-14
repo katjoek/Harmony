@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- Common properties are inherited from Directory.Build.props -->
-    <!-- TreatWarningsAsErrors and ImplicitUsings are overridden in Directory.Build.props for this project -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <ImplicitUsings>false</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>

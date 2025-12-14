@@ -16,15 +16,4 @@
     <Authors>Mark van de Veerdonk</Authors>
     <Description>Harmony - A people and groups management system</Description>
   </PropertyGroup>
-  
-  <!-- Allow Seeder project to override settings -->
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Harmony.Seeder'">
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <ImplicitUsings>false</ImplicitUsings>
-  </PropertyGroup>
-  
-  <!-- Set RuntimeIdentifier only for projects that need it -->
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Harmony.Infrastructure' OR '$(MSBuildProjectName)' == 'Harmony.Web' OR '$(MSBuildProjectName)' == 'Harmony.Import'">
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  </PropertyGroup>
 </Project>
