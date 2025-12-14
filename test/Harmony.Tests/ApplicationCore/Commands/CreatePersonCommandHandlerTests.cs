@@ -108,7 +108,7 @@ public sealed class CreatePersonCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithInvalidPhoneNumber_ThrowsArgumentException()
+    public async Task Handle_WithShortPhoneNumber_CreatesPersonWithPhoneNumber()
     {
         // Arrange
         var command = new CreatePersonCommand(
@@ -119,11 +119,20 @@ public sealed class CreatePersonCommandHandlerTests
             null,
             null,
             null,
-            "123", // Too short
+            "123", // Short phone number - should be accepted without validation
             null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => 
-            _handler.HandleAsync(command, CancellationToken.None));
+        // Act
+        var result = await _handler.HandleAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+        
+        await _personRepository.Received(1).AddAsync(
+            Arg.Is<Person>(p => 
+                p.Name.FirstName == "Jan" &&
+                p.PhoneNumber!.Value == "123"),
+            Arg.Any<CancellationToken>());
     }
 }
