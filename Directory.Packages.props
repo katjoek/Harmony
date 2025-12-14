@@ -1,0 +1,36 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <!-- LiteBus Packages -->
+    <PackageVersion Include="LiteBus.Commands" Version="3.1.0" />
+    <PackageVersion Include="LiteBus.Queries" Version="3.1.0" />
+    <PackageVersion Include="LiteBus.Extensions.MicrosoftDependencyInjection" Version="3.1.0" />
+    
+    <!-- Entity Framework Core Packages -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1" />
+    
+    <!-- Microsoft Extensions Packages -->
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+    
+    <!-- Testing Packages -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageVersion Include="xunit" Version="2.6.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.4" />
+    <PackageVersion Include="NSubstitute" Version="5.1.0" />
+    
+    <!-- Other Packages -->
+    <PackageVersion Include="iText7" Version="8.0.5" />
+    <PackageVersion Include="itext7.bouncy-castle-adapter" Version="8.0.5" />
+    <PackageVersion Include="EPPlus" Version="7.2.2" />
+  </ItemGroup>
+</Project>
