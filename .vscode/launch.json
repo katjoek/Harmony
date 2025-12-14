@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Harmony.Import/bin/Debug/net9.0/win-x64/Harmony.Import.dll",
+            "program": "${workspaceFolder}/Harmony.Import/bin/Debug/net9.0-windows/win-x64/Harmony.Import.dll",
             "cwd": "${workspaceFolder}/Harmony.Import",
             "stopAtEntry": false
         },
@@ -18,7 +18,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Harmony.Web/bin/Debug/net9.0/win-x64/Harmony.Web.dll",
+            "program": "${workspaceFolder}/Harmony.Web/bin/Debug/net9.0-windows/win-x64/Harmony.Web.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Harmony.Web",
             "stopAtEntry": false,
