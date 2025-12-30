@@ -167,7 +167,9 @@ Het project bevat uitgebreide unit tests:
 
 ## 📄 Licentie
 
-Dit project is ontwikkeld voor gebruik binnen kerkgemeenschappen.
+Dit project is gelicenseerd onder de Apache License, Version 2.0. Zie het [LICENSE](LICENSE) bestand voor meer informatie.
+
+Copyright 2025 Mark van de Veerdonk
 
 ## 🤝 Bijdragen
 
