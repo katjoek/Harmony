@@ -1,17 +1,14 @@
 using Harmony.ApplicationCore.Interfaces;
-using Microsoft.Extensions.Configuration;
 
 namespace Harmony.Infrastructure.Services;
 
 public sealed class DatabaseConnectionStringProvider : IDatabaseConnectionStringProvider
 {
     private readonly ISettingsService _settingsService;
-    private readonly IConfiguration _configuration;
 
-    public DatabaseConnectionStringProvider(ISettingsService settingsService, IConfiguration configuration)
+    public DatabaseConnectionStringProvider(ISettingsService settingsService)
     {
         _settingsService = settingsService;
-        _configuration = configuration;
     }
 
     public async Task<string> GetConnectionStringAsync(CancellationToken cancellationToken = default)
