@@ -8,9 +8,9 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     
     <!-- Assembly Metadata -->
-    <Version>1.0.2</Version>
-    <AssemblyVersion>1.0.2.0</AssemblyVersion>
-    <FileVersion>1.0.2.0</FileVersion>
+    <Version>1.0.3</Version>
+    <AssemblyVersion>1.0.3.0</AssemblyVersion>
+    <FileVersion>1.0.3.0</FileVersion>
     <Company>Harmony</Company>
     <Product>Harmony Community Manager</Product>
     <Authors>Mark van de Veerdonk</Authors>
@@ -23,8 +23,13 @@
     <ImplicitUsings>false</ImplicitUsings>
   </PropertyGroup>
   
-  <!-- Set RuntimeIdentifier only for projects that need it -->
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Harmony.Infrastructure' OR '$(MSBuildProjectName)' == 'Harmony.Web' OR '$(MSBuildProjectName)' == 'Harmony.Import'">
+  <!-- 
+    RuntimeIdentifier should NOT be set at build time for web projects.
+    Setting it unconditionally breaks Blazor's static web assets in Release mode.
+    Only specify RuntimeIdentifier at PUBLISH time using: dotnet publish -r win-x64
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Harmony.Import'">
+    <!-- WPF apps can have RuntimeIdentifier at build time -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 </Project>

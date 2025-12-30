@@ -18,7 +18,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/Harmony.Web/bin/Debug/net9.0/win-x64/Harmony.Web.dll",
+            "program": "${workspaceFolder}/src/Harmony.Web/bin/Debug/net9.0/Harmony.Web.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/Harmony.Web",
             "stopAtEntry": false,
@@ -28,6 +28,26 @@
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": "Harmony.Web Release",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "publish-release",
+            "program": "${workspaceFolder}/src/Harmony.Web/bin/Release/net9.0/win-x64/publish/Harmony.Web.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Harmony.Web/bin/Release/net9.0/win-x64/publish",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Production"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"

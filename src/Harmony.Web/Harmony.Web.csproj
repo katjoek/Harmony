@@ -2,6 +2,19 @@
 
   <PropertyGroup>
     <!-- Common properties are inherited from Directory.Build.props -->
+    
+    <!-- Publishing Configuration for self-contained Windows x64 deployment -->
+    <RuntimeIdentifier Condition="'$(Configuration)' == 'Release'">win-x64</RuntimeIdentifier>
+    <SelfContained Condition="'$(Configuration)' == 'Release'">true</SelfContained>
+    
+    <!-- Minimize output size - only include win-x64 runtime -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    
+    <!-- Disable trimming to ensure Blazor works correctly -->
+    <PublishTrimmed>false</PublishTrimmed>
+    
+    <!-- Single file is not recommended for Blazor Server, but we can reduce file count -->
+    <PublishSingleFile>false</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

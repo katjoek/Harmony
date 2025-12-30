@@ -14,12 +14,28 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "publish",
+            "label": "build-release",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Harmony.sln",
+                "-c",
+                "Release",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-release",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/Harmony.sln",
+                "${workspaceFolder}/src/Harmony.Web/Harmony.Web.csproj",
+                "-c",
+                "Release",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -33,7 +49,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/Harmony.sln"
+                "${workspaceFolder}/src/Harmony.Web/Harmony.Web.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
