@@ -66,6 +66,53 @@
             </div>
         </div>
 
+        <!-- Server Binding Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-network-wired me-2"></i>
+                    Server Netwerk Instellingen
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Wie kan de server benaderen?</label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="serverBinding" id="localhostOnly" 
+                               checked="@(!listenOnAllInterfaces)" 
+                               @onchange="@(() => UpdateServerBinding(false))" />
+                        <label class="form-check-label" for="localhostOnly">
+                            <strong>Alleen deze computer (aanbevolen)</strong>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="serverBinding" id="allInterfaces" 
+                               checked="@listenOnAllInterfaces" 
+                               @onchange="@(() => UpdateServerBinding(true))" />
+                        <label class="form-check-label" for="allInterfaces">
+                            <strong>Alle computers in het netwerk</strong>
+                        </label>
+                    </div>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <div class="small">
+                        <strong>Uitleg:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Alleen deze computer:</strong> De server is alleen bereikbaar vanaf deze computer zelf. 
+                                Andere computers in uw netwerk kunnen de applicatie niet gebruiken. Dit is de veiligste optie.</li>
+                            <li><strong>Alle computers in het netwerk:</strong> De server is bereikbaar vanaf alle computers 
+                                die met hetzelfde netwerk verbonden zijn. Andere computers kunnen de applicatie gebruiken door 
+                                het IP-adres van deze computer te gebruiken. <strong>Let op:</strong> Dit kan een beveiligingsrisico zijn 
+                                als uw netwerk niet goed beveiligd is.</li>
+                        </ul>
+                        <div class="mt-2">
+                            <strong>Belangrijk:</strong> Wijzigingen aan deze instelling worden pas actief na het opnieuw opstarten van de applicatie.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Backup Section -->
         <div class="card mb-4">
             <div class="card-header">
@@ -201,11 +248,13 @@
     private bool isCreatingBackup = false;
     private bool isRestoring = false;
     private IBrowserFile? selectedFile;
+    private bool listenOnAllInterfaces = false;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDatabasePath();
         await LoadBackups();
+        await LoadServerBindingSetting();
     }
 
     private async Task LoadDatabasePath()
@@ -490,6 +539,37 @@
         catch
         {
             errorMessage = "Kon pad niet kopiëren naar klembord";
+        }
+    }
+
+    private async Task LoadServerBindingSetting()
+    {
+        try
+        {
+            listenOnAllInterfaces = await SettingsService.GetListenOnAllInterfacesAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fout bij laden server instellingen: {ex.Message}";
+        }
+    }
+
+    private async Task UpdateServerBinding(bool value)
+    {
+        errorMessage = "";
+        successMessage = "";
+        
+        try
+        {
+            await SettingsService.SetListenOnAllInterfacesAsync(value);
+            listenOnAllInterfaces = value;
+            successMessage = value 
+                ? "Server instelling bijgewerkt: Alle computers in het netwerk kunnen nu de server benaderen. Herstart de applicatie om de wijziging door te voeren."
+                : "Server instelling bijgewerkt: Alleen deze computer kan nu de server benaderen. Herstart de applicatie om de wijziging door te voeren.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fout bij bijwerken server instelling: {ex.Message}";
         }
     }
 

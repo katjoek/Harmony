@@ -80,6 +80,44 @@ builder.Services.AddScoped<SeedDataCommand>();
 
 var app = builder.Build();
 
+// Configure server binding address based on settings
+// This must be done before app.Run() but after app.Build()
+var serverSettingsService = app.Services.GetRequiredService<ISettingsService>();
+var listenOnAllInterfaces = await serverSettingsService.GetListenOnAllInterfacesAsync();
+
+if (listenOnAllInterfaces)
+{
+    if (app.Urls.Count > 0)
+    {
+        // Replace localhost with 0.0.0.0 in all URLs to listen on all interfaces
+        // Only modify URLs that explicitly use localhost - preserve custom IPs/hostnames
+        var modifiedUrls = app.Urls.Select(url =>
+        {
+            // Check if URL uses localhost (case-insensitive)
+            if (url.Contains("://localhost", StringComparison.OrdinalIgnoreCase) || 
+                url.Contains("://127.0.0.1", StringComparison.OrdinalIgnoreCase))
+            {
+                return url.Replace("localhost", "0.0.0.0", StringComparison.OrdinalIgnoreCase)
+                          .Replace("127.0.0.1", "0.0.0.0", StringComparison.OrdinalIgnoreCase);
+            }
+            // If URL already contains a specific IP address or hostname, keep it as is
+            return url;
+        }).ToList();
+        
+        app.Urls.Clear();
+        foreach (var url in modifiedUrls)
+        {
+            app.Urls.Add(url);
+        }
+    }
+    else
+    {
+        // No URLs configured, set default to listen on all interfaces
+        app.Urls.Add("http://0.0.0.0:5000");
+    }
+}
+// If listenOnAllInterfaces is false (default), URLs remain as configured (localhost)
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
