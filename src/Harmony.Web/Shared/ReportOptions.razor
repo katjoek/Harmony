@@ -13,25 +13,25 @@
 				</label>
 			</div>
 			<div class="form-check">
-				<input class="form-check-input" type="checkbox" @bind="Model.IncludeDateOfBirth" @bind:event="onchange" id="includeDateOfBirth">
+				<input class="form-check-input" type="checkbox" checked="@Model.IncludeDateOfBirth" @onchange="@((e) => { Model.IncludeDateOfBirth = e.Value is bool value && value; OnFieldChanged(); })" id="includeDateOfBirth">
 				<label class="form-check-label" for="includeDateOfBirth">
 					Geboortedatum
 				</label>
 			</div>
 			<div class="form-check">
-				<input class="form-check-input" type="checkbox" @bind="Model.IncludeAddress" @bind:event="onchange" id="includeAddress">
+				<input class="form-check-input" type="checkbox" checked="@Model.IncludeAddress" @onchange="@((e) => { Model.IncludeAddress = e.Value is bool value && value; OnFieldChanged(); })" id="includeAddress">
 				<label class="form-check-label" for="includeAddress">
 					Adres
 				</label>
 			</div>
 			<div class="form-check">
-				<input class="form-check-input" type="checkbox" @bind="Model.IncludePhoneNumber" @bind:event="onchange" id="includePhoneNumber">
+				<input class="form-check-input" type="checkbox" checked="@Model.IncludePhoneNumber" @onchange="@((e) => { Model.IncludePhoneNumber = e.Value is bool value && value; OnFieldChanged(); })" id="includePhoneNumber">
 				<label class="form-check-label" for="includePhoneNumber">
 					Telefoonnummer
 				</label>
 			</div>
 			<div class="form-check">
-				<input class="form-check-input" type="checkbox" @bind="Model.IncludeEmailAddress" @bind:event="onchange" id="includeEmailAddress">
+				<input class="form-check-input" type="checkbox" checked="@Model.IncludeEmailAddress" @onchange="@((e) => { Model.IncludeEmailAddress = e.Value is bool value && value; OnFieldChanged(); })" id="includeEmailAddress">
 				<label class="form-check-label" for="includeEmailAddress">
 					E-mailadres
 				</label>
@@ -42,7 +42,7 @@
 	<!-- Output Format -->
 	<div class="mb-3">
 		<label class="form-label">Uitvoerformaat *</label>
-		<InputSelect @bind-Value="Model.OutputFormat" class="form-select w-auto">
+		<InputSelect Value="@Model.OutputFormat" ValueChanged="@((string value) => { Model.OutputFormat = value; OnFieldChanged(); })" ValueExpression="@(() => Model.OutputFormat)" class="form-select w-auto">
 			<option value="PDF">PDF</option>
 			<option value="Excel">Excel</option>
 		</InputSelect>
@@ -52,7 +52,7 @@
 	<!-- Orientation -->
 	<div class="mb-3">
 		<label class="form-label">Oriëntatie *</label>
-		<InputSelect @bind-Value="Model.Orientation" class="form-select w-auto">
+		<InputSelect Value="@Model.Orientation" ValueChanged="@((string value) => { Model.Orientation = value; OnFieldChanged(); })" ValueExpression="@(() => Model.Orientation)" class="form-select w-auto">
 			<option value="Portrait">Staand (Portrait)</option>
 			<option value="Landscape">Liggend (Landscape)</option>
 		</InputSelect>
@@ -62,7 +62,7 @@
 	<!-- Sort Order -->
 	<div class="mb-3">
 		<label class="form-label">Sorteervolgorde *</label>
-		<InputSelect @bind-Value="Model.SortOrder" class="form-select w-auto">
+		<InputSelect Value="@Model.SortOrder" ValueChanged="@((string value) => { Model.SortOrder = value; OnFieldChanged(); })" ValueExpression="@(() => Model.SortOrder)" class="form-select w-auto">
 			<option value="LastName">Achternaam</option>
 			<option value="FirstName">Voornaam</option>
 		</InputSelect>
@@ -73,6 +73,14 @@
 @code {
 	[Parameter]
 	public ReportModel Model { get; set; } = default!;
+
+	[Parameter]
+	public EventCallback OnFieldChangedCallback { get; set; }
+
+	private void OnFieldChanged()
+	{
+		OnFieldChangedCallback.InvokeAsync();
+	}
 }
 
 

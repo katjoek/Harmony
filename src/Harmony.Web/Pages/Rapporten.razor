@@ -101,7 +101,7 @@
                 </div>
             }
 
-            <ReportOptions Model="@reportModel" />
+            <ReportOptions Model="@reportModel" OnFieldChangedCallback="@(() => InvokeAsync(StateHasChanged))" />
 
             <!-- Generate Button -->
             <div class="d-flex align-items-center gap-3">
