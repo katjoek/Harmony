@@ -14,7 +14,7 @@
     <div class="d-flex gap-2">
         <div class="input-group">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input class="form-control" placeholder="Zoeken..." @bind="personSearch" @bind:event="oninput" />
+            <input @ref="personSearchInput" class="form-control" placeholder="Zoeken..." @bind="personSearch" @bind:event="oninput" />
             @if (!string.IsNullOrWhiteSpace(personSearch))
             {
                 <button type="button" class="btn btn-outline-secondary" title="Wissen" @onclick="ClearPersonSearch">
@@ -249,6 +249,7 @@
     private bool showPersonModal = false;
     private string personSearch = "";
     private string personSortOrder = "LastName"; // Default to last name sorting
+    private ElementReference personSearchInput;
     
     // Groups modal state
     private bool showGroupsModal = false;
@@ -277,6 +278,23 @@
             }
         });
         return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Small delay to ensure the element is fully rendered
+            await Task.Delay(50);
+            try
+            {
+                await personSearchInput.FocusAsync();
+            }
+            catch
+            {
+                // Ignore focus errors (e.g., if element not yet rendered)
+            }
+        }
     }
 
     private async Task LoadPersons()
