@@ -24,7 +24,7 @@ public sealed class GroupRepository : IGroupRepository
     public async Task<IReadOnlyList<Group>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Groups
-            .OrderBy(g => g.Name)
+            .OrderBy(g => g.Name.ToLower())
             .ToListAsync(cancellationToken);
     }
 
@@ -37,6 +37,7 @@ public sealed class GroupRepository : IGroupRepository
 
         return await _context.Groups
             .Where(g => groupIds.Contains(g.Id))
+            .OrderBy(g => g.Name.ToLower())
             .ToListAsync(cancellationToken);
     }
 

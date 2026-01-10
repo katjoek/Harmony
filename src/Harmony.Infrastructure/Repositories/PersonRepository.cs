@@ -24,8 +24,8 @@ public sealed class PersonRepository : IPersonRepository
     public async Task<IReadOnlyList<Person>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Persons
-            .OrderBy(p => p.Name.FirstName)
-            .ThenBy(p => p.Name.Surname)
+            .OrderBy(p => p.Name.FirstName.ToLower())
+            .ThenBy(p => (p.Name.Surname ?? "").ToLower())
             .ToListAsync(cancellationToken);
     }
 
@@ -38,6 +38,8 @@ public sealed class PersonRepository : IPersonRepository
 
         return await _context.Persons
             .Where(p => personIds.Contains(p.Id))
+            .OrderBy(p => p.Name.FirstName.ToLower())
+            .ThenBy(p => (p.Name.Surname ?? "").ToLower())
             .ToListAsync(cancellationToken);
     }
 

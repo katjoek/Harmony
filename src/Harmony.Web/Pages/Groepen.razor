@@ -307,7 +307,11 @@
     {
         if (allPersons == null) return Task.CompletedTask;
         
-        groupMembers = allPersons.Where(p => p.GroupIds.Contains(groupId)).ToList();
+        groupMembers = allPersons
+            .Where(p => p.GroupIds.Contains(groupId))
+            .OrderBy(p => p.FirstName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(p => p.Surname ?? "", StringComparer.OrdinalIgnoreCase)
+            .ToList();
         return Task.CompletedTask;
     }
 
@@ -316,7 +320,11 @@
         if (allPersons == null || groupMembers == null) return;
 
         var memberIds = groupMembers.Select(m => m.Id).ToHashSet();
-        availablePersons = allPersons.Where(p => !memberIds.Contains(p.Id)).ToList();
+        availablePersons = allPersons
+            .Where(p => !memberIds.Contains(p.Id))
+            .OrderBy(p => p.FirstName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(p => p.Surname ?? "", StringComparer.OrdinalIgnoreCase)
+            .ToList();
         selectedAvailableIds.Clear();
         selectedMemberIds.Clear();
     }
@@ -476,7 +484,7 @@
         var memberNames = allPersons
             .Where(p => group.MemberIds.Contains(p.Id))
             .Select(p => p.FullName)
-            .OrderBy(n => n)
+            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         return memberNames.Any() 
@@ -496,6 +504,8 @@
         {
             coordinatorCandidates = allPersons
                 .Where(p => p.GroupIds.Contains(groupModel.Id!))
+                .OrderBy(p => p.FirstName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(p => p.Surname ?? "", StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
         else
@@ -563,9 +573,17 @@
     }
 
     private IEnumerable<GroupDto> FilteredGroups
-        => string.IsNullOrWhiteSpace(groupSearch) || groups == null
-            ? groups ?? Enumerable.Empty<GroupDto>()
-            : groups.Where(g => MatchesGroup(g, groupSearch));
+    {
+        get
+        {
+            var filtered = string.IsNullOrWhiteSpace(groupSearch) || groups == null
+                ? groups ?? Enumerable.Empty<GroupDto>()
+                : groups.Where(g => MatchesGroup(g, groupSearch));
+            
+            // Apply case-insensitive sorting
+            return filtered.OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
+        }
+    }
 
     private static bool MatchesGroup(GroupDto g, string term)
     {

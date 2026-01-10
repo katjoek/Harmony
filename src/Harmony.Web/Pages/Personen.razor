@@ -305,7 +305,7 @@
         var groupNames = allGroups
             .Where(g => person.GroupIds.Contains(g.Id))
             .Select(g => g.Name)
-            .OrderBy(n => n)
+            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         return groupNames.Any() 
@@ -334,14 +334,20 @@
     {
         if (allGroups == null || selectedPerson == null) return;
         var set = selectedPerson.GroupIds.ToHashSet();
-        personGroups = allGroups.Where(g => set.Contains(g.Id)).ToList();
+        personGroups = allGroups
+            .Where(g => set.Contains(g.Id))
+            .OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private void UpdateAvailableGroups()
     {
         if (allGroups == null || personGroups == null) return;
         var member = personGroups.Select(g => g.Id).ToHashSet();
-        availableGroups = allGroups.Where(g => !member.Contains(g.Id)).ToList();
+        availableGroups = allGroups
+            .Where(g => !member.Contains(g.Id))
+            .OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
         selectedAvailableGroupIds.Clear();
         selectedMemberGroupIds.Clear();
     }
@@ -575,10 +581,10 @@
                 ? persons ?? Enumerable.Empty<PersonDto>()
                 : persons.Where(p => MatchesPerson(p, personSearch));
 
-            // Apply sorting
+            // Apply sorting (case-insensitive)
             return personSortOrder == "FirstName"
-                ? filtered.OrderBy(p => p.FirstName).ThenBy(p => p.Surname ?? "")
-                : filtered.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName);
+                ? filtered.OrderBy(p => p.FirstName, StringComparer.OrdinalIgnoreCase).ThenBy(p => p.Surname ?? "", StringComparer.OrdinalIgnoreCase)
+                : filtered.OrderBy(p => p.Surname ?? "", StringComparer.OrdinalIgnoreCase).ThenBy(p => p.FirstName, StringComparer.OrdinalIgnoreCase);
         }
     }
 
