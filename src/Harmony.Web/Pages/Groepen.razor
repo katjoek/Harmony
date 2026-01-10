@@ -165,7 +165,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Leden van @(selectedGroup?.Name)</h5>
+                <h5 class="modal-title">Leden van @(selectedGroup?.Name) beheren</h5>
                 <button type="button" class="btn-close" @onclick="CloseMembersModal"></button>
             </div>
             <div class="modal-body">
@@ -173,7 +173,7 @@
                 {
                     <div class="row">
                         <div class="col-md-5">
-                            <label class="form-label">Niet-leden</label>
+                            <label class="form-label">Beschikbare personen</label>
                             <select id="group-available" multiple size="10" class="form-select dual-list-select" @onchange="OnAvailableChange">
                                 @foreach (var p in availablePersons)
                                 {
