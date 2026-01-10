@@ -59,6 +59,7 @@ public sealed class GroupRepository : IGroupRepository
         {
             _context.Groups.Remove(group);
             await _context.SaveChangesAsync(cancellationToken);
+            // Associated membership records are automatically deleted via database cascade delete
         }
     }
 

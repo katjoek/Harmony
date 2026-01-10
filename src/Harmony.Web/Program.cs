@@ -74,7 +74,7 @@ builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<IReportService, ReportService>();
- builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
+builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
 builder.Services.AddScoped<IDatabaseCleanupService, DatabaseCleanupService>();
 builder.Services.AddScoped<DataSeeder>();
 builder.Services.AddScoped<SeedDataCommand>();

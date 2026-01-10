@@ -60,6 +60,7 @@ public sealed class PersonRepository : IPersonRepository
         {
             _context.Persons.Remove(person);
             await _context.SaveChangesAsync(cancellationToken);
+            // Associated membership records are automatically deleted via database cascade delete
         }
     }
 

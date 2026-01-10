@@ -130,6 +130,19 @@ public sealed class HarmonyDbContext : DbContext
                 id => id.Value,
                 value => new GroupId(value));
 
+        // Configure foreign key relationships with cascade delete
+        membershipBuilder
+            .HasOne<Person>()
+            .WithMany()
+            .HasForeignKey(m => m.PersonId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        membershipBuilder
+            .HasOne<Group>()
+            .WithMany()
+            .HasForeignKey(m => m.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Add indexes for better query performance
         membershipBuilder.HasIndex(m => m.PersonId);
         membershipBuilder.HasIndex(m => m.GroupId);
