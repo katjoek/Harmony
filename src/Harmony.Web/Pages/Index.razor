@@ -6,53 +6,53 @@
     <h1 class="display-4">Welkom bij Harmony</h1>
     <p class="lead">Beheer uw gemeenschap eenvoudig en efficiënt</p>
     
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-users me-2"></i>
-                        Personen Beheer
-                    </h5>
-                    <p class="card-text">
+    <div class="row mt-5 g-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="fas fa-users" style="font-size: 4rem; color: var(--bs-primary);"></i>
+                    </div>
+                    <h5 class="card-title mb-3">Personen Beheer</h5>
+                    <p class="card-text flex-grow-1">
                         Beheer alle personen in uw gemeenschap. Voeg nieuwe leden toe, 
                         bewerk hun gegevens en organiseer hen in groepen.
                     </p>
-                    <button type="button" class="btn btn-primary" @onclick="@(() => NavigationManager.NavigateTo("/personen"))">
+                    <button type="button" class="btn btn-primary mt-auto" @onclick="@(() => NavigationManager.NavigateTo("/personen"))">
                         Naar Personen
                     </button>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-user-friends me-2"></i>
-                        Groepen Beheer
-                    </h5>
-                    <p class="card-text">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="fas fa-user-friends" style="font-size: 4rem; color: var(--bs-primary);"></i>
+                    </div>
+                    <h5 class="card-title mb-3">Groepen Beheer</h5>
+                    <p class="card-text flex-grow-1">
                         Organiseer uw gemeenschap in groepen. Maak nieuwe groepen aan, 
                         wijs coördinatoren toe en beheer lidmaatschappen.
                     </p>
-                    <button type="button" class="btn btn-primary" @onclick="@(() => NavigationManager.NavigateTo("/groepen"))">
+                    <button type="button" class="btn btn-primary mt-auto" @onclick="@(() => NavigationManager.NavigateTo("/groepen"))">
                         Naar Groepen
                     </button>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mt-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-file-alt me-2"></i>
-                        Rapporten
-                    </h5>
-                    <p class="card-text">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="fas fa-file-alt" style="font-size: 4rem; color: var(--bs-primary);"></i>
+                    </div>
+                    <h5 class="card-title mb-3">Rapporten</h5>
+                    <p class="card-text flex-grow-1">
                         Genereer overzichten van groepen in PDF of Excel formaat. 
                         Selecteer welke velden opgenomen moeten worden in het rapport.
                     </p>
-                    <button type="button" class="btn btn-primary" @onclick="@(() => NavigationManager.NavigateTo("/rapporten"))">
+                    <button type="button" class="btn btn-primary mt-auto" @onclick="@(() => NavigationManager.NavigateTo("/rapporten"))">
                         Naar Rapporten
                     </button>
                 </div>
