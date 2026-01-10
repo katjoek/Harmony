@@ -75,6 +75,7 @@ builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<IReportService, ReportService>();
  builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
+builder.Services.AddScoped<IDatabaseCleanupService, DatabaseCleanupService>();
 builder.Services.AddScoped<DataSeeder>();
 builder.Services.AddScoped<SeedDataCommand>();
 
@@ -144,6 +145,14 @@ using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
         context.Database.EnsureCreated();
+        
+        // Perform database clean-up: delete orphaned group membership entries
+        var cleanupService = scope.ServiceProvider.GetRequiredService<IDatabaseCleanupService>();
+        var deletedCount = await cleanupService.CleanupOrphanedMembershipsAsync();
+        if (deletedCount > 0)
+        {
+            Console.WriteLine($"Database cleanup: Removed {deletedCount} orphaned group membership entries.");
+        }
     }
 }
 
