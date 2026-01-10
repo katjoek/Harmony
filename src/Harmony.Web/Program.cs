@@ -147,6 +147,7 @@ using (var scope = app.Services.CreateScope())
         context.Database.EnsureCreated();
         
         // Perform database clean-up: delete orphaned group membership entries
+        // (memberships for persons or groups that no longer exist)
         var cleanupService = scope.ServiceProvider.GetRequiredService<IDatabaseCleanupService>();
         var deletedCount = await cleanupService.CleanupOrphanedMembershipsAsync();
         if (deletedCount > 0)

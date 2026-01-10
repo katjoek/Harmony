@@ -16,8 +16,10 @@ public sealed class DatabaseCleanupService : IDatabaseCleanupService
     public async Task<int> CleanupOrphanedMembershipsAsync(CancellationToken cancellationToken = default)
     {
         // Find all PersonGroupMembership entries where PersonId doesn't exist in Persons table
+        // or GroupId doesn't exist in Groups table
         var orphanedMemberships = await _context.PersonGroupMemberships
-            .Where(m => !_context.Persons.Any(p => p.Id == m.PersonId))
+            .Where(m => !_context.Persons.Any(p => p.Id == m.PersonId) ||
+                        !_context.Groups.Any(g => g.Id == m.GroupId))
             .ToListAsync(cancellationToken);
 
         if (orphanedMemberships.Count == 0)
