@@ -73,4 +73,46 @@ window.downloadFile = function (fileName, base64Data, contentType) {
   window.URL.revokeObjectURL(url);
 };
 
+window.searchUtils = {
+  registerF3Focus: function (elementId) {
+    // Remove any existing handler first
+    if (window._harmonyF3Handler) {
+      document.removeEventListener('keydown', window._harmonyF3Handler);
+      window._harmonyF3Handler = null;
+    }
+    
+    // Create new handler
+    const handler = function (e) {
+      // Check if F3 is pressed
+      if (e.key === 'F3') {
+        const activeElement = document.activeElement;
+        const searchInput = document.getElementById(elementId);
+        
+        // If search input doesn't exist, do nothing
+        if (!searchInput) return;
+        
+        // If search input is already focused, do nothing (let user continue typing)
+        if (activeElement === searchInput) return;
+        
+        // Prevent default F3 behavior (browser search)
+        e.preventDefault();
+        
+        // Focus and select the search input
+        searchInput.focus();
+        searchInput.select(); // Select existing text for easy replacement
+      }
+    };
+    
+    document.addEventListener('keydown', handler);
+    window._harmonyF3Handler = handler;
+  },
+  
+  unregisterF3Focus: function () {
+    if (window._harmonyF3Handler) {
+      document.removeEventListener('keydown', window._harmonyF3Handler);
+      window._harmonyF3Handler = null;
+    }
+  }
+};
+
 

@@ -6,6 +6,7 @@
 @using LiteBus.Commands.Abstractions
 @using LiteBus.Queries.Abstractions
 @using System.Linq
+@implements IDisposable
 
 <PageTitle>Personen - Harmony</PageTitle>
 
@@ -14,7 +15,7 @@
     <div class="d-flex gap-2">
         <div class="input-group">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input @ref="personSearchInput" class="form-control" placeholder="Zoeken..." @bind="personSearch" @bind:event="oninput" />
+            <input @ref="personSearchInput" id="person-search-input" class="form-control" placeholder="Zoeken... (F3)" @bind="personSearch" @bind:event="oninput" />
             @if (!string.IsNullOrWhiteSpace(personSearch))
             {
                 <button type="button" class="btn btn-outline-secondary" title="Wissen" @onclick="ClearPersonSearch">
@@ -284,6 +285,9 @@
     {
         if (firstRender)
         {
+            // Register F3 keyboard shortcut to focus search
+            await JSRuntime.InvokeVoidAsync("searchUtils.registerF3Focus", "person-search-input");
+            
             // Small delay to ensure the element is fully rendered
             await Task.Delay(50);
             try
@@ -295,6 +299,22 @@
                 // Ignore focus errors (e.g., if element not yet rendered)
             }
         }
+    }
+
+    public void Dispose()
+    {
+        // Unregister F3 handler when component is disposed
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("searchUtils.unregisterF3Focus");
+            }
+            catch
+            {
+                // Ignore errors during disposal
+            }
+        });
     }
 
     private async Task LoadPersons()

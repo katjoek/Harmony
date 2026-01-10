@@ -6,6 +6,7 @@
 @using Harmony.Web.Models
 @using LiteBus.Commands.Abstractions
 @using LiteBus.Queries.Abstractions
+@implements IDisposable
 
 <PageTitle>Groepen - Harmony</PageTitle>
 
@@ -14,7 +15,7 @@
     <div class="d-flex gap-2">
         <div class="input-group">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input @ref="groupSearchInput" class="form-control" placeholder="Zoeken..." @bind="groupSearch" @bind:event="oninput" />
+            <input @ref="groupSearchInput" id="group-search-input" class="form-control" placeholder="Zoeken... (F3)" @bind="groupSearch" @bind:event="oninput" />
             @if (!string.IsNullOrWhiteSpace(groupSearch))
             {
                 <button type="button" class="btn btn-outline-secondary" title="Wissen" @onclick="ClearGroupSearch">
@@ -247,6 +248,9 @@
     {
         if (firstRender)
         {
+            // Register F3 keyboard shortcut to focus search
+            await JSRuntime.InvokeVoidAsync("searchUtils.registerF3Focus", "group-search-input");
+            
             // Small delay to ensure the element is fully rendered
             await Task.Delay(50);
             try
@@ -258,6 +262,22 @@
                 // Ignore focus errors (e.g., if element not yet rendered)
             }
         }
+    }
+
+    public void Dispose()
+    {
+        // Unregister F3 handler when component is disposed
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("searchUtils.unregisterF3Focus");
+            }
+            catch
+            {
+                // Ignore errors during disposal
+            }
+        });
     }
 
     private async Task LoadData()
