@@ -67,6 +67,7 @@
                 <th>Adres</th>
                 <th>Telefoon</th>
                 <th>E-mail</th>
+                <th>&#35; Groepen</th>
                 <th>Acties</th>
             </tr>
         </thead>
@@ -82,6 +83,7 @@
                         <td><div class="placeholder-glow"><span class="placeholder col-10"></span></div></td>
                         <td><div class="placeholder-glow"><span class="placeholder col-7"></span></div></td>
                         <td><div class="placeholder-glow"><span class="placeholder col-9"></span></div></td>
+                        <td><div class="placeholder-glow"><span class="placeholder col-3"></span></div></td>
                         <td>
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-secondary" disabled>
@@ -98,13 +100,13 @@
             else if (persons.Count == 0)
             {
                 <tr>
-                    <td colspan="6" class="text-center text-muted">Geen personen gevonden.</td>
+                    <td colspan="7" class="text-center text-muted">Geen personen gevonden.</td>
                 </tr>
             }
             else if (!FilteredPersons.Any())
             {
                 <tr>
-                    <td colspan="6" class="text-center text-muted">Geen resultaten voor "@personSearch".</td>
+                    <td colspan="7" class="text-center text-muted">Geen resultaten voor "@personSearch".</td>
                 </tr>
             }
             else
@@ -117,6 +119,9 @@
                         <td>@person.FormattedAddress</td>
                         <td>@person.PhoneNumber</td>
                         <td>@person.EmailAddress</td>
+                        <td class="text-center">
+                            @person.GroupIds.Count
+                        </td>
                         <td>
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-info" title="Groepen" @onclick="@(() => OpenGroupsModal(person))">
