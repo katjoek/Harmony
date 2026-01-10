@@ -72,6 +72,7 @@ builder.Services.AddLiteBus(config =>
 // Add repositories and services
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
 builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();

@@ -4,6 +4,7 @@
 @using Harmony.ApplicationCore.Queries.Persons
 @using Harmony.Web.Models
 @using LiteBus.Queries.Abstractions
+@using LiteBus.Commands.Abstractions
 @using System.Linq
 
 <PageTitle>Rapporten - Harmony</PageTitle>
@@ -28,13 +29,13 @@
                 <label class="form-label">Rapporttype *</label>
                 <div class="d-flex gap-4">
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Group")" checked="@(reportModel.ReportType == "Group")" id="typeGroup">
+                        <input class="form-check-input" type="radio" name="reportType" @onchange="@(async () => await OnReportTypeChanged("Group"))" checked="@(reportModel.ReportType == "Group")" id="typeGroup">
                         <label class="form-check-label" for="typeGroup">
                             Groepsrapport
                         </label>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Birthday")" checked="@(reportModel.ReportType == "Birthday")" id="typeBirthday">
+                        <input class="form-check-input" type="radio" name="reportType" @onchange="@(async () => await OnReportTypeChanged("Birthday"))" checked="@(reportModel.ReportType == "Birthday")" id="typeBirthday">
                         <label class="form-check-label" for="typeBirthday">
                             Verjaardagen
                         </label>
@@ -66,6 +67,28 @@
             }
             else if (reportModel.ReportType == "Birthday")
             {
+                <!-- Group Selection (Optional) -->
+                <div class="mb-3">
+                    <label class="form-label">Groep selecteren (optioneel)</label>
+                    <InputSelect TValue="string"
+                                 Value="@reportModel.SelectedGroupId"
+                                 ValueChanged="@OnBirthdayGroupChanged"
+                                 ValueExpression="@(() => reportModel.SelectedGroupId)"
+                                 class="form-select">
+                        <option value="">-- Alle personen --</option>
+                        @if (groups != null)
+                        {
+                            @foreach (var group in groups)
+                            {
+                                <option value="@group.Id">@group.Name (@group.MemberCount leden)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <small class="form-text text-muted">
+                        Selecteer een groep om alleen personen uit die groep te tonen, of laat leeg voor alle personen.
+                    </small>
+                </div>
+                
                 <!-- Month Selection -->
                 <div class="mb-3">
                     <label class="form-label">Maand *</label>
@@ -92,10 +115,14 @@
                     }
                     else if (reportModel.ReportType == "Birthday" && allPersons != null)
                     {
-                        var count = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth).Count();
+                        var birthdayPersons = GetFilteredBirthdayPersons();
+                        var count = birthdayPersons.Count();
+                        var groupInfo = !string.IsNullOrEmpty(reportModel.SelectedGroupId) && selectedBirthdayGroup != null
+                            ? $" uit groep \"{selectedBirthdayGroup.Name}\""
+                            : "";
                         <small class="text-muted">
                             <i class="fas fa-info-circle me-1"></i>
-                            @count personen met verjaardag in @GetDutchMonthName(reportModel.SelectedMonth)
+                            @count personen met verjaardag in @GetDutchMonthName(reportModel.SelectedMonth)@groupInfo
                         </small>
                     }
                 </div>
@@ -272,6 +299,7 @@
     private List<PersonDto>? allPersons;
     private List<PersonDto>? groupMembers;
     private GroupDto? selectedGroup;
+    private GroupDto? selectedBirthdayGroup;
     private ReportModel reportModel = new();
     private bool isGenerating = false;
     private int memberCount = 0;
@@ -284,6 +312,7 @@
             try
             {
                 await LoadData();
+                await LoadBirthdayGroupFromConfig();
             }
             catch (Exception ex)
             {
@@ -315,10 +344,84 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task OnReportTypeChanged(string reportType)
+    {
+        reportModel.ReportType = reportType;
+        
+        if (reportType == "Birthday")
+        {
+            // Load saved Birthday group when switching to Birthday report type
+            await LoadBirthdayGroupFromConfig();
+        }
+        else if (reportType == "Group")
+        {
+            // Clear SelectedGroupId when switching to Group report type
+            // User must select a group for Group reports
+            reportModel.SelectedGroupId = null;
+            selectedGroup = null;
+            groupMembers = null;
+            memberCount = 0;
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
     private async Task OnSelectedGroupChanged(string? value)
     {
         reportModel.SelectedGroupId = value;
         await OnGroupSelectionChanged(value);
+    }
+
+    private async Task OnBirthdayGroupChanged(string? value)
+    {
+        reportModel.SelectedGroupId = value;
+        await OnBirthdayGroupSelectionChanged(value);
+        await SaveBirthdayGroupToConfig(value);
+    }
+
+    private async Task OnBirthdayGroupSelectionChanged(string? groupId)
+    {
+        if (!string.IsNullOrEmpty(groupId) && groups != null)
+        {
+            selectedBirthdayGroup = groups.FirstOrDefault(g => g.Id == groupId);
+        }
+        else
+        {
+            selectedBirthdayGroup = null;
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadBirthdayGroupFromConfig()
+    {
+        try
+        {
+            var query = new Harmony.ApplicationCore.Queries.Config.GetConfigValueQuery("BirthdayReport.SelectedGroupId");
+            var savedGroupId = await QueryMediator.QueryAsync(query);
+            
+            if (!string.IsNullOrEmpty(savedGroupId) && groups != null)
+            {
+                reportModel.SelectedGroupId = savedGroupId;
+                await OnBirthdayGroupSelectionChanged(savedGroupId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading birthday group from config: {ex.Message}");
+        }
+    }
+
+    private async Task SaveBirthdayGroupToConfig(string? groupId)
+    {
+        try
+        {
+            var command = new Harmony.ApplicationCore.Commands.Config.SetConfigValueCommand("BirthdayReport.SelectedGroupId", groupId);
+            await CommandMediator.SendAsync(command);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving birthday group to config: {ex.Message}");
+        }
     }
 
     private async Task OnGroupSelectionChanged(string? groupId)
@@ -394,7 +497,7 @@
         {
             if (allPersons == null) return;
             var monthName = GetDutchMonthName(reportModel.SelectedMonth);
-            var persons = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
+            var persons = GetFilteredBirthdayPersons()
                                     .OrderBy(p => p.DateOfBirth?.Day)
                                     .ToList();
             var reportData = await ReportService.GenerateBirthdayPdfReportAsync(monthName, persons, reportModel);
@@ -414,7 +517,7 @@
         {
             if (allPersons == null) return;
             var monthName = GetDutchMonthName(reportModel.SelectedMonth);
-            var persons = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
+            var persons = GetFilteredBirthdayPersons()
                                     .OrderBy(p => p.DateOfBirth?.Day)
                                     .ToList();
             var reportData = await ReportService.GenerateBirthdayExcelReportAsync(monthName, persons, reportModel);
@@ -470,12 +573,25 @@
             : groupMembers.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName);
     }
 
-    private IEnumerable<PersonDto> GetSortedBirthdayPersons()
+    private IEnumerable<PersonDto> GetFilteredBirthdayPersons()
     {
         if (allPersons == null) return Enumerable.Empty<PersonDto>();
         
-        var birthdayPersons = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth)
-                                       .OrderBy(p => p.DateOfBirth?.Day);
+        var filtered = allPersons.Where(p => p.DateOfBirth?.Month == reportModel.SelectedMonth);
+        
+        // Filter by group if selected
+        if (!string.IsNullOrEmpty(reportModel.SelectedGroupId))
+        {
+            filtered = filtered.Where(p => p.GroupIds.Contains(reportModel.SelectedGroupId));
+        }
+        
+        return filtered;
+    }
+
+    private IEnumerable<PersonDto> GetSortedBirthdayPersons()
+    {
+        var birthdayPersons = GetFilteredBirthdayPersons()
+            .OrderBy(p => p.DateOfBirth?.Day);
         
         return reportModel.SortOrder == "FirstName"
             ? birthdayPersons.ThenBy(p => p.FirstName).ThenBy(p => p.Surname ?? "")
@@ -484,5 +600,6 @@
 }
 
 @inject IQueryMediator QueryMediator
+@inject ICommandMediator CommandMediator
 @inject IJSRuntime JSRuntime
 @inject Harmony.Web.Services.IReportService ReportService

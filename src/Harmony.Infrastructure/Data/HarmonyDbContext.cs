@@ -9,6 +9,7 @@ public sealed class HarmonyDbContext : DbContext
     public DbSet<Person> Persons { get; set; } = null!;
     public DbSet<Group> Groups { get; set; } = null!;
     public DbSet<PersonGroupMembership> PersonGroupMemberships { get; set; } = null!;
+    public DbSet<Config> Configs { get; set; } = null!;
 
     public HarmonyDbContext(DbContextOptions<HarmonyDbContext> options) : base(options)
     {
@@ -21,6 +22,7 @@ public sealed class HarmonyDbContext : DbContext
         ConfigurePersonEntity(modelBuilder);
         ConfigureGroupEntity(modelBuilder);
         ConfigureMembershipEntity(modelBuilder);
+        ConfigureConfigEntity(modelBuilder);
     }
 
     private static void ConfigurePersonEntity(ModelBuilder modelBuilder)
@@ -146,6 +148,23 @@ public sealed class HarmonyDbContext : DbContext
         // Add indexes for better query performance
         membershipBuilder.HasIndex(m => m.PersonId);
         membershipBuilder.HasIndex(m => m.GroupId);
+    }
+
+    private static void ConfigureConfigEntity(ModelBuilder modelBuilder)
+    {
+        var configBuilder = modelBuilder.Entity<Config>();
+
+        configBuilder.HasKey(c => c.Key);
+
+        configBuilder.Property(c => c.Key)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        configBuilder.Property(c => c.Value)
+            .HasMaxLength(1000);
+
+        configBuilder.HasIndex(c => c.Key)
+            .IsUnique();
     }
 }
 
