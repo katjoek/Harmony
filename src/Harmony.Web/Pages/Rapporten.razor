@@ -13,7 +13,9 @@
 </div>
 
 <!-- Report Generation Form -->
-<div class="card mb-4">
+<div class="row">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0">Rapport Genereren</h5>
     </div>
@@ -24,22 +26,18 @@
             <!-- Report Type Selection -->
             <div class="mb-3">
                 <label class="form-label">Rapporttype *</label>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Group")" checked="@(reportModel.ReportType == "Group")" id="typeGroup">
-                            <label class="form-check-label" for="typeGroup">
-                                Groepsrapport
-                            </label>
-                        </div>
+                <div class="d-flex gap-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Group")" checked="@(reportModel.ReportType == "Group")" id="typeGroup">
+                        <label class="form-check-label" for="typeGroup">
+                            Groepsrapport
+                        </label>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Birthday")" checked="@(reportModel.ReportType == "Birthday")" id="typeBirthday">
-                            <label class="form-check-label" for="typeBirthday">
-                                Verjaardagen
-                            </label>
-                        </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="reportType" @onchange="@(() => reportModel.ReportType = "Birthday")" checked="@(reportModel.ReportType == "Birthday")" id="typeBirthday">
+                        <label class="form-check-label" for="typeBirthday">
+                            Verjaardagen
+                        </label>
                     </div>
                 </div>
             </div>
@@ -83,8 +81,8 @@
             <ReportOptions Model="@reportModel" />
 
             <!-- Generate Button -->
-            <div class="d-flex justify-content-between">
-                <div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="flex-grow-1">
                     @if (reportModel.ReportType == "Group" && !string.IsNullOrEmpty(reportModel.SelectedGroupId) && selectedGroup != null)
                     {
                         <small class="text-muted">
@@ -115,6 +113,8 @@
                 </button>
             </div>
         </EditForm>
+    </div>
+        </div>
     </div>
 </div>
 
@@ -276,9 +276,22 @@
     private bool isGenerating = false;
     private int memberCount = 0;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
-        await LoadData();
+        // Start loading data in the background without blocking the initial render
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the page
+                Console.WriteLine($"Error loading data: {ex.Message}");
+            }
+        });
+        return Task.CompletedTask;
     }
 
     private async Task LoadData()
@@ -292,23 +305,23 @@
     {
         var query = new GetAllGroupsQuery();
         groups = (await QueryMediator.QueryAsync(query)).ToList();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadPersons()
     {
         var query = new GetAllPersonsQuery();
         allPersons = (await QueryMediator.QueryAsync(query)).ToList();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
-    private void OnSelectedGroupChanged(string? value)
+    private async Task OnSelectedGroupChanged(string? value)
     {
         reportModel.SelectedGroupId = value;
-        OnGroupSelectionChanged(value);
+        await OnGroupSelectionChanged(value);
     }
 
-    private void OnGroupSelectionChanged(string? groupId)
+    private async Task OnGroupSelectionChanged(string? groupId)
     {
         if (!string.IsNullOrEmpty(groupId) && groups != null && allPersons != null)
         {
@@ -322,7 +335,7 @@
             groupMembers = null;
             memberCount = 0;
         }
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task GenerateReport()
