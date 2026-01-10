@@ -16,6 +16,20 @@ a, .btn-link {
     border-color: #1861ac;
 }
 
+/* Override Bootstrap's primary color for navbar */
+.bg-primary,
+.navbar.bg-primary,
+nav.navbar.bg-primary,
+.navbar.navbar-expand-lg.navbar-dark.bg-primary {
+    background-color: #1b6ec2 !important;
+}
+
+/* Also override Bootstrap CSS variables if they're being used */
+:root {
+    --bs-primary: #1b6ec2;
+    --bs-primary-rgb: 27, 110, 194;
+}
+
 .content {
     padding-top: 1.1rem;
 }
