@@ -114,7 +114,7 @@
                 @foreach (var person in FilteredPersons)
                 {
                     <tr title="@GetPersonGroupsTooltip(person)">
-                        <td>@person.FullName</td>
+                        <td>@GetDisplayName(person)</td>
                         <td>@person.DateOfBirth?.ToString("dd-MM-yyyy")</td>
                         <td>@person.FormattedAddress</td>
                         <td>@person.PhoneNumber</td>
@@ -655,6 +655,28 @@
     {
         personSortOrder = personSortOrder == "FirstName" ? "LastName" : "FirstName";
         StateHasChanged();
+    }
+
+    private string GetDisplayName(PersonDto person)
+    {
+        if (personSortOrder == "FirstName")
+        {
+            // Format: "FirstName Prefix Surname" (same as FullName)
+            return person.FullName;
+        }
+        else
+        {
+            // Format: "Surname, FirstName Prefix"
+            var firstNameWithPrefix = string.Join(" ", new[] { person.FirstName, person.Prefix }.Where(x => !string.IsNullOrEmpty(x)));
+            
+            if (string.IsNullOrEmpty(person.Surname))
+            {
+                // No surname, just show first name with prefix
+                return firstNameWithPrefix;
+            }
+            
+            return $"{person.Surname}, {firstNameWithPrefix}";
+        }
     }
 }
 
