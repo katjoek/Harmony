@@ -10,6 +10,7 @@ Wijzigingen sinds v1.1.0
 - **Feedback bij genereren**: Laadindicator wordt nu getoond tijdens het genereren van rapporten
 - **Naamweergave**: Bij sorteren op achternaam wordt de naam weergegeven als "Achternaam, Voornaam Tussenvoegsel"
 - **Groepsselectie verjaardagsrapport**: Geselecteerde groep voor verjaardagsrapporten wordt nu onthouden tussen sessies (groepsrapporten starten altijd zonder selectie)
+- **Bestandsnaam verjaardagsrapport**: Bij verjaardagsrapporten wordt de groepsnaam nu opgenomen in de bestandsnaam wanneer een groep is geselecteerd
 
 ### Bugfixes
 

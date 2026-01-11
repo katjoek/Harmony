@@ -488,7 +488,15 @@
             else
             {
                 var monthName = GetDutchMonthName(reportModel.SelectedMonth).Replace(" ", "_");
-                fileName = $"Verjaardagen_{monthName}_{timestamp}";
+                if (selectedBirthdayGroup != null)
+                {
+                    var groupName = selectedBirthdayGroup.Name.Replace(" ", "_");
+                    fileName = $"Verjaardagen_{groupName}_{monthName}_{timestamp}";
+                }
+                else
+                {
+                    fileName = $"Verjaardagen_{monthName}_{timestamp}";
+                }
             }
             
             if (reportModel.OutputFormat == "PDF")
