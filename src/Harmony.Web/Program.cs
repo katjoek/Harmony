@@ -253,6 +253,7 @@ static async Task EnsureMigrationHistoryExistsAsync(HarmonyDbContext context, IL
     }
 }
 
+#if DEBUG
 // Check for seed command line argument
 if (args.Length > 0 && args[0] == "seed")
 {
@@ -273,68 +274,67 @@ if (args.Length > 0 && args[0] == "seed")
     Console.WriteLine("Seeding completed. Exiting application.");
     return;
 }
+#endif
 
 #if RELEASE
 // Open default browser to Harmony homepage in Release builds only
-if (!app.Environment.IsDevelopment())
+
+// Determine the URL to open - use the actual listening URL
+// app.Urls is populated from:
+// 1. Command-line arguments: --urls "http://localhost:8080"
+// 2. Environment variable: ASPNETCORE_URLS="http://localhost:8080"
+// 3. Configuration: appsettings.json "Urls" key
+string url = "http://localhost:5000"; // Default fallback URL
+
+// Try to get URL from app.Urls (includes command-line --urls, environment variables, and config)
+if (app.Urls.Count > 0)
 {
-    // Determine the URL to open - use the actual listening URL
-    // app.Urls is populated from:
-    // 1. Command-line arguments: --urls "http://localhost:8080"
-    // 2. Environment variable: ASPNETCORE_URLS="http://localhost:8080"
-    // 3. Configuration: appsettings.json "Urls" key
-    string url = "http://localhost:5000"; // Default fallback URL
-    
-    // Try to get URL from app.Urls (includes command-line --urls, environment variables, and config)
-    if (app.Urls.Count > 0)
-    {
-        // Prefer HTTP over HTTPS, or use the first available
-        url = app.Urls.FirstOrDefault(u => u.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) 
-              ?? app.Urls.First();
-    }
-    else
-    {
-        // Fall back to configuration (shouldn't normally be needed as app.Urls should contain these)
-        var urls = builder.Configuration["Urls"] ?? builder.Configuration["ASPNETCORE_URLS"];
-        if (!string.IsNullOrEmpty(urls))
-        {
-            // Parse URLs from the semicolon-separated list
-            var urlList = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            if (urlList.Length > 0)
-            {
-                // Prefer HTTP over HTTPS
-                url = urlList.FirstOrDefault(u => u.Trim().StartsWith("http://", StringComparison.OrdinalIgnoreCase))?.Trim()
-                      ?? urlList.First().Trim();
-            }
-        }
-    }
-    
-    // Ensure URL has protocol
-    if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
-        !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-    {
-        url = "http://" + url;
-    }
-    
-    // Launch browser after a short delay to ensure server is ready
-    _ = Task.Run(async () =>
-    {
-        await Task.Delay(2000); // Wait 2 seconds for server to start
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-        }
-        catch (Exception ex)
-        {
-            // Silently fail if browser cannot be opened
-            Console.WriteLine($"Could not open browser: {ex.Message}");
-        }
-    });
+    // Prefer HTTP over HTTPS, or use the first available
+    url = app.Urls.FirstOrDefault(u => u.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) 
+            ?? app.Urls.First();
 }
+else
+{
+    // Fall back to configuration (shouldn't normally be needed as app.Urls should contain these)
+    var urls = builder.Configuration["Urls"] ?? builder.Configuration["ASPNETCORE_URLS"];
+    if (!string.IsNullOrEmpty(urls))
+    {
+        // Parse URLs from the semicolon-separated list
+        var urlList = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
+        if (urlList.Length > 0)
+        {
+            // Prefer HTTP over HTTPS
+            url = urlList.FirstOrDefault(u => u.Trim().StartsWith("http://", StringComparison.OrdinalIgnoreCase))?.Trim()
+                    ?? urlList.First().Trim();
+        }
+    }
+}
+
+// Ensure URL has protocol
+if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
+    !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+{
+    url = "http://" + url;
+}
+
+// Launch browser after a short delay to ensure server is ready
+_ = Task.Run(async () =>
+{
+    await Task.Delay(2000); // Wait 2 seconds for server to start
+    try
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        });
+    }
+    catch (Exception ex)
+    {
+        // Silently fail if browser cannot be opened
+        Console.WriteLine($"Could not open browser: {ex.Message}");
+    }
+});
 #endif
 
 app.Run();
