@@ -303,6 +303,9 @@
     private ReportModel reportModel = new();
     private bool isGenerating = false;
     private int memberCount = 0;
+    
+    // Marker value to indicate "all persons" was explicitly selected (not just default)
+    private const string AllPersonsMarker = "__ALL_PERSONS__";
 
     protected override Task OnInitializedAsync()
     {
@@ -312,7 +315,8 @@
             try
             {
                 await LoadData();
-                await LoadBirthdayGroupFromConfig();
+                // Note: Birthday group config is only loaded when user switches to Birthday report type
+                // For Group reports, we always start with no selection (user must choose)
             }
             catch (Exception ex)
             {
@@ -399,13 +403,31 @@
         try
         {
             var query = new Harmony.ApplicationCore.Queries.Config.GetConfigValueQuery("BirthdayReport.SelectedGroupId");
-            var savedGroupId = await QueryMediator.QueryAsync(query);
+            var savedValue = await QueryMediator.QueryAsync(query);
             
-            if (!string.IsNullOrEmpty(savedGroupId) && groups != null)
+            // Only apply saved value if one was explicitly saved before
+            if (!string.IsNullOrEmpty(savedValue))
             {
-                reportModel.SelectedGroupId = savedGroupId;
-                await OnBirthdayGroupSelectionChanged(savedGroupId);
+                if (savedValue == AllPersonsMarker)
+                {
+                    // User explicitly chose "all persons" - set to empty string
+                    reportModel.SelectedGroupId = "";
+                    selectedBirthdayGroup = null;
+                }
+                else if (groups != null)
+                {
+                    // User chose a specific group - verify it still exists
+                    var groupExists = groups.Any(g => g.Id == savedValue);
+                    if (groupExists)
+                    {
+                        reportModel.SelectedGroupId = savedValue;
+                        await OnBirthdayGroupSelectionChanged(savedValue);
+                    }
+                    // If group no longer exists, leave selection empty (default behavior)
+                }
             }
+            // If savedValue is null/empty, it means no explicit selection was made yet
+            // Leave the default (empty selection)
         }
         catch (Exception ex)
         {
@@ -417,7 +439,10 @@
     {
         try
         {
-            var command = new Harmony.ApplicationCore.Commands.Config.SetConfigValueCommand("BirthdayReport.SelectedGroupId", groupId);
+            // Use marker value when "all persons" is selected (empty/null groupId)
+            // This distinguishes between "never configured" and "explicitly chose all persons"
+            var valueToSave = string.IsNullOrEmpty(groupId) ? AllPersonsMarker : groupId;
+            var command = new Harmony.ApplicationCore.Commands.Config.SetConfigValueCommand("BirthdayReport.SelectedGroupId", valueToSave);
             await CommandMediator.SendAsync(command);
         }
         catch (Exception ex)
