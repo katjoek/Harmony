@@ -82,3 +82,25 @@ if (Test-Path $installerName) {
     }
 }
 
+Write-Host ""
+Write-Host "Step 3: Creating git tag..." -ForegroundColor Cyan
+
+$tagName = "v$version"
+$tagMessage = "Release $version"
+
+# Check if tag already exists
+$existingTag = git tag -l $tagName 2>$null
+if ($existingTag) {
+    Write-Host "WARNING: Tag '$tagName' already exists. Skipping tag creation." -ForegroundColor Yellow
+} else {
+    git tag -a $tagName -m $tagMessage
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERROR: Failed to create git tag." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Created git tag: $tagName" -ForegroundColor Green
+    Write-Host "Tag message: $tagMessage" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "To push the tag to remote, run: git push origin $tagName" -ForegroundColor Yellow
+}
+
