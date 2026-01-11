@@ -22,6 +22,8 @@ Wijzigingen sinds v1.1.0
 - E2E-tests toegevoegd met Microsoft Playwright voor het aanmaken van personen
 - Database seeding is nu alleen beschikbaar in DEBUG-builds
 - Verbeterde afhandeling van databasemigraties voor bestaande databases
+- Installer script maakt nu ook een zip-bestand van de publish folder
+- Installer script maakt publish folder weg voordat de build gedaan wordt
 
 ---
 

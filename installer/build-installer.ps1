@@ -21,6 +21,13 @@ if (-not $nsisPath) {
 }
 
 Write-Host "Step 1: Publishing Harmony.Web application..." -ForegroundColor Cyan
+
+# Clean publish folder before publishing to ensure no stale files
+if (Test-Path $PublishPath) {
+    Write-Host "Cleaning existing publish folder..." -ForegroundColor Yellow
+    Remove-Item $PublishPath -Recurse -Force
+}
+
 dotnet publish $ProjectPath -c $Configuration -r win-x64 --self-contained true
 
 if ($LASTEXITCODE -ne 0) {
@@ -83,7 +90,27 @@ if (Test-Path $installerName) {
 }
 
 Write-Host ""
-Write-Host "Step 3: Creating git tag..." -ForegroundColor Cyan
+Write-Host "Step 3: Creating zip archive of publish folder..." -ForegroundColor Cyan
+
+$zipName = "Harmony-$version.zip"
+# Remove existing zip file if it exists
+if (Test-Path $zipName) {
+    Remove-Item $zipName -Force
+}
+
+# Create zip archive from publish folder
+Compress-Archive -Path "$PublishPath\*" -DestinationPath $zipName -CompressionLevel Optimal
+
+if ($LASTEXITCODE -ne 0 -and -not (Test-Path $zipName)) {
+    Write-Host "ERROR: Failed to create zip archive." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Zip archive created successfully!" -ForegroundColor Green
+Write-Host "Zip location: $(Resolve-Path $zipName)" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "Step 4: Creating git tag..." -ForegroundColor Cyan
 
 $tagName = "v$version"
 $tagMessage = "Release $version"
