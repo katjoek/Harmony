@@ -243,3 +243,6 @@ if (!app.Environment.IsDevelopment())
 #endif
 
 app.Run();
+
+// Partial class declaration to make Program accessible for WebApplicationFactory in tests
+public partial class Program { }

@@ -21,6 +21,7 @@ Het project volgt Clean Architecture principes met de volgende lagen:
 - **SQLite**: Embedded database
 - **LiteBus**: CQRS implementatie
 - **xUnit**: Unit testing framework
+- **Playwright**: E2E browser testing
 
 ## 🎯 Functionaliteiten
 
@@ -71,12 +72,43 @@ dotnet run
 De applicatie gebruikt SQLite met automatische database creatie. De database wordt aangemaakt bij de eerste start.
 
 ### Tests uitvoeren
-```bash
-# Run alle tests
-dotnet test
 
-# Run tests met coverage
-dotnet test --collect:"XPlat Code Coverage"
+#### Unit Tests
+```bash
+# Run unit tests
+dotnet test test/Harmony.Tests
+
+# Run met coverage
+dotnet test test/Harmony.Tests --collect:"XPlat Code Coverage"
+```
+
+#### E2E Tests (Playwright)
+De E2E tests gebruiken Microsoft Playwright om de applicatie in een echte browser te testen.
+
+**Eerste keer setup:**
+```bash
+# Build het E2E test project
+dotnet build test/Harmony.E2ETests
+
+# Installeer Playwright browsers (alleen eerste keer nodig)
+pwsh test/Harmony.E2ETests/bin/Debug/net9.0/playwright.ps1 install chromium
+```
+
+**Tests uitvoeren:**
+```bash
+# Run E2E tests
+dotnet test test/Harmony.E2ETests
+
+# Run met gedetailleerde output
+dotnet test test/Harmony.E2ETests --logger "console;verbosity=detailed"
+```
+
+**Debugging:** Voor visueel debuggen, wijzig `Headless = true` naar `Headless = false` in `test/Harmony.E2ETests/Infrastructure/PlaywrightFixture.cs`.
+
+#### Alle tests
+```bash
+# Run alle tests (unit + E2E)
+dotnet test
 ```
 
 ## 📁 Project Structuur
@@ -98,9 +130,12 @@ Harmony2/
 │   ├── Pages/                  # Blazor pages
 │   ├── Shared/                 # Shared components
 │   └── wwwroot/                # Static files
-├── Harmony.Tests/              # Test project
-│   ├── Domain/                 # Domain tests
-│   └── ApplicationCore/        # Application tests
+├── test/
+│   ├── Harmony.Tests/          # Unit tests
+│   │   ├── Domain/             # Domain tests
+│   │   └── ApplicationCore/    # Application tests
+│   └── Harmony.E2ETests/       # E2E tests (Playwright)
+│       └── Infrastructure/     # Test fixtures & factories
 └── requirements/               # Project requirements
 ```
 
@@ -159,11 +194,18 @@ Standaard logging configuratie in `appsettings.json`:
 
 ## 🧪 Testing
 
-Het project bevat uitgebreide unit tests:
+Het project bevat uitgebreide tests:
 
+### Unit Tests (`Harmony.Tests`)
 - **Domain Tests**: Value objects en entities
 - **Application Tests**: Command en query handlers
-- **Integration Tests**: End-to-end scenarios
+- Gebruikt xUnit en NSubstitute voor mocking
+
+### E2E Tests (`Harmony.E2ETests`)
+- **Browser Tests**: Testen van de volledige gebruikersstroom in een echte browser
+- Gebruikt Microsoft Playwright voor browser automatisering
+- Elke test krijgt een geïsoleerde SQLite database (automatisch opgeruimd)
+- Tests draaien headless (standaard) of met zichtbare browser (voor debugging)
 
 ## 📄 Licentie
 

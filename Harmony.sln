@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -15,6 +15,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmony.Seeder", "tools\Harmony.Seeder\Harmony.Seeder.csproj", "{A7921744-A753-4DEF-8EC9-BA31AFE2B1FF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmony.Import", "tools\Harmony.Import\Harmony.Import.csproj", "{71089936-865C-45C2-8417-E5E1CF602711}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FFF3D4AA-F6A2-4997-82F3-7901A379A1A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmony.E2ETests", "test\Harmony.E2ETests\Harmony.E2ETests.csproj", "{1A665930-77B3-4CE0-AA24-C46291A2BAF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,5 +42,12 @@ Global
 		{00000000-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00000000-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00000000-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A665930-77B3-4CE0-AA24-C46291A2BAF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A665930-77B3-4CE0-AA24-C46291A2BAF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A665930-77B3-4CE0-AA24-C46291A2BAF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A665930-77B3-4CE0-AA24-C46291A2BAF8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1A665930-77B3-4CE0-AA24-C46291A2BAF8} = {FFF3D4AA-F6A2-4997-82F3-7901A379A1A4}
 	EndGlobalSection
 EndGlobal
