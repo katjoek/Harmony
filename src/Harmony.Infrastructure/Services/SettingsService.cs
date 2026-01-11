@@ -11,7 +11,26 @@ public sealed class SettingsService : ISettingsService
     public SettingsService()
     {
         var appDirectory = AppContext.BaseDirectory;
-        _settingsFilePath = Path.Combine(appDirectory, "harmony.settings.json");
+        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        
+        string settingsDirectory;
+        if (appDirectory.StartsWith(userProfile, StringComparison.OrdinalIgnoreCase))
+        {
+            // Installed in user profile → use AppData (per-user settings)
+            settingsDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Harmony");
+        }
+        else
+        {
+            // Installed system-wide (e.g., Program Files) → use ProgramData (shared settings)
+            settingsDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                "Harmony");
+        }
+        
+        Directory.CreateDirectory(settingsDirectory);
+        _settingsFilePath = Path.Combine(settingsDirectory, "harmony.settings.json");
     }
 
     public async Task<string?> GetDatabaseDirectoryAsync(CancellationToken cancellationToken = default)
