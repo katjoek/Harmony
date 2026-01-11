@@ -136,7 +136,7 @@ app.MapRazorPages();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-// Ensure database is created (only if directory is configured)
+// Ensure database is created and migrations are applied (only if directory is configured)
 using (var scope = app.Services.CreateScope())
 {
     var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
@@ -145,7 +145,13 @@ using (var scope = app.Services.CreateScope())
     if (isConfigured)
     {
         var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
-        context.Database.EnsureCreated();
+        
+        // Check if this is a database created with EnsureCreated() (no migration history)
+        // If so, create the migration history table and mark existing migrations as applied
+        await EnsureMigrationHistoryExistsAsync(context, app.Logger);
+        
+        // Now apply any pending migrations
+        await context.Database.MigrateAsync();
         
         // Perform database clean-up: delete orphaned group membership entries
         // (memberships for persons or groups that no longer exist)
@@ -155,6 +161,95 @@ using (var scope = app.Services.CreateScope())
         {
             app.Logger.LogInformation("Database cleanup: Removed {DeletedCount} orphaned group membership entries.", deletedCount);
         }
+    }
+}
+
+// Helper method to ensure migration history exists for databases created with EnsureCreated()
+static async Task EnsureMigrationHistoryExistsAsync(HarmonyDbContext context, ILogger logger)
+{
+    var connection = context.Database.GetDbConnection();
+    await connection.OpenAsync();
+    
+    try
+    {
+        // Check if __EFMigrationsHistory table exists
+        using var checkCmd = connection.CreateCommand();
+        checkCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'";
+        var historyExists = await checkCmd.ExecuteScalarAsync() != null;
+        
+        if (historyExists)
+        {
+            // Migration history exists, nothing to do
+            return;
+        }
+        
+        // Check if this is an existing database (has Persons table) or a new database
+        using var checkPersonsCmd = connection.CreateCommand();
+        checkPersonsCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='Persons'";
+        var isExistingDatabase = await checkPersonsCmd.ExecuteScalarAsync() != null;
+        
+        if (!isExistingDatabase)
+        {
+            // New database - MigrateAsync() will handle everything
+            return;
+        }
+        
+        logger.LogInformation("Existing database detected without migration history. Creating migration history table...");
+        
+        // Create the __EFMigrationsHistory table
+        using var createHistoryCmd = connection.CreateCommand();
+        createHistoryCmd.CommandText = @"
+            CREATE TABLE __EFMigrationsHistory (
+                MigrationId TEXT NOT NULL PRIMARY KEY,
+                ProductVersion TEXT NOT NULL
+            )";
+        await createHistoryCmd.ExecuteNonQueryAsync();
+        
+        // Determine which migrations are already applied based on existing tables/indexes
+        var migrationsToMark = new List<string>();
+        
+        // InitialCreate - check if core tables exist
+        migrationsToMark.Add("20250826072508_InitialCreate");
+        
+        // PerformanceIndexes - check if indexes exist
+        using var checkIndexCmd = connection.CreateCommand();
+        checkIndexCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='index' AND name='IX_Persons_EmailAddress'";
+        if (await checkIndexCmd.ExecuteScalarAsync() != null)
+        {
+            migrationsToMark.Add("20250826090247_PerformanceIndexes");
+        }
+        
+        // AddCascadeDeleteToMemberships - this modified FK behavior, assume applied if table exists
+        using var checkMembershipCmd = connection.CreateCommand();
+        checkMembershipCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='PersonGroupMemberships'";
+        if (await checkMembershipCmd.ExecuteScalarAsync() != null)
+        {
+            migrationsToMark.Add("20260110150415_AddCascadeDeleteToMemberships");
+        }
+        
+        // AddConfigTable - check if Configs table exists
+        using var checkConfigCmd = connection.CreateCommand();
+        checkConfigCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='Configs'";
+        if (await checkConfigCmd.ExecuteScalarAsync() != null)
+        {
+            migrationsToMark.Add("20260110175328_AddConfigTable");
+        }
+        
+        // Insert migration history records
+        const string efCoreVersion = "9.0.1"; // Match the EF Core version in use
+        foreach (var migrationId in migrationsToMark)
+        {
+            using var insertCmd = connection.CreateCommand();
+            insertCmd.CommandText = $"INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('{migrationId}', '{efCoreVersion}')";
+            await insertCmd.ExecuteNonQueryAsync();
+            logger.LogInformation("Marked migration as applied: {MigrationId}", migrationId);
+        }
+        
+        logger.LogInformation("Migration history created. {Count} migrations marked as applied.", migrationsToMark.Count);
+    }
+    finally
+    {
+        await connection.CloseAsync();
     }
 }
 
