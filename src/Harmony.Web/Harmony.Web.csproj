@@ -3,6 +3,9 @@
   <PropertyGroup>
     <!-- Common properties are inherited from Directory.Build.props -->
     
+    <!-- Application Icon -->
+    <ApplicationIcon>..\..\artwork\HarmonyIcon.ico</ApplicationIcon>
+    
     <!-- Publishing Configuration for self-contained Windows x64 deployment -->
     <RuntimeIdentifier Condition="'$(Configuration)' == 'Release'">win-x64</RuntimeIdentifier>
     <SelfContained Condition="'$(Configuration)' == 'Release'">true</SelfContained>

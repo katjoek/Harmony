@@ -19,6 +19,7 @@
 ; Name and file
 Name "Harmony Community Manager"
 OutFile "Harmony-Setup-${VERSION}.exe"
+Icon "..\artwork\HarmonyIcon.ico"
 Unicode True
 
 ; Default installation folder
@@ -47,8 +48,8 @@ VIAddVersionKey "LegalCopyright" "Copyright 2025 Mark van de Veerdonk - Licensed
 ; Interface Settings
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
-!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+!define MUI_ICON "..\artwork\HarmonyIcon.ico"
+!define MUI_UNICON "..\artwork\HarmonyIcon.ico"
 
 ; Finish page settings
 !define MUI_FINISHPAGE_RUN "$INSTDIR\Harmony.Web.exe"
