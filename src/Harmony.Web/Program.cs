@@ -153,7 +153,7 @@ using (var scope = app.Services.CreateScope())
         var deletedCount = await cleanupService.CleanupOrphanedMembershipsAsync();
         if (deletedCount > 0)
         {
-            Console.WriteLine($"Database cleanup: Removed {deletedCount} orphaned group membership entries.");
+            app.Logger.LogInformation("Database cleanup: Removed {DeletedCount} orphaned group membership entries.", deletedCount);
         }
     }
 }
