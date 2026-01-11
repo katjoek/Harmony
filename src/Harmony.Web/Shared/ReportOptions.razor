@@ -13,9 +13,9 @@
 				</label>
 			</div>
 			<div class="form-check">
-				<input class="form-check-input" type="checkbox" checked="@Model.IncludeDateOfBirth" @onchange="@((e) => { Model.IncludeDateOfBirth = e.Value is bool value && value; OnFieldChanged(); })" id="includeDateOfBirth">
+				<input class="form-check-input" type="checkbox" checked="@Model.IncludeDateOfBirth" @onchange="@((e) => { Model.IncludeDateOfBirth = e.Value is bool value && value; OnFieldChanged(); })" id="includeDateOfBirth" disabled="@IsBirthdayReport">
 				<label class="form-check-label" for="includeDateOfBirth">
-					Geboortedatum
+					Geboortedatum@(IsBirthdayReport ? " (verplicht)" : "")
 				</label>
 			</div>
 			<div class="form-check">
@@ -73,6 +73,9 @@
 @code {
 	[Parameter]
 	public ReportModel Model { get; set; } = default!;
+
+	[Parameter]
+	public bool IsBirthdayReport { get; set; }
 
 	[Parameter]
 	public EventCallback OnFieldChangedCallback { get; set; }

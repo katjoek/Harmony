@@ -217,17 +217,19 @@ public class ReportService : IReportService
             table.SetWidth(UnitValue.CreatePercentValue(100));
             table.SetFontSize(9);
 
-            AddTableHeader(table, "Volledige naam");
+            // For birthday report: date column first
             if (config.IncludeDateOfBirth) AddTableHeader(table, "Geboortedatum");
+            AddTableHeader(table, "Volledige naam");
             if (config.IncludeAddress) AddTableHeader(table, "Adres");
             if (config.IncludePhoneNumber) AddTableHeader(table, "Telefoon");
             if (config.IncludeEmailAddress) AddTableHeader(table, "E-mail");
 
             foreach (var person in ordered)
             {
-                table.AddCell(new Cell().Add(new Paragraph(person.FullName ?? "")));
+                // For birthday report: date column first
                 if (config.IncludeDateOfBirth)
                     table.AddCell(new Cell().Add(new Paragraph(person.DateOfBirth?.ToString("dd-MM-yyyy") ?? "")));
+                table.AddCell(new Cell().Add(new Paragraph(person.FullName ?? "")));
                 if (config.IncludeAddress)
                     table.AddCell(new Cell().Add(new Paragraph(person.FormattedAddress ?? "")));
                 if (config.IncludePhoneNumber)
@@ -273,9 +275,10 @@ public class ReportService : IReportService
 
         row += 2;
 
+        // For birthday report: date column first
         var col = 1;
-        worksheet.Cells[row, col++].Value = "Volledige naam";
         if (config.IncludeDateOfBirth) worksheet.Cells[row, col++].Value = "Geboortedatum";
+        worksheet.Cells[row, col++].Value = "Volledige naam";
         if (config.IncludeAddress) worksheet.Cells[row, col++].Value = "Adres";
         if (config.IncludePhoneNumber) worksheet.Cells[row, col++].Value = "Telefoon";
         if (config.IncludeEmailAddress) worksheet.Cells[row, col++].Value = "E-mail";
@@ -296,10 +299,11 @@ public class ReportService : IReportService
 
         foreach (var person in ordered)
         {
+            // For birthday report: date column first
             col = 1;
-            worksheet.Cells[row, col++].Value = person.FullName ?? "";
             if (config.IncludeDateOfBirth)
                 worksheet.Cells[row, col++].Value = person.DateOfBirth?.ToString("dd-MM-yyyy") ?? "";
+            worksheet.Cells[row, col++].Value = person.FullName ?? "";
             if (config.IncludeAddress)
                 worksheet.Cells[row, col++].Value = person.FormattedAddress ?? "";
             if (config.IncludePhoneNumber)

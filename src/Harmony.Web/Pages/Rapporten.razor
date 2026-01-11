@@ -101,7 +101,7 @@
                 </div>
             }
 
-            <ReportOptions Model="@reportModel" OnFieldChangedCallback="@(() => InvokeAsync(StateHasChanged))" />
+            <ReportOptions Model="@reportModel" IsBirthdayReport="@(reportModel.ReportType == "Birthday")" OnFieldChangedCallback="@(() => InvokeAsync(StateHasChanged))" />
 
             <!-- Generate Button -->
             <div class="d-flex align-items-center gap-3">
@@ -350,6 +350,8 @@
         
         if (reportType == "Birthday")
         {
+            // Date of birth is always required for birthday reports
+            reportModel.IncludeDateOfBirth = true;
             // Load saved Birthday group when switching to Birthday report type
             await LoadBirthdayGroupFromConfig();
         }
@@ -449,6 +451,7 @@
         {
             isGenerating = true;
             StateHasChanged();
+            await Task.Yield(); // Allow UI to update before starting report generation
 
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             string fileName;
