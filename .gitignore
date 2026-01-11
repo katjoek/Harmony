@@ -78,4 +78,7 @@ _ReSharper*/
 secrets.json
 
 # NOTE: EF Core migrations are source and should be committed.
-installer/Harmony-Installer*.*
+
+# Installer build outputs
+installer/Harmony-Setup*.exe
+installer/Harmony-*.zip
