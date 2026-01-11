@@ -14,6 +14,7 @@ Wijzigingen sinds v1.1.0
 ### Bugfixes
 
 - **Configuratieopslag**: Opslaan van geselecteerde groep voor verjaardagsrapporten gerepareerd door databasemigraties correct af te handelen
+- **Instellingenbestand locatie**: Instellingenbestand wordt nu opgeslagen in AppData of ProgramData (afhankelijk van installatielocatie) in plaats van in de applicatiemap, waardoor de app correct werkt bij installatie in `C:\Program Files`
 
 ### Technisch
 
