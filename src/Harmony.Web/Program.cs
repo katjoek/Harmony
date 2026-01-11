@@ -107,9 +107,9 @@ if (listenOnAllInterfaces)
         }).ToList();
         
         app.Urls.Clear();
-        foreach (var url in modifiedUrls)
+        foreach (var modifiedUrl in modifiedUrls)
         {
-            app.Urls.Add(url);
+            app.Urls.Add(modifiedUrl);
         }
     }
     else
