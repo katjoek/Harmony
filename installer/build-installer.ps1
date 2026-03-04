@@ -4,7 +4,7 @@
 param(
     [string]$Configuration = "Release",
     [string]$ProjectPath = "..\src\Harmony.Web\Harmony.Web.csproj",
-    [string]$PublishPath = "..\src\Harmony.Web\bin\Release\net9.0\win-x64\publish",
+    [string]$PublishPath = "..\src\Harmony.Web\bin\Release\net10.0\win-x64\publish",
     [string]$NsiFile = "Harmony.nsi"
 )
 

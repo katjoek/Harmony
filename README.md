@@ -14,7 +14,7 @@ Het project volgt Clean Architecture principes met de volgende lagen:
 
 ## 🚀 Technologieën
 
-- **.NET 9.0**: Moderne framework voor C#
+- **.NET 10.0**: Moderne framework voor C#
 - **Blazor Server**: Interactieve webapplicatie
 - **BootstrapBlazor**: UI componenten
 - **Entity Framework Core**: ORM voor database toegang
@@ -48,7 +48,7 @@ Het project volgt Clean Architecture principes met de volgende lagen:
 ## 🛠️ Installatie en Gebruik
 
 ### Vereisten
-- .NET 9.0 SDK
+- .NET 10.0 SDK
 - Visual Studio 2022 of VS Code
 
 ### Installatie
@@ -91,7 +91,7 @@ De E2E tests gebruiken Microsoft Playwright om de applicatie in een echte browse
 dotnet build test/Harmony.E2ETests
 
 # Installeer Playwright browsers (alleen eerste keer nodig)
-pwsh test/Harmony.E2ETests/bin/Debug/net9.0/playwright.ps1 install chromium
+pwsh test/Harmony.E2ETests/bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
 **Tests uitvoeren:**
@@ -216,3 +216,63 @@ Copyright 2025 Mark van de Veerdonk
 ## 🤝 Bijdragen
 
 Bijdragen zijn welkom! Zorg ervoor dat alle tests slagen en volg de coding standards.
+
+## 🚢 Release Procedure
+
+### Versiebeheer
+
+Versienummers volgen het formaat `MAJOR.MINOR.PATCH` (bijv. `1.2.0`). Het versienummer wordt op één centrale plek beheerd:
+
+- **`Directory.Build.props`** — bevat `<Version>`, `<AssemblyVersion>` en `<FileVersion>`. Dit is de enige plek die aangepast moet worden voor een nieuwe versie.
+
+```xml
+<Version>1.2.0</Version>
+<AssemblyVersion>1.2.0.0</AssemblyVersion>
+<FileVersion>1.2.0.0</FileVersion>
+```
+
+Het build-installer script leest het versienummer automatisch uit dit bestand en gebruikt het voor de bestandsnamen van de installer en het zip-archief.
+
+### Release aanmaken
+
+1. **Versienummer bijwerken** in `Directory.Build.props`:
+   ```xml
+   <Version>X.Y.Z</Version>
+   <AssemblyVersion>X.Y.Z.0</AssemblyVersion>
+   <FileVersion>X.Y.Z.0</FileVersion>
+   ```
+
+2. **Release notes bijwerken** in `RELEASE_NOTES.md` — voeg een nieuw blok toe bovenaan het bestand met de wijzigingen van deze versie.
+
+3. **Alle tests laten slagen**:
+   ```powershell
+   dotnet test
+   ```
+
+4. **Wijzigingen committen**:
+   ```powershell
+   git add .
+   git commit -m "Release v X.Y.Z"
+   ```
+
+5. **Installer bouwen** vanuit de `installer/` map:
+   ```powershell
+   cd installer
+   .\build-installer.ps1
+   ```
+
+   Het script voert automatisch de volgende stappen uit:
+   - Publiceert `Harmony.Web` als zelfstandige Windows x64 applicatie
+   - Bouwt de NSIS installer: `Harmony-Setup-X.Y.Z.exe`
+   - Maakt een zip-archief: `Harmony-X.Y.Z.zip`
+   - Maakt een git-tag aan: `vX.Y.Z`
+
+6. **Tag naar remote pushen**:
+   ```powershell
+   git push origin vX.Y.Z
+   ```
+
+### Vereisten voor de installer
+
+- [NSIS](https://nsis.sourceforge.io/Download) moet geïnstalleerd zijn en `makensis` moet beschikbaar zijn in het PATH.
+- De installer en het zip-archief worden aangemaakt in de `installer/` map.

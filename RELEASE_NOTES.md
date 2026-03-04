@@ -1,5 +1,29 @@
 # Release Notes
 
+## Versie 1.2.0
+
+Wijzigingen sinds v1.1.1
+
+### Verbeteringen
+- **E-mail adressen kopiëren**: Mogelijkheid toegevoegd om e-mailadressen van groepsleden op het clipboard te zetten middels een druk op een knop in de groepen pagina.
+- **Rapport preview verwijderd**: Het voegde niets toe en de preview was niet altijd correct.
+
+### Technisch
+
+- **Upgrade naar .NET 10**: Applicatie en alle projecten zijn gemigreerd van .NET 9 naar .NET 10
+- **NuGet-pakketupdates**: Alle NuGet-pakketten bijgewerkt naar de nieuwste stabiele versies
+  - Entity Framework Core: 9.0.1 → 10.0.3
+  - Microsoft.Extensions.*: 9.0.x → 10.0.3
+  - iText7: 8.0.5 → 9.5.0
+  - EPPlus: 7.2.2 → 8.4.2
+  - Microsoft.Playwright: 1.49.0 → 1.58.0
+- **iText7 9.x compatibiliteit**: `SetBold()` vervangen door `SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))`
+- **EPPlus 8.x compatibiliteit**: `ExcelPackage.LicenseContext` vervangen door `ExcelPackage.License.SetNonCommercialPersonal()`
+- **Statische web-assets**: `UseStaticWebAssets()` toegevoegd zodat `blazor.server.js` correct geladen wordt in productie
+- **HTTPS-redirect**: HTTPS-redirect wordt nu overgeslagen in de testomgeving
+
+---
+
 ## Versie 1.1.1
 
 Wijzigingen sinds v1.1.0
