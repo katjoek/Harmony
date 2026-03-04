@@ -24,7 +24,7 @@
             }
         </div>
 
-        <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
+        <button type="button" class="btn btn-primary" data-testid="new-person-btn" @onclick="OpenCreateModal">
             <i class="fas fa-plus me-2"></i>
             Nieuwe Persoon
         </button>
@@ -175,20 +175,20 @@
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Voornaam *</label>
-                                <InputText @bind-Value="@personModel.FirstName" class="form-control" />
+                                <InputText @bind-Value="@personModel.FirstName" class="form-control" data-testid="input-firstname" />
                                 <ValidationMessage For="@(() => personModel.FirstName)" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Tussenvoegsel</label>
-                                <InputText @bind-Value="@personModel.Prefix" class="form-control" />
+                                <InputText @bind-Value="@personModel.Prefix" class="form-control" data-testid="input-prefix" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Achternaam</label>
-                                <InputText @bind-Value="@personModel.Surname" class="form-control" />
+                                <InputText @bind-Value="@personModel.Surname" class="form-control" data-testid="input-surname" />
                             </div>
                         </div>
                     </div>
@@ -196,13 +196,13 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Geboortedatum</label>
-                                <InputDate @bind-Value="@personModel.DateOfBirth" class="form-control" />
+                                <InputDate @bind-Value="@personModel.DateOfBirth" class="form-control" data-testid="input-dateofbirth" />
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Telefoon</label>
-                                <InputText @bind-Value="@personModel.PhoneNumber" class="form-control" />
+                                <InputText @bind-Value="@personModel.PhoneNumber" class="form-control" data-testid="input-phonenumber" />
                             </div>
                         </div>
                     </div>
@@ -210,7 +210,7 @@
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label class="form-label">E-mail</label>
-                                <InputText @bind-Value="@personModel.EmailAddress" class="form-control" type="email" />
+                                <InputText @bind-Value="@personModel.EmailAddress" class="form-control" type="email" data-testid="input-email" />
                                 <ValidationMessage For="@(() => personModel.EmailAddress)" />
                             </div>
                         </div>
@@ -219,13 +219,13 @@
                         <div class="col-md-8">
                             <div class="mb-3">
                                 <label class="form-label">Straat en huisnummer</label>
-                                <InputText @bind-Value="@personModel.Street" class="form-control" />
+                                <InputText @bind-Value="@personModel.Street" class="form-control" data-testid="input-street" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Postcode</label>
-                                <InputText @bind-Value="@personModel.ZipCode" class="form-control" />
+                                <InputText @bind-Value="@personModel.ZipCode" class="form-control" data-testid="input-zipcode" />
                             </div>
                         </div>
                     </div>
@@ -233,14 +233,14 @@
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label class="form-label">Plaats</label>
-                                <InputText @bind-Value="@personModel.City" class="form-control" />
+                                <InputText @bind-Value="@personModel.City" class="form-control" data-testid="input-city" />
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuleren</button>
-                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                    <button type="submit" class="btn btn-primary" data-testid="modal-save-btn">Opslaan</button>
                 </div>
             </EditForm>
         </div>

@@ -65,7 +65,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         var groupRow = _page.Locator($"table tbody tr:has-text('{groupName}')");
         await groupRow.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
-        var copyButton = groupRow.Locator("button.btn-success");
+        var copyButton = groupRow.Locator("[data-testid='copy-emails']");
         await copyButton.ClickAsync();
         _output.WriteLine("Clicked email copy button");
 
@@ -99,7 +99,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
             await dialog.AcceptAsync();
         };
 
-        var copyButton = groupRow.Locator("button.btn-success");
+        var copyButton = groupRow.Locator("[data-testid='copy-emails']");
         await copyButton.ClickAsync();
         await _page.WaitForTimeoutAsync(1000);
 
@@ -113,19 +113,17 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         await _page.GotoAsync($"{_baseUrl}/personen");
         await _page.WaitForSelectorAsync("table.table", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
-        await _page.ClickAsync("button:has-text('Nieuwe Persoon')");
+        await _page.ClickAsync("[data-testid='new-person-btn']");
         await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
 
-        var firstNameInput = _page.Locator(".modal input").First;
-        await firstNameInput.FillAsync(firstName);
+        await _page.FillAsync("[data-testid='input-firstname']", firstName);
 
         if (!string.IsNullOrEmpty(email))
         {
-            var emailContainer = _page.Locator(".modal .mb-3:has(label.form-label:text('E-mail'))");
-            await emailContainer.Locator("input").FillAsync(email);
+            await _page.FillAsync("[data-testid='input-email']", email);
         }
 
-        await _page.ClickAsync(".modal button[type='submit']:has-text('Opslaan')");
+        await _page.ClickAsync("[data-testid='modal-save-btn']");
         await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Hidden, Timeout = 5000 });
         _output.WriteLine($"Created person: {firstName}");
     }
@@ -135,13 +133,12 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         await _page.GotoAsync($"{_baseUrl}/groepen");
         await WaitForTableLoaded();
 
-        await _page.ClickAsync("button:has-text('Nieuwe Groep')");
+        await _page.ClickAsync("[data-testid='new-group-btn']");
         await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
 
-        var nameInput = _page.Locator(".modal input").First;
-        await nameInput.FillAsync(groupName);
+        await _page.FillAsync("[data-testid='input-groupname']", groupName);
 
-        await _page.ClickAsync(".modal button[type='submit']:has-text('Opslaan')");
+        await _page.ClickAsync("[data-testid='modal-save-btn']");
         await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Hidden, Timeout = 5000 });
         _output.WriteLine($"Created group: {groupName}");
     }

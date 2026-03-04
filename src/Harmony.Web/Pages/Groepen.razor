@@ -23,7 +23,7 @@
                 </button>
             }
         </div>
-        <button type="button" class="btn btn-primary" @onclick="OpenCreateModal">
+        <button type="button" class="btn btn-primary" data-testid="new-group-btn" @onclick="OpenCreateModal">
             <i class="fas fa-plus me-2"></i>
             Nieuwe Groep
         </button>
@@ -106,13 +106,13 @@
                         <td>@group.MemberCount</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-info" @onclick="@(() => OpenMembersModal(group))">
+                                <button type="button" class="btn btn-sm btn-info" data-testid="members-btn" @onclick="@(() => OpenMembersModal(group))">
                                     <i class="fas fa-users"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-primary" @onclick="@(() => OpenEditModal(group))">
+                                <button type="button" class="btn btn-sm btn-primary" data-testid="edit-group-btn" @onclick="@(() => OpenEditModal(group))">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-success" title="E-mailadressen kopiëren" @onclick="@(() => CopyEmailsToClipboard(group))">
+                                <button type="button" class="btn btn-sm btn-success" title="E-mailadressen kopiëren" data-testid="copy-emails" @onclick="@(() => CopyEmailsToClipboard(group))">
                                     <i class="fas fa-envelope"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => DeleteGroup(group))">
@@ -140,7 +140,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Groepsnaam *</label>
-                        <InputText @bind-Value="@groupModel.Name" class="form-control" />
+                        <InputText @bind-Value="@groupModel.Name" class="form-control" data-testid="input-groupname" />
                         <ValidationMessage For="@(() => groupModel.Name)" />
                     </div>
                     <div class="mb-3">
@@ -159,7 +159,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuleren</button>
-                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                    <button type="submit" class="btn btn-primary" data-testid="modal-save-btn">Opslaan</button>
                 </div>
             </EditForm>
         </div>

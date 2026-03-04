@@ -74,7 +74,7 @@ public sealed class PersonCreationTests : IAsyncLifetime
         });
 
         // Click "Nieuwe Persoon" button to open the modal
-        await _page.ClickAsync("button:has-text('Nieuwe Persoon')");
+        await _page.ClickAsync("[data-testid='new-person-btn']");
         _output.WriteLine("Clicked 'Nieuwe Persoon' button");
 
         // Wait for the modal to appear
@@ -85,47 +85,21 @@ public sealed class PersonCreationTests : IAsyncLifetime
         });
         _output.WriteLine("Modal is visible");
 
-        // Helper function to fill input by finding the label text and its adjacent input
-        async Task FillInputByLabel(string labelText, string value)
-        {
-            // Find the container div with the label, then get the input inside it
-            var container = _page.Locator($".modal .mb-3:has(label.form-label:text('{labelText}'))");
-            var input = container.Locator("input");
-            await input.FillAsync(value);
-        }
-
         // Fill in the form fields
-        // First name (required)
-        await FillInputByLabel("Voornaam *", firstName);
-        
-        // Prefix
-        await FillInputByLabel("Tussenvoegsel", prefix);
-        
-        // Surname
-        await FillInputByLabel("Achternaam", surname);
-
-        // Date of birth
-        await FillInputByLabel("Geboortedatum", dateOfBirthHtmlFormat);
-
-        // Phone number
-        await FillInputByLabel("Telefoon", phoneNumber);
-
-        // Email
-        await FillInputByLabel("E-mail", email);
-
-        // Street
-        await FillInputByLabel("Straat en huisnummer", street);
-
-        // Zip code
-        await FillInputByLabel("Postcode", zipCode);
-
-        // City
-        await FillInputByLabel("Plaats", city);
+        await _page.FillAsync("[data-testid='input-firstname']", firstName);
+        await _page.FillAsync("[data-testid='input-prefix']", prefix);
+        await _page.FillAsync("[data-testid='input-surname']", surname);
+        await _page.FillAsync("[data-testid='input-dateofbirth']", dateOfBirthHtmlFormat);
+        await _page.FillAsync("[data-testid='input-phonenumber']", phoneNumber);
+        await _page.FillAsync("[data-testid='input-email']", email);
+        await _page.FillAsync("[data-testid='input-street']", street);
+        await _page.FillAsync("[data-testid='input-zipcode']", zipCode);
+        await _page.FillAsync("[data-testid='input-city']", city);
 
         _output.WriteLine("Form fields filled");
 
         // Click the "Opslaan" (Save) button
-        await _page.ClickAsync(".modal button[type='submit']:has-text('Opslaan')");
+        await _page.ClickAsync("[data-testid='modal-save-btn']");
         _output.WriteLine("Clicked 'Opslaan' button");
 
         // Wait for the modal to close
@@ -173,7 +147,7 @@ public sealed class PersonCreationTests : IAsyncLifetime
         });
 
         // Click "Nieuwe Persoon" button
-        await _page.ClickAsync("button:has-text('Nieuwe Persoon')");
+        await _page.ClickAsync("[data-testid='new-person-btn']");
 
         // Wait for the modal
         await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions
@@ -183,11 +157,10 @@ public sealed class PersonCreationTests : IAsyncLifetime
         });
 
         // Fill only the required first name field
-        var firstNameInput = _page.Locator(".modal input").First;
-        await firstNameInput.FillAsync(firstName);
+        await _page.FillAsync("[data-testid='input-firstname']", firstName);
 
         // Submit the form
-        await _page.ClickAsync(".modal button[type='submit']:has-text('Opslaan')");
+        await _page.ClickAsync("[data-testid='modal-save-btn']");
 
         // Wait for modal to close
         await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions
