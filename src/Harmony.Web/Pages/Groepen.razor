@@ -74,6 +74,9 @@
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" disabled>
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -108,6 +111,9 @@
                                 </button>
                                 <button type="button" class="btn btn-sm btn-primary" @onclick="@(() => OpenEditModal(group))">
                                     <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-success" title="E-mailadressen kopiëren" @onclick="@(() => CopyEmailsToClipboard(group))">
+                                    <i class="fas fa-envelope"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => DeleteGroup(group))">
                                     <i class="fas fa-trash"></i>
@@ -507,6 +513,25 @@
                 groupModel.CoordinatorId = null;
             }
         }
+    }
+
+    private async Task CopyEmailsToClipboard(GroupDto group)
+    {
+        if (allPersons == null) return;
+
+        var emails = allPersons
+            .Where(p => group.MemberIds.Contains(p.Id) && !string.IsNullOrWhiteSpace(p.EmailAddress))
+            .Select(p => p.EmailAddress!)
+            .ToList();
+
+        if (emails.Count == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Geen e-mailadressen bekend voor leden van '{group.Name}'.");
+            return;
+        }
+
+        var text = string.Join("; ", emails);
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
     }
 
     private async Task<bool> ShowConfirmDialog(string message)
