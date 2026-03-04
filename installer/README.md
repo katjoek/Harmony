@@ -12,7 +12,7 @@ Harmony Community Manager is licensed under the Apache License, Version 2.0. The
    - Download from: https://nsis.sourceforge.io/Download
    - Ensure `makensis.exe` is in your system PATH
 
-2. **.NET 9.0 SDK** must be installed for publishing the application
+2. **.NET 10.0 SDK** must be installed for publishing the application
 
 ## Building the Installer
 
@@ -100,7 +100,7 @@ To customize the installer:
 ### Publish output not found
 - Ensure you've published the application first
 - Check that the publish path matches the expected location:
-  `src\Harmony.Web\bin\Release\net9.0\win-x64\publish`
+  `src\Harmony.Web\bin\Release\net10.0\win-x64\publish`
 
 ### Installer fails to build
 - Check NSIS syntax errors in the output

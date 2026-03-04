@@ -1,117 +1,117 @@
-# Harmony - (Kerk-)gemeenschap Beheer
+# Harmony - Community Management
 
-Een moderne webapplicatie voor het beheren van personen en groepen binnen een (kerk-)gemeenschap, gebouwd met Clean Architecture en CQRS principes.
+A modern web application for managing persons and groups within a (church) community, built with Clean Architecture and CQRS principles.
 
-## 🏗️ Architectuur
+## 🏗️ Architecture
 
-Het project volgt Clean Architecture principes met de volgende lagen:
+The project follows Clean Architecture principles with the following layers:
 
-- **Domain**: Kernlogica en business rules
-- **ApplicationCore**: Use cases en CQRS implementatie
-- **Infrastructure**: Data access en externe services
+- **Domain**: Core logic and business rules
+- **ApplicationCore**: Use cases and CQRS implementation
+- **Infrastructure**: Data access and external services
 - **Web**: Blazor Server UI
-- **Tests**: Unit tests voor alle lagen
+- **Tests**: Unit tests for all layers
 
-## 🚀 Technologieën
+## 🚀 Technologies
 
-- **.NET 10.0**: Moderne framework voor C#
-- **Blazor Server**: Interactieve webapplicatie
-- **BootstrapBlazor**: UI componenten
-- **Entity Framework Core**: ORM voor database toegang
+- **.NET 10.0**: Modern framework for C#
+- **Blazor Server**: Interactive web application
+- **BootstrapBlazor**: UI components
+- **Entity Framework Core**: ORM for database access
 - **SQLite**: Embedded database
-- **LiteBus**: CQRS implementatie
+- **LiteBus**: CQRS implementation
 - **xUnit**: Unit testing framework
 - **Playwright**: E2E browser testing
 
-## 🎯 Functionaliteiten
+## 🎯 Features
 
-### Personen Beheer
-- ✅ Personen toevoegen, bewerken en verwijderen
-- ✅ Voornaam (verplicht), tussenvoegsel, achternaam
-- ✅ Geboortedatum, adres, telefoon, e-mail
-- ✅ Lidmaatschap van groepen beheren
-- ✅ Cascading delete bij verwijdering
+### Person Management
+- ✅ Add, edit, and delete persons
+- ✅ First name (required), prefix, surname
+- ✅ Date of birth, address, phone, email
+- ✅ Manage group memberships
+- ✅ Cascading delete on removal
 
-### Groepen Beheer
-- ✅ Groepen aanmaken, bewerken en verwijderen
-- ✅ Unieke groepsnaam (verplicht)
-- ✅ Coördinator toewijzen (optioneel)
-- ✅ Leden toevoegen en verwijderen
-- ✅ Non-cascading delete bij verwijdering
+### Group Management
+- ✅ Create, edit, and delete groups
+- ✅ Unique group name (required)
+- ✅ Assign coordinator (optional)
+- ✅ Add and remove members
+- ✅ Non-cascading delete on removal
 
-### Gebruikersinterface
-- ✅ Nederlandse interface
-- ✅ Professioneel en gebruiksvriendelijk design
-- ✅ Bevestigingsdialogen bij verwijdering
-- ✅ Responsief design voor verschillende schermformaten
+### User Interface
+- ✅ Dutch interface
+- ✅ Professional and user-friendly design
+- ✅ Confirmation dialogs for deletion
+- ✅ Responsive design for various screen sizes
 
-## 🛠️ Installatie en Gebruik
+## 🛠️ Installation and Usage
 
-### Vereisten
+### Prerequisites
 - .NET 10.0 SDK
-- Visual Studio 2022 of VS Code
+- Visual Studio 2022 or VS Code
 
-### Installatie
+### Installation
 ```bash
-# Clone de repository
+# Clone the repository
 git clone [repository-url]
 cd Harmony2
 
 # Restore packages
 dotnet restore
 
-# Build de solution
+# Build the solution
 dotnet build
 
-# Run de applicatie
+# Run the application
 cd Harmony.Web
 dotnet run
 ```
 
 ### Database
-De applicatie gebruikt SQLite met automatische database creatie. De database wordt aangemaakt bij de eerste start.
+The application uses SQLite with automatic database creation. The database is created on the first start.
 
-### Tests uitvoeren
+### Running Tests
 
 #### Unit Tests
 ```bash
 # Run unit tests
 dotnet test test/Harmony.Tests
 
-# Run met coverage
+# Run with coverage
 dotnet test test/Harmony.Tests --collect:"XPlat Code Coverage"
 ```
 
 #### E2E Tests (Playwright)
-De E2E tests gebruiken Microsoft Playwright om de applicatie in een echte browser te testen.
+The E2E tests use Microsoft Playwright to test the application in a real browser.
 
-**Eerste keer setup:**
+**First-time setup:**
 ```bash
-# Build het E2E test project
+# Build the E2E test project
 dotnet build test/Harmony.E2ETests
 
-# Installeer Playwright browsers (alleen eerste keer nodig)
+# Install Playwright browsers (only needed once)
 pwsh test/Harmony.E2ETests/bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
-**Tests uitvoeren:**
+**Running tests:**
 ```bash
 # Run E2E tests
 dotnet test test/Harmony.E2ETests
 
-# Run met gedetailleerde output
+# Run with detailed output
 dotnet test test/Harmony.E2ETests --logger "console;verbosity=detailed"
 ```
 
-**Debugging:** Voor visueel debuggen, wijzig `Headless = true` naar `Headless = false` in `test/Harmony.E2ETests/Infrastructure/PlaywrightFixture.cs`.
+**Debugging:** For visual debugging, change `Headless = true` to `Headless = false` in `test/Harmony.E2ETests/Infrastructure/PlaywrightFixture.cs`.
 
-#### Alle tests
+#### All Tests
 ```bash
-# Run alle tests (unit + E2E)
+# Run all tests (unit + E2E)
 dotnet test
 ```
 
-## 📁 Project Structuur
+## 📁 Project Structure
 
 ```
 Harmony2/
@@ -139,38 +139,35 @@ Harmony2/
 └── requirements/               # Project requirements
 ```
 
-## 🎨 Design Principes
+## 🎨 Design Principles
 
 ### Clean Architecture
-- **Dependency Rule**: Dependencies wijzen naar binnen
-- **Separation of Concerns**: Elke laag heeft een duidelijke verantwoordelijkheid
-- **Testability**: Alle lagen zijn unit testbaar
+- **Dependency Rule**: Dependencies point inwards
+- **Separation of Concerns**: Each layer has a clear responsibility
+- **Testability**: All layers are unit-testable
 
 ### CQRS (Command Query Responsibility Segregation)
-- **Commands**: Voor write operations (CREATE, UPDATE, DELETE)
-- **Queries**: Voor read operations (SELECT)
-- **Handlers**: Scheiden van business logic per use case
+- **Commands**: For write operations (CREATE, UPDATE, DELETE)
+- **Queries**: For read operations (SELECT)
+- **Handlers**: Separation of business logic per use case
 
 ### Domain-Driven Design
-- **Value Objects**: Voor type-safe identifiers en validaties
-- **Entities**: Voor business objecten met identiteit
-- **Repositories**: Voor data toegang abstractie
+- **Value Objects**: For type-safe identifiers and validations
+- **Entities**: For business objects with identity
+- **Repositories**: For data access abstraction
 
-## 🔧 Configuratie
+## 🔧 Configuration
 
-### Connectionstring
-De database connectionstring kan geconfigureerd worden in `appsettings.json`:
+### Database Configuration
+The application stores its configuration in a file named `harmony.settings.json`. The location of this file depends on where the application is installed:
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=harmony.db"
-  }
-}
-```
+- **User Installation**: `%APPDATA%\Harmony\harmony.settings.json`
+- **System Installation**: `%PROGRAMDATA%\Harmony\harmony.settings.json`
+
+The database location itself is also stored in this file under the `DatabaseDirectory` property. The database file is named `harmony.db`.
 
 ### Logging
-Standaard logging configuratie in `appsettings.json`:
+Standard logging configuration in `appsettings.json`:
 
 ```json
 {
@@ -183,47 +180,47 @@ Standaard logging configuratie in `appsettings.json`:
 }
 ```
 
-## 📋 Gebruiksaanwijzing
+## 📋 User Guide
 
-1. **Start de applicatie**: Navigeer naar `https://localhost:5001`
-2. **Personen beheren**: Ga naar "Personen" in het menu
-3. **Groepen beheren**: Ga naar "Groepen" in het menu
-4. **Persoon toevoegen**: Klik op "Nieuwe Persoon"
-5. **Groep aanmaken**: Klik op "Nieuwe Groep"
-6. **Lidmaatschap beheren**: Gebruik de "Leden" knop bij groepen
+1. **Start the application**: Navigate to `https://localhost:5001`
+2. **Manage persons**: Go to "Persons" in the menu
+3. **Manage groups**: Go to "Groups" in the menu
+4. **Add person**: Click "New Person"
+5. **Create group**: Click "New Group"
+6. **Manage membership**: Use the "Members" button for groups
 
 ## 🧪 Testing
 
-Het project bevat uitgebreide tests:
+The project includes comprehensive tests:
 
 ### Unit Tests (`Harmony.Tests`)
-- **Domain Tests**: Value objects en entities
-- **Application Tests**: Command en query handlers
-- Gebruikt xUnit en NSubstitute voor mocking
+- **Domain Tests**: Value objects and entities
+- **Application Tests**: Command and query handlers
+- Uses xUnit and NSubstitute for mocking
 
 ### E2E Tests (`Harmony.E2ETests`)
-- **Browser Tests**: Testen van de volledige gebruikersstroom in een echte browser
-- Gebruikt Microsoft Playwright voor browser automatisering
-- Elke test krijgt een geïsoleerde SQLite database (automatisch opgeruimd)
-- Tests draaien headless (standaard) of met zichtbare browser (voor debugging)
+- **Browser Tests**: Testing the full user flow in a real browser
+- Uses Microsoft Playwright for browser automation
+- Each test gets an isolated SQLite database (automatically cleaned up)
+- Tests run headless (default) or with visible browser (for debugging)
 
-## 📄 Licentie
+## 📄 License
 
-Dit project is gelicenseerd onder de Apache License, Version 2.0. Zie het [LICENSE](LICENSE) bestand voor meer informatie.
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more information.
 
 Copyright 2025 Mark van de Veerdonk
 
-## 🤝 Bijdragen
+## 🤝 Contributing
 
-Bijdragen zijn welkom! Zorg ervoor dat alle tests slagen en volg de coding standards.
+Contributions are welcome! Ensure all tests pass and follow the coding standards.
 
 ## 🚢 Release Procedure
 
-### Versiebeheer
+### Version Management
 
-Versienummers volgen het formaat `MAJOR.MINOR.PATCH` (bijv. `1.2.0`). Het versienummer wordt op één centrale plek beheerd:
+Version numbers follow the format `MAJOR.MINOR.PATCH` (e.g., `1.2.0`). The version number is managed in one central place:
 
-- **`Directory.Build.props`** — bevat `<Version>`, `<AssemblyVersion>` en `<FileVersion>`. Dit is de enige plek die aangepast moet worden voor een nieuwe versie.
+- **`Directory.Build.props`** — contains `<Version>`, `<AssemblyVersion>`, and `<FileVersion>`. This is the only place that needs to be modified for a new version.
 
 ```xml
 <Version>1.2.0</Version>
@@ -231,48 +228,48 @@ Versienummers volgen het formaat `MAJOR.MINOR.PATCH` (bijv. `1.2.0`). Het versie
 <FileVersion>1.2.0.0</FileVersion>
 ```
 
-Het build-installer script leest het versienummer automatisch uit dit bestand en gebruikt het voor de bestandsnamen van de installer en het zip-archief.
+The build-installer script automatically reads the version number from this file and uses it for the file names of the installer and the zip archive.
 
-### Release aanmaken
+### Creating a Release
 
-1. **Versienummer bijwerken** in `Directory.Build.props`:
+1. **Update version number** in `Directory.Build.props`:
    ```xml
    <Version>X.Y.Z</Version>
    <AssemblyVersion>X.Y.Z.0</AssemblyVersion>
    <FileVersion>X.Y.Z.0</FileVersion>
    ```
 
-2. **Release notes bijwerken** in `RELEASE_NOTES.md` — voeg een nieuw blok toe bovenaan het bestand met de wijzigingen van deze versie.
+2. **Update release notes** in `RELEASE_NOTES.md` — add a new block at the top of the file with the changes for this version.
 
-3. **Alle tests laten slagen**:
+3. **Pass all tests**:
    ```powershell
    dotnet test
    ```
 
-4. **Wijzigingen committen**:
+4. **Commit changes**:
    ```powershell
    git add .
    git commit -m "Release v X.Y.Z"
    ```
 
-5. **Installer bouwen** vanuit de `installer/` map:
+5. **Build installer** from the `installer/` directory:
    ```powershell
    cd installer
    .\build-installer.ps1
    ```
 
-   Het script voert automatisch de volgende stappen uit:
-   - Publiceert `Harmony.Web` als zelfstandige Windows x64 applicatie
-   - Bouwt de NSIS installer: `Harmony-Setup-X.Y.Z.exe`
-   - Maakt een zip-archief: `Harmony-X.Y.Z.zip`
-   - Maakt een git-tag aan: `vX.Y.Z`
+   The script automatically performs the following steps:
+   - Publishes `Harmony.Web` as a standalone Windows x64 application
+   - Builds the NSIS installer: `Harmony-Setup-X.Y.Z.exe`
+   - Creates a zip archive: `Harmony-X.Y.Z.zip`
+   - Creates a git tag: `vX.Y.Z`
 
-6. **Tag naar remote pushen**:
+6. **Push tag to remote**:
    ```powershell
    git push origin vX.Y.Z
    ```
 
-### Vereisten voor de installer
+### Installer Requirements
 
-- [NSIS](https://nsis.sourceforge.io/Download) moet geïnstalleerd zijn en `makensis` moet beschikbaar zijn in het PATH.
-- De installer en het zip-archief worden aangemaakt in de `installer/` map.
+- [NSIS](https://nsis.sourceforge.io/Download) must be installed and `makensis` must be available in the PATH.
+- The installer and the zip archive are created in the `installer/` folder.

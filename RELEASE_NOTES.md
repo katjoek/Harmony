@@ -1,90 +1,94 @@
 # Release Notes
 
-## Versie 1.2.0
+## Version 1.2.0
 
-Wijzigingen sinds v1.1.1
+Changes since v1.1.1
 
-### Verbeteringen
-- **E-mail adressen kopiëren**: Mogelijkheid toegevoegd om e-mailadressen van groepsleden op het clipboard te zetten middels een druk op een knop in de groepen pagina.
-- **Rapport preview verwijderd**: Het voegde niets toe en de preview was niet altijd correct.
+### Improvements
+- **Copy email addresses**: Added the ability to copy email addresses of group members to the clipboard with a single button click on the groups page.
+- **Report preview removed**: It added no value and the preview was not always accurate.
 
-### Technisch
+### Technical
 
-- **Upgrade naar .NET 10**: Applicatie en alle projecten zijn gemigreerd van .NET 9 naar .NET 10
-- **NuGet-pakketupdates**: Alle NuGet-pakketten bijgewerkt naar de nieuwste stabiele versies
+- **Upgrade to .NET 10**: The application and all projects have been migrated from .NET 9 to .NET 10.
+- **NuGet package updates**: All NuGet packages updated to the latest stable versions.
   - Entity Framework Core: 9.0.1 → 10.0.3
   - Microsoft.Extensions.*: 9.0.x → 10.0.3
   - iText7: 8.0.5 → 9.5.0
   - EPPlus: 7.2.2 → 8.4.2
   - Microsoft.Playwright: 1.49.0 → 1.58.0
-- **iText7 9.x compatibiliteit**: `SetBold()` vervangen door `SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))`
-- **EPPlus 8.x compatibiliteit**: `ExcelPackage.LicenseContext` vervangen door `ExcelPackage.License.SetNonCommercialPersonal()`
-- **Statische web-assets**: `UseStaticWebAssets()` toegevoegd zodat `blazor.server.js` correct geladen wordt in productie
-- **HTTPS-redirect**: HTTPS-redirect wordt nu overgeslagen in de testomgeving
+- **iText7 9.x compatibility**: Replaced `SetBold()` with `SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))`.
+- **EPPlus 8.x compatibility**: Replaced `ExcelPackage.LicenseContext` with `ExcelPackage.License.SetNonCommercialPersonal()`.
+- **Static web assets**: Added `UseStaticWebAssets()` so `blazor.server.js` loads correctly in production.
+- **HTTPS redirect**: HTTPS redirect is now skipped in the test environment.
+
+### Documentation
+
+- **English docs**: the README.md and RELEASE_NOTES.md files have been translated into English.
 
 ---
 
-## Versie 1.1.1
+## Version 1.1.1
 
-Wijzigingen sinds v1.1.0
+Changes since v1.1.0
 
-### Verbeteringen
+### Improvements
 
-- **Verjaardagsrapport layout**: Geboortedatum is nu de eerste kolom in verjaardagsrapporten
-- **Feedback bij genereren**: Laadindicator wordt nu getoond tijdens het genereren van rapporten
-- **Naamweergave**: Bij sorteren op achternaam wordt de naam weergegeven als "Achternaam, Voornaam Tussenvoegsel"
-- **Groepsselectie verjaardagsrapport**: Geselecteerde groep voor verjaardagsrapporten wordt nu onthouden tussen sessies (groepsrapporten starten altijd zonder selectie)
-- **Bestandsnaam verjaardagsrapport**: Bij verjaardagsrapporten wordt de groepsnaam nu opgenomen in de bestandsnaam wanneer een groep is geselecteerd
+- **Birthday report layout**: Date of birth is now the first column in birthday reports.
+- **Generation feedback**: A loading indicator is now shown during report generation.
+- **Name display**: When sorting by surname, the name is displayed as "Surname, First Name Prefix".
+- **Birthday report group selection**: Selected group for birthday reports is now remembered between sessions (group reports always start without a selection).
+- **Birthday report filename**: For birthday reports, the group name is now included in the filename when a group is selected.
 
 ### Bugfixes
 
-- **Configuratieopslag**: Opslaan van geselecteerde groep voor verjaardagsrapporten gerepareerd door databasemigraties correct af te handelen
-- **Instellingenbestand locatie**: Instellingenbestand wordt nu opgeslagen in AppData of ProgramData (afhankelijk van installatielocatie) in plaats van in de applicatiemap, waardoor de app correct werkt bij installatie in `C:\Program Files`
+- **Configuration storage**: Fixed storing the selected group for birthday reports by correctly handling database migrations.
+- **Settings file location**: Settings file is now stored in AppData or ProgramData (depending on installation location) instead of the application folder, ensuring the app works correctly when installed in `C:\Program Files`.
 
-### Technisch
+### Technical
 
-- E2E-tests toegevoegd met Microsoft Playwright voor het aanmaken van personen
-- Database seeding is nu alleen beschikbaar in DEBUG-builds
-- Verbeterde afhandeling van databasemigraties voor bestaande databases
-- Installer script maakt nu ook een zip-bestand van de publish folder
-- Installer script maakt publish folder weg voordat de build gedaan wordt
+- Added E2E tests with Microsoft Playwright for creating persons.
+- Database seeding is now only available in DEBUG builds.
+- Improved handling of database migrations for existing databases.
+- Installer script now also creates a zip file of the publish folder.
+- Installer script deletes the publish folder before performing the build.
 
 ---
 
-## Versie 1.1.0
+## Version 1.1.0
 
-Wijzigingen sinds v1.0.1
+Changes since v1.0.1
 
-### Nieuwe functionaliteit
+### New Functionality
 
-- **Verjaardagsrapport per groep**: Gebruiker kan een groep selecteren om verjaardagen uit te filteren
-- **Netwerkconfiguratie**: Gebruiker kan kiezen om te luisteren op localhost of 0.0.0.0
-- **Installer**: Installer toegevoegd voor eenvoudigere distributie
-- **Browser automatisch starten**: In release-modus start de applicatie automatisch de browser
-- **Applicatielogo**: Logo voor Harmony geïntroduceerd
+- **Birthday report per group**: User can select a group to filter birthdays.
+- **Network configuration**: User can choose to listen on localhost or 0.0.0.0.
+- **Installer**: Added installer for easier distribution.
+- **Auto-start browser**: In release mode, the application automatically starts the browser.
+- **Application logo**: Introduced Harmony logo.
 
-### Verbeteringen
+### Improvements
 
-- **Rapportenpagina**: Werkt direct na opstarten; rapportenpagina is overzichtelijker gemaakt
-- **Live voorbeeld**: Wijzigen van kolomselectie wordt direct weergegeven in het voorbeeld
-- **Groepenkolom**: Kolom toegevoegd voor aantal groepen op de Personenpagina
-- **Zoekfocus**: Zoekveld krijgt automatisch focus bij navigeren naar personen- of groepenpagina
-- **F3 sneltoets**: F3-toets zet de cursor in het zoekveld
-- **Sortering**: Hoofdletterongevoelig sorteren van personen en groepsnamen
-- **Homepagina**: Inhoud van de homepagina verbeterd
-- **UI kleuren**: Kleurenschema verbeterd
-- **Tekstuele verbeteringen**: Diverse tekstuele verbeteringen door de hele applicatie
+- **Reports page**: Works immediately after startup; reports page has been made more organized.
+- **Live preview**: Changing column selection is immediately reflected in the preview.
+- **Groups column**: Added column for number of groups on the Persons page.
+- **Search focus**: Search field automatically gets focus when navigating to the persons or groups page.
+- **F3 shortcut**: F3 key places the cursor in the search field.
+- **Sorting**: Case-insensitive sorting for persons and group names.
+- **Home page**: Improved content of the home page.
+- **UI colors**: Improved color scheme.
+- **Textual improvements**: Various textual improvements throughout the application.
 
 ### Bugfixes
 
-- **Lidmaatschapsmodal**: Pijlknoppen werkten niet bij bewerken van lidmaatschappen via groepenpagina. Nu wordt het DualListMembershipModal-component gebruikt, net als op de personenpagina
-- **Data-integriteit**: Lidmaatschappen worden nu verwijderd wanneer een persoon of groep wordt verwijderd
-- **Opschonen verweesde records**: Bij opstarten worden lidmaatschapsrecords voor niet-bestaande personen of groepen verwijderd
+- **Membership modal**: Arrow buttons didn't work when editing memberships via the groups page. Now the DualListMembershipModal component is used, just like on the persons page.
+- **Data integrity**: Memberships are now deleted when a person or group is deleted.
+- **Clean up orphaned records**: On startup, membership records for non-existent persons or groups are removed.
 
-### Technisch
+### Technical
 
-- Bij het maken van de installer wordt nu het versienummer toegevoegd aan de bestandsnaam
-- Verbeterde release-procedure
-- Schrijven naar logbestand in plaats van console
-- Licentie van de code gewijzigd/gespecificeerd
-- GIT-tag wordt aangemaakt na succesvol maken van installer
+- Added version number to the filename when creating the installer.
+- Improved release procedure.
+- Logging to log file instead of console.
+- Changed/specified the code license.
+- GIT tag is created after successfully building the installer.
