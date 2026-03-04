@@ -145,154 +145,6 @@
     </div>
 </div>
 
-<!-- Report Preview -->
-<div class="card">
-    <div class="card-header">
-        <h6 class="mb-0">Voorbeeld</h6>
-    </div>
-    <div class="card-body">
-        @if (reportModel.ReportType == "Group" && selectedGroup != null)
-        {
-            <h6>@selectedGroup.Name</h6>
-            <p class="small text-muted mb-2">
-                Gegenereerd op: @DateTime.Now.ToString("dd-MM-yyyy HH:mm")
-            </p>
-            @if (!string.IsNullOrEmpty(selectedGroup.CoordinatorName))
-            {
-                <p class="small mb-2">
-                    <strong>Coördinator:</strong> @selectedGroup.CoordinatorName
-                </p>
-            }
-            
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Volledige naam</th>
-                            @if (reportModel.IncludeDateOfBirth)
-                            {
-                                <th>Geboortedatum</th>
-                            }
-                            @if (reportModel.IncludeAddress)
-                            {
-                                <th>Adres</th>
-                            }
-                            @if (reportModel.IncludePhoneNumber)
-                            {
-                                <th>Telefoon</th>
-                            }
-                            @if (reportModel.IncludeEmailAddress)
-                            {
-                                <th>E-mail</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (groupMembers != null)
-                        {
-                            @foreach (var member in GetSortedGroupMembers().Take(3))
-                            {
-                                <tr>
-                                    <td>@member.FullName</td>
-                                    @if (reportModel.IncludeDateOfBirth)
-                                    {
-                                        <td>@member.DateOfBirth?.ToString("dd-MM-yyyy")</td>
-                                    }
-                                    @if (reportModel.IncludeAddress)
-                                    {
-                                        <td>@member.FormattedAddress</td>
-                                    }
-                                    @if (reportModel.IncludePhoneNumber)
-                                    {
-                                        <td>@member.PhoneNumber</td>
-                                    }
-                                    @if (reportModel.IncludeEmailAddress)
-                                    {
-                                        <td>@member.EmailAddress</td>
-                                    }
-                                </tr>
-                            }
-                            @if (GetSortedGroupMembers().Count() > 3)
-                            {
-                                <tr>
-                                    <td colspan="@GetColumnCount()" class="text-center text-muted">
-                                        ... en @(GetSortedGroupMembers().Count() - 3) meer
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <h6>Voorbeeld</h6>
-            <p class="small text-muted mb-2">
-                Gegenereerd op: @DateTime.Now.ToString("dd-MM-yyyy HH:mm")
-            </p>
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Volledige naam</th>
-                            @if (reportModel.IncludeDateOfBirth)
-                            {
-                                <th>Geboortedatum</th>
-                            }
-                            @if (reportModel.IncludeAddress)
-                            {
-                                <th>Adres</th>
-                            }
-                            @if (reportModel.IncludePhoneNumber)
-                            {
-                                <th>Telefoon</th>
-                            }
-                            @if (reportModel.IncludeEmailAddress)
-                            {
-                                <th>E-mail</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (reportModel.ReportType == "Birthday" && allPersons != null)
-                        {
-                            var sample = GetSortedBirthdayPersons().Take(3);
-                            foreach (var member in sample)
-                            {
-                                <tr>
-                                    <td>@member.FullName</td>
-                                    @if (reportModel.IncludeDateOfBirth)
-                                    {
-                                        <td>@member.DateOfBirth?.ToString("dd-MM-yyyy")</td>
-                                    }
-                                    @if (reportModel.IncludeAddress)
-                                    {
-                                        <td>@member.FormattedAddress</td>
-                                    }
-                                    @if (reportModel.IncludePhoneNumber)
-                                    {
-                                        <td>@member.PhoneNumber</td>
-                                    }
-                                    @if (reportModel.IncludeEmailAddress)
-                                    {
-                                        <td>@member.EmailAddress</td>
-                                    }
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="@GetColumnCount()" class="text-muted">Selecteer een groep of maand</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div>
 
 @code {
     private List<GroupDto>? groups;
@@ -574,16 +426,6 @@
         }
     }
 
-    private int GetColumnCount()
-    {
-        int count = 1; // Always include full name
-        if (reportModel.IncludeDateOfBirth) count++;
-        if (reportModel.IncludeAddress) count++;
-        if (reportModel.IncludePhoneNumber) count++;
-        if (reportModel.IncludeEmailAddress) count++;
-        return count;
-    }
-
     private static string GetDutchMonthName(int month)
     {
         var culture = new System.Globalization.CultureInfo("nl-NL");
@@ -598,15 +440,6 @@
     private void ShowErrorMessage(string message)
     {
         Console.WriteLine($"ERROR: {message}");
-    }
-
-    private IEnumerable<PersonDto> GetSortedGroupMembers()
-    {
-        if (groupMembers == null) return Enumerable.Empty<PersonDto>();
-        
-        return reportModel.SortOrder == "FirstName"
-            ? groupMembers.OrderBy(p => p.FirstName).ThenBy(p => p.Surname ?? "")
-            : groupMembers.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName);
     }
 
     private IEnumerable<PersonDto> GetFilteredBirthdayPersons()
@@ -624,15 +457,7 @@
         return filtered;
     }
 
-    private IEnumerable<PersonDto> GetSortedBirthdayPersons()
-    {
-        var birthdayPersons = GetFilteredBirthdayPersons()
-            .OrderBy(p => p.DateOfBirth?.Day);
-        
-        return reportModel.SortOrder == "FirstName"
-            ? birthdayPersons.ThenBy(p => p.FirstName).ThenBy(p => p.Surname ?? "")
-            : birthdayPersons.ThenBy(p => p.Surname ?? "").ThenBy(p => p.FirstName);
-    }
+
 }
 
 @inject IQueryMediator QueryMediator
