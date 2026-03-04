@@ -69,7 +69,14 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         await copyButton.ClickAsync();
         _output.WriteLine("Clicked email copy button");
 
-        var clipboardText = await _page.EvaluateAsync<string>("navigator.clipboard.readText()");
+        var clipboardText = await _page.EvaluateAsync<string>(@"async () => {
+            for (let i = 0; i < 20; i++) {
+                const text = await navigator.clipboard.readText();
+                if (text) return text;
+                await new Promise(r => setTimeout(r, 100));
+            }
+            return await navigator.clipboard.readText();
+        }");
         _output.WriteLine($"Clipboard content: {clipboardText}");
 
         Assert.Contains(email1, clipboardText);

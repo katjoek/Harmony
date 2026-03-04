@@ -2,6 +2,8 @@ using Harmony.ApplicationCore.DTOs;
 using Harmony.Web.Models;
 using iText.Kernel.Pdf;
 using iText.Kernel.Geom;
+using iText.Kernel.Font;
+using iText.IO.Font.Constants;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
@@ -31,7 +33,7 @@ public class ReportService : IReportService
             var title = new Paragraph($"Groepsrapport: {group.Name}")
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetFontSize(20)
-                .SetBold();
+                .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD));
             document.Add(title);
 
             // Timestamp
@@ -97,7 +99,7 @@ public class ReportService : IReportService
 
     public Task<byte[]> GenerateExcelReportAsync(GroupDto group, List<PersonDto> members, ReportModel config)
     {
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        ExcelPackage.License.SetNonCommercialPersonal("Harmony");
         
         using var package = new ExcelPackage();
         var worksheet = package.Workbook.Worksheets.Add($"Rapport {group.Name}");
@@ -197,7 +199,7 @@ public class ReportService : IReportService
             var title = new Paragraph($"Verjaardagen in {monthNameNl}")
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetFontSize(20)
-                .SetBold();
+                .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD));
             document.Add(title);
 
             var timestamp = new Paragraph($"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}")
@@ -251,7 +253,7 @@ public class ReportService : IReportService
 
     public Task<byte[]> GenerateBirthdayExcelReportAsync(string monthNameNl, List<PersonDto> persons, ReportModel config)
     {
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        ExcelPackage.License.SetNonCommercialPersonal("Harmony");
 
         using var package = new ExcelPackage();
         var worksheet = package.Workbook.Worksheets.Add($"Verjaardagen {monthNameNl}");
@@ -338,7 +340,7 @@ public class ReportService : IReportService
     {
         var cell = new Cell().Add(new Paragraph(text));
         cell.SetBackgroundColor(ColorConstants.LIGHT_GRAY);
-        cell.SetBold();
+        cell.SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD));
         table.AddHeaderCell(cell);
     }
 
