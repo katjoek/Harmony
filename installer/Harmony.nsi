@@ -85,11 +85,11 @@ Section "Harmony Application" SecMain
     SetOutPath "$INSTDIR"
     
     ; Install all files from the publish directory
-    ; Publish output should be in: src/Harmony.Web/bin/Release/net9.0/win-x64/publish/
+    ; Publish output should be in: src/Harmony.Web/bin/Release/net10.0/win-x64/publish/
     ; Note: This path is relative to where makensis is executed (installer directory)
     ; NSIS will fail at compile time if these files don't exist, so ensure you run
     ; the build script or publish the application before building the installer
-    File /r "..\src\Harmony.Web\bin\Release\net9.0\win-x64\publish\*.*"
+    File /r "..\src\Harmony.Web\bin\Release\net10.0\win-x64\publish\*.*"
     
     ; Store installation folder
     WriteRegStr HKCU "Software\Harmony" "" $INSTDIR
