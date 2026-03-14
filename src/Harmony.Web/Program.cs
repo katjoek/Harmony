@@ -134,6 +134,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.MapStaticAssets();
 app.MapRazorPages();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");

@@ -11,12 +11,15 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="NSubstitute" />
+    <PackageReference Include="iText7" />
+    <PackageReference Include="EPPlus" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Harmony.Domain\Harmony.Domain.csproj" />
     <ProjectReference Include="..\..\src\Harmony.ApplicationCore\Harmony.ApplicationCore.csproj" />
     <ProjectReference Include="..\..\src\Harmony.Infrastructure\Harmony.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Harmony.Web\Harmony.Web.csproj" />
   </ItemGroup>
 
 </Project>
