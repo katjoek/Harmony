@@ -58,18 +58,11 @@ public sealed class PersonsMembershipTests : IAsyncLifetime
         await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
 
         // Act
-        await _page.EvaluateAsync(
-            "id => { const el = document.getElementById(id); for (const o of el.options) o.selected = true; el.dispatchEvent(new Event('change', { bubbles: true })); }",
-            "person-available-groups");
-        await _page.WaitForTimeoutAsync(200);
-
+        await _page.SelectAllOptionsAsync("person-available-groups");
         await _page.Locator("[data-testid='move-right-btn']").ClickAsync();
         await _page.WaitForTimeoutAsync(500);
 
-        var selectedCount = await _page.EvaluateAsync<int>(
-            "id => document.getElementById(id).querySelectorAll('option:checked').length",
-            "person-available-groups");
-        Assert.Equal(0, selectedCount);
+        await _page.AssertNoOptionsSelectedAsync("person-available-groups");
 
         var closeButton = _page.Locator(".modal.show button:has-text('Sluiten')");
         await closeButton.ClickAsync();
