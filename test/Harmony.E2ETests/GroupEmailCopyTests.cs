@@ -48,9 +48,9 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         var email2 = "bob@example.com";
         var groupName = "TestGroep";
 
-        await CreatePerson("Alice", email1);
-        await CreatePerson("Bob", email2);
-        await CreatePerson("Charlie", null);
+        await _appFixture.Factory.SeedPersonAsync("Alice", email1);
+        await _appFixture.Factory.SeedPersonAsync("Bob", email2);
+        await _appFixture.Factory.SeedPersonAsync("Charlie");
 
         await CreateGroup(groupName);
 
@@ -86,7 +86,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
     {
         var groupName = "LegeMailGroep";
 
-        await CreatePerson("Dirk", null);
+        await _appFixture.Factory.SeedPersonAsync("Dirk");
         await CreateGroup(groupName);
         await AddAllPersonsToGroup(groupName);
 
@@ -110,26 +110,6 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         _output.WriteLine($"Alert message: {dialogMessage}");
         Assert.NotNull(dialogMessage);
         Assert.Contains("geen e-mailadressen", dialogMessage, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private async Task CreatePerson(string firstName, string? email)
-    {
-        await _page.GotoAsync($"{_appFixture.BaseUrl}/personen");
-        await _page.WaitForSelectorAsync("table.table", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
-
-        await _page.ClickAsync("[data-testid='new-person-btn']");
-        await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
-
-        await _page.FillAsync("[data-testid='input-firstname']", firstName);
-
-        if (!string.IsNullOrEmpty(email))
-        {
-            await _page.FillAsync("[data-testid='input-email']", email);
-        }
-
-        await _page.ClickAsync("[data-testid='modal-save-btn']");
-        await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Hidden, Timeout = 5000 });
-        _output.WriteLine($"Created person: {firstName}");
     }
 
     private async Task CreateGroup(string groupName)

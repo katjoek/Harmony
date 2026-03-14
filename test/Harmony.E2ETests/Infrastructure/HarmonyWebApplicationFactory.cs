@@ -1,6 +1,8 @@
 namespace Harmony.E2ETests.Infrastructure;
 
 using Harmony.ApplicationCore.Interfaces;
+using Harmony.Domain.Entities;
+using Harmony.Domain.ValueObjects;
 using Harmony.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -103,6 +105,20 @@ public sealed class HarmonyWebApplicationFactory : WebApplicationFactory<Program
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
         await context.Database.EnsureCreatedAsync();
+    }
+
+    /// <summary>
+    /// Seeds a person directly into the database, bypassing the UI.
+    /// </summary>
+    public async Task SeedPersonAsync(string firstName, string? email = null)
+    {
+        using var scope = Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
+        var person = Person.Create(new PersonName(firstName));
+        if (email is not null)
+            person.UpdateEmailAddress(new EmailAddress(email));
+        context.Persons.Add(person);
+        await context.SaveChangesAsync();
     }
 
     /// <summary>
