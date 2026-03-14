@@ -1,0 +1,41 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+
+<div class="input-group">
+    <span class="input-group-text"><i class="fas fa-search"></i></span>
+    <input @ref="_inputRef" id="@Id" class="form-control" placeholder="@Placeholder"
+           value="@Value" @oninput="OnInput" />
+    @if (!string.IsNullOrWhiteSpace(Value))
+    {
+        <button type="button" class="btn btn-outline-secondary" title="Wissen" @onclick="Clear">
+            <i class="fas fa-times"></i>
+        </button>
+    }
+</div>
+
+@code {
+    private ElementReference _inputRef;
+
+    [Parameter, EditorRequired] public string Id { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Zoeken... (F3)";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await JSRuntime.InvokeVoidAsync("searchUtils.registerF3Focus", Id);
+        await Task.Delay(50);
+        try { await _inputRef.FocusAsync(); } catch { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JSRuntime.InvokeVoidAsync("searchUtils.unregisterF3Focus"); } catch { }
+    }
+
+    private async Task OnInput(ChangeEventArgs e) =>
+        await ValueChanged.InvokeAsync(e.Value?.ToString() ?? "");
+
+    private async Task Clear() => await ValueChanged.InvokeAsync("");
+}

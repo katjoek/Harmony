@@ -1,0 +1,49 @@
+@using Harmony.ApplicationCore.DTOs
+@using Harmony.Web.Models
+
+<div class="modal fade @(Show ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Title</h5>
+                <button type="button" class="btn-close" @onclick="OnClose"></button>
+            </div>
+            <EditForm Model="@Model" OnValidSubmit="@OnSave">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Groepsnaam *</label>
+                        <InputText @bind-Value="@Model.Name" class="form-control" data-testid="input-groupname" />
+                        <ValidationMessage For="@(() => Model.Name)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Coördinator</label>
+                        <InputSelect @bind-Value="@Model.CoordinatorId" class="form-select">
+                            <option value="">Geen coördinator</option>
+                            @if (CoordinatorCandidates != null)
+                            {
+                                @foreach (var person in CoordinatorCandidates)
+                                {
+                                    <option value="@person.Id">@person.FullName</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="OnClose">Annuleren</button>
+                    <button type="submit" class="btn btn-primary" data-testid="modal-save-btn">Opslaan</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public GroupViewModel Model { get; set; } = new();
+    [Parameter] public List<PersonDto>? CoordinatorCandidates { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}

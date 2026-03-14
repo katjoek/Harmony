@@ -1,0 +1,95 @@
+@using Harmony.Web.Models
+
+<div class="modal fade @(Show ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Title</h5>
+                <button type="button" class="btn-close" @onclick="OnClose"></button>
+            </div>
+            <EditForm Model="@Model" OnValidSubmit="@OnSave">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Voornaam *</label>
+                                <InputText @bind-Value="@Model.FirstName" class="form-control" data-testid="input-firstname" />
+                                <ValidationMessage For="@(() => Model.FirstName)" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Tussenvoegsel</label>
+                                <InputText @bind-Value="@Model.Prefix" class="form-control" data-testid="input-prefix" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Achternaam</label>
+                                <InputText @bind-Value="@Model.Surname" class="form-control" data-testid="input-surname" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Geboortedatum</label>
+                                <InputDate @bind-Value="@Model.DateOfBirth" class="form-control" data-testid="input-dateofbirth" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Telefoon</label>
+                                <InputText @bind-Value="@Model.PhoneNumber" class="form-control" data-testid="input-phonenumber" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">E-mail</label>
+                                <InputText @bind-Value="@Model.EmailAddress" class="form-control" type="email" data-testid="input-email" />
+                                <ValidationMessage For="@(() => Model.EmailAddress)" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Straat en huisnummer</label>
+                                <InputText @bind-Value="@Model.Street" class="form-control" data-testid="input-street" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Postcode</label>
+                                <InputText @bind-Value="@Model.ZipCode" class="form-control" data-testid="input-zipcode" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Plaats</label>
+                                <InputText @bind-Value="@Model.City" class="form-control" data-testid="input-city" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="OnClose">Annuleren</button>
+                    <button type="submit" class="btn btn-primary" data-testid="modal-save-btn">Opslaan</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public PersonViewModel Model { get; set; } = new();
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}

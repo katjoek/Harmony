@@ -1,0 +1,338 @@
+@using Harmony.ApplicationCore.Interfaces
+@using Microsoft.Data.Sqlite
+@inject IDatabaseBackupService BackupService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject IServiceProvider ServiceProvider
+@inject ISettingsService SettingsService
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-shield-alt me-2"></i>
+            Database Backup
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (!string.IsNullOrWhiteSpace(_successMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                @_successMessage
+                <button type="button" class="btn-close" @onclick="() => _successMessage = string.Empty" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (_isRestoring)
+        {
+            <div class="alert alert-warning fade show" role="alert">
+                <div class="d-flex align-items-center">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <div>
+                        <strong>Database wordt hersteld...</strong>
+                        <div class="small">Dit kan even duren. Gelieve te wachten tot de restore is voltooid.</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                @_errorMessage
+                <button type="button" class="btn-close" @onclick="() => _errorMessage = string.Empty" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="mb-3">
+            <h6>Backup Maken</h6>
+            <p class="text-muted small">
+                Maak een backup van de huidige database. De backup wordt opgeslagen in dezelfde map als de database.
+            </p>
+            <button type="button" class="btn btn-primary" @onclick="CreateBackup" disabled="@_isCreatingBackup">
+                @if (_isCreatingBackup)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Backup maken...</span>
+                }
+                else
+                {
+                    <i class="fas fa-download me-2"></i>
+                    <span>Backup Maken</span>
+                }
+            </button>
+        </div>
+
+        <hr />
+
+        <div class="mb-3">
+            <h6>Bestaande Backups</h6>
+            @if (_backups == null)
+            {
+                <div class="text-muted">Laden...</div>
+            }
+            else if (!_backups.Any())
+            {
+                <div class="text-muted">Geen backups gevonden.</div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var backup in _backups)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">@backup</div>
+                                <small class="text-muted">@GetBackupDate(backup)</small>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="@(() => DownloadBackup(backup))" disabled="@_isRestoring" title="Download backup">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-warning" @onclick="@(() => RestoreBackup(backup))" disabled="@_isRestoring" title="Herstel backup">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="@(() => DeleteBackup(backup))" disabled="@_isRestoring" title="Verwijder backup">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <hr />
+
+        <div class="mb-3">
+            <h6>Backup Herstellen</h6>
+            <p class="text-muted small">
+                Upload een eerder gemaakte backup om de database te herstellen. Let op: dit overschrijft de huidige database!
+            </p>
+            <div class="input-group">
+                <InputFile class="form-control" accept=".db" OnChange="OnFileSelected" maxAllowedSize="104857600" disabled="@_isRestoring" />
+                <button type="button" class="btn btn-warning" @onclick="RestoreFromFile" disabled="@(_selectedFile == null || _isRestoring)">
+                    @if (_isRestoring)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Herstellen...</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-upload me-2"></i>
+                        <span>Herstel Backup</span>
+                    }
+                </button>
+            </div>
+            @if (_selectedFile != null)
+            {
+                <div class="mt-2">
+                    <small class="text-muted">Geselecteerd bestand: @_selectedFile.Name</small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<string>? _backups;
+    private string _successMessage = "";
+    private string _errorMessage = "";
+    private bool _isCreatingBackup = false;
+    private bool _isRestoring = false;
+    private IBrowserFile? _selectedFile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBackups();
+    }
+
+    private async Task LoadBackups()
+    {
+        try
+        {
+            var isConfigured = await SettingsService.IsDatabaseDirectoryConfiguredAsync();
+            if (!isConfigured)
+            {
+                _backups = new List<string>();
+                return;
+            }
+            _backups = (await BackupService.ListBackupsAsync()).ToList();
+        }
+        catch (InvalidOperationException)
+        {
+            _backups = new List<string>();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Fout bij laden backups: {ex.Message}";
+            _backups = new List<string>();
+        }
+    }
+
+    private async Task CreateBackup()
+    {
+        _errorMessage = "";
+        _successMessage = "";
+        _isCreatingBackup = true;
+        try
+        {
+            var backupPath = await BackupService.CreateBackupAsync();
+            _successMessage = $"Backup succesvol gemaakt: {Path.GetFileName(backupPath)}";
+            await LoadBackups();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Fout bij maken backup: {ex.Message}";
+        }
+        finally
+        {
+            _isCreatingBackup = false;
+        }
+    }
+
+    private async Task DownloadBackup(string backupFileName)
+    {
+        try
+        {
+            var databasePath = await BackupService.GetDatabasePathAsync();
+            var backupPath = Path.Combine(Path.GetDirectoryName(databasePath) ?? string.Empty, backupFileName);
+            var fileBytes = await BackupService.GetBackupFileAsync(backupPath);
+            await JSRuntime.InvokeVoidAsync("downloadFile", backupFileName, "application/octet-stream", fileBytes);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Fout bij downloaden backup: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteBackup(string backupFileName)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            $"Weet u zeker dat u de backup '{backupFileName}' wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.");
+        if (!confirmed) return;
+
+        _errorMessage = "";
+        _successMessage = "";
+        try
+        {
+            await BackupService.DeleteBackupAsync(backupFileName);
+            _successMessage = $"Backup '{backupFileName}' succesvol verwijderd.";
+            await LoadBackups();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Fout bij verwijderen backup: {ex.Message}";
+        }
+    }
+
+    private async Task RestoreBackup(string backupFileName)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            $"Weet u zeker dat u de database wilt herstellen vanaf '{backupFileName}'? Dit overschrijft de huidige database!");
+        if (!confirmed) return;
+
+        _errorMessage = "";
+        _successMessage = "";
+        _isRestoring = true;
+        StateHasChanged();
+        try
+        {
+            await CloseAllDatabaseConnectionsAsync();
+            var databasePath = await BackupService.GetDatabasePathAsync().ConfigureAwait(false);
+            var backupPath = Path.Combine(Path.GetDirectoryName(databasePath) ?? string.Empty, backupFileName);
+            await Task.Run(async () => await BackupService.RestoreBackupAsync(backupPath).ConfigureAwait(false)).ConfigureAwait(false);
+            _successMessage = $"Database succesvol hersteld vanaf {backupFileName}. U wordt doorgestuurd naar de home pagina.";
+            await Task.Delay(2000).ConfigureAwait(false);
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Fout bij herstellen backup: {ex.Message}";
+        }
+        finally
+        {
+            _isRestoring = false;
+        }
+    }
+
+    private async Task RestoreFromFile()
+    {
+        if (_selectedFile == null) return;
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            "Weet u zeker dat u de database wilt herstellen vanaf het geüploade bestand? Dit overschrijft de huidige database!");
+        if (!confirmed) return;
+
+        _errorMessage = "";
+        _successMessage = "";
+        _isRestoring = true;
+        StateHasChanged();
+        try
+        {
+            await CloseAllDatabaseConnectionsAsync();
+            var tempPath = Path.Combine(Path.GetTempPath(), $"harmony_restore_{Guid.NewGuid()}.db");
+            await using (var fileStream = File.Create(tempPath))
+            {
+                await _selectedFile.OpenReadStream().CopyToAsync(fileStream).ConfigureAwait(false);
+                await fileStream.FlushAsync().ConfigureAwait(false);
+            }
+            await Task.Run(async () => await BackupService.RestoreBackupAsync(tempPath).ConfigureAwait(false)).ConfigureAwait(false);
+            try { File.Delete(tempPath); } catch { }
+            _successMessage = $"Database succesvol hersteld vanaf geüploade bestand '{_selectedFile.Name}'. U wordt doorgestuurd naar de home pagina.";
+            await Task.Delay(2000).ConfigureAwait(false);
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Fout bij herstellen backup: {ex.Message}";
+        }
+        finally
+        {
+            _isRestoring = false;
+            _selectedFile = null;
+        }
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+    }
+
+    private async Task CloseAllDatabaseConnectionsAsync()
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var connectionStringProvider = scope.ServiceProvider.GetRequiredService<IDatabaseConnectionStringProvider>();
+        await Task.Run(async () =>
+        {
+            try
+            {
+                var connectionString = await connectionStringProvider.GetConnectionStringAsync().ConfigureAwait(false);
+                using var tempConnection = new SqliteConnection(connectionString);
+                tempConnection.Open();
+                SqliteConnection.ClearPool(tempConnection);
+                tempConnection.Close();
+            }
+            catch { }
+            await Task.Delay(200).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
+
+    private static string GetBackupDate(string backupFileName)
+    {
+        try
+        {
+            var parts = backupFileName.Split('_');
+            if (parts.Length >= 4)
+            {
+                var datePart = parts[^2];
+                var timePart = parts[^1].Replace(".db", "");
+                if (DateTime.TryParseExact($"{datePart}_{timePart}", "yyyyMMdd_HHmmss", null,
+                    System.Globalization.DateTimeStyles.None, out var date))
+                    return date.ToString("dd-MM-yyyy HH:mm:ss");
+            }
+        }
+        catch { }
+        return "Onbekende datum";
+    }
+}

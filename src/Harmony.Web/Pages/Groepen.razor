@@ -6,23 +6,13 @@
 @using Harmony.Web.Models
 @using LiteBus.Commands.Abstractions
 @using LiteBus.Queries.Abstractions
-@implements IDisposable
 
 <PageTitle>Groepen - Harmony</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Groepen</h1>
     <div class="d-flex gap-2">
-        <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input @ref="groupSearchInput" id="group-search-input" class="form-control" placeholder="Zoeken... (F3)" @bind="groupSearch" @bind:event="oninput" />
-            @if (!string.IsNullOrWhiteSpace(groupSearch))
-            {
-                <button type="button" class="btn btn-outline-secondary" title="Wissen" @onclick="ClearGroupSearch">
-                    <i class="fas fa-times"></i>
-                </button>
-            }
-        </div>
+        <SearchBar Id="group-search-input" @bind-Value="groupSearch" />
         <button type="button" class="btn btn-primary" data-testid="new-group-btn" @onclick="OpenCreateModal">
             <i class="fas fa-plus me-2"></i>
             Nieuwe Groep
@@ -127,44 +117,13 @@
     </table>
 </div>
 
-<!-- Create/Edit Modal -->
-<div class="modal fade @(showGroupModal ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">@modalTitle</h5>
-                <button type="button" class="btn-close" @onclick="CloseModal"></button>
-            </div>
-            <EditForm Model="@groupModel" OnValidSubmit="@SaveGroup">
-                <DataAnnotationsValidator />
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Groepsnaam *</label>
-                        <InputText @bind-Value="@groupModel.Name" class="form-control" data-testid="input-groupname" />
-                        <ValidationMessage For="@(() => groupModel.Name)" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Coördinator</label>
-                        <InputSelect @bind-Value="@groupModel.CoordinatorId" class="form-select">
-                            <option value="">Geen coördinator</option>
-                            @if (coordinatorCandidates != null)
-                            {
-                                @foreach (var person in coordinatorCandidates)
-                                {
-                                    <option value="@person.Id">@person.FullName</option>
-                                }
-                            }
-                        </InputSelect>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuleren</button>
-                    <button type="submit" class="btn btn-primary" data-testid="modal-save-btn">Opslaan</button>
-                </div>
-            </EditForm>
-        </div>
-    </div>
-</div>
+<GroupFormModal
+    Show="@showGroupModal"
+    Title="@modalTitle"
+    Model="@groupModel"
+    CoordinatorCandidates="@coordinatorCandidates"
+    OnSave="@SaveGroup"
+    OnClose="@CloseModal" />
 
 <!-- Members Modal Component -->
 @if (selectedGroup != null && groupMembers != null && availablePersons != null)
@@ -198,11 +157,9 @@
     private bool showMembersModal = false;
     private string groupSearch = "";
     private bool isProcessing = false;
-    private ElementReference groupSearchInput;
 
     protected override Task OnInitializedAsync()
     {
-        // Start loading data in the background without blocking the initial render
         _ = Task.Run(async () =>
         {
             try
@@ -211,71 +168,28 @@
             }
             catch (Exception ex)
             {
-                // Log error but don't crash the page
-                Console.WriteLine($"Error loading data: {ex.Message}");
+                Logger.LogWarning(ex, "Error loading data");
             }
         });
         return Task.CompletedTask;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Register F3 keyboard shortcut to focus search
-            await JSRuntime.InvokeVoidAsync("searchUtils.registerF3Focus", "group-search-input");
-            
-            // Small delay to ensure the element is fully rendered
-            await Task.Delay(50);
-            try
-            {
-                await groupSearchInput.FocusAsync();
-            }
-            catch
-            {
-                // Ignore focus errors (e.g., if element not yet rendered)
-            }
-        }
-    }
-
-    public void Dispose()
-    {
-        // Unregister F3 handler when component is disposed
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("searchUtils.unregisterF3Focus");
-            }
-            catch
-            {
-                // Ignore errors during disposal
-            }
-        });
-    }
-
     private async Task LoadData()
     {
-        // Load both in parallel for maximum performance
-        var groupsTask = LoadGroups();
-        var personsTask = LoadPersons();
-        
-        await Task.WhenAll(groupsTask, personsTask);
+        await Task.WhenAll(LoadGroups(), LoadPersons());
     }
 
     private async Task LoadGroups()
     {
-        var query = new GetAllGroupsQuery();
-        groups = (await QueryMediator.QueryAsync(query)).ToList();
+        groups = (await QueryMediator.QueryAsync(new GetAllGroupsQuery())).ToList();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadPersons()
     {
-        var query = new GetAllPersonsQuery();
-        allPersons = (await QueryMediator.QueryAsync(query)).ToList();
+        allPersons = (await QueryMediator.QueryAsync(new GetAllPersonsQuery())).ToList();
         UpdateCoordinatorCandidatesForCurrentModel();
-        await InvokeAsync(StateHasChanged); // Update UI so tooltips work
+        await InvokeAsync(StateHasChanged);
     }
 
     private void OpenCreateModal()
@@ -304,7 +218,6 @@
     private async Task OpenMembersModal(GroupDto group)
     {
         selectedGroup = group;
-        // Ensure we have the latest data before opening the modal
         await LoadPersons();
         await LoadGroupMembers(group.Id);
         UpdateAvailablePersons();
@@ -314,7 +227,6 @@
     private Task LoadGroupMembers(string groupId)
     {
         if (allPersons == null) return Task.CompletedTask;
-        
         groupMembers = allPersons
             .Where(p => p.GroupIds.Contains(groupId))
             .OrderBy(p => p.FirstName, StringComparer.OrdinalIgnoreCase)
@@ -326,7 +238,6 @@
     private void UpdateAvailablePersons()
     {
         if (allPersons == null || groupMembers == null) return;
-
         var memberIds = groupMembers.Select(m => m.Id).ToHashSet();
         availablePersons = allPersons
             .Where(p => !memberIds.Contains(p.Id))
@@ -341,46 +252,39 @@
         {
             if (isEditing)
             {
-                var command = new UpdateGroupCommand(
+                await CommandMediator.SendAsync(new UpdateGroupCommand(
                     groupModel.Id!,
                     groupModel.Name!,
-                    string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId);
-
-                await CommandMediator.SendAsync(command);
+                    string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId));
             }
             else
             {
-                var command = new CreateGroupCommand(
+                await CommandMediator.SendAsync(new CreateGroupCommand(
                     groupModel.Name!,
-                    string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId);
-
-                await CommandMediator.SendAsync(command);
+                    string.IsNullOrEmpty(groupModel.CoordinatorId) ? null : groupModel.CoordinatorId));
             }
 
             await LoadGroups();
             CloseModal();
-            ShowSuccessMessage("Groep succesvol opgeslagen!");
         }
         catch (Exception ex)
         {
-            ShowErrorMessage($"Fout bij opslaan: {ex.Message}");
+            Logger.LogWarning(ex, "Fout bij opslaan groep");
         }
     }
 
     private async Task DeleteGroup(GroupDto group)
     {
-        if (await ShowConfirmDialog($"Weet u zeker dat u groep '{group.Name}' wilt verwijderen?"))
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Weet u zeker dat u groep '{group.Name}' wilt verwijderen?"))
         {
             try
             {
-                var command = new DeleteGroupCommand(group.Id);
-                await CommandMediator.SendAsync(command);
+                await CommandMediator.SendAsync(new DeleteGroupCommand(group.Id));
                 await LoadGroups();
-                ShowSuccessMessage("Groep succesvol verwijderd!");
             }
             catch (Exception ex)
             {
-                ShowErrorMessage($"Fout bij verwijderen: {ex.Message}");
+                Logger.LogWarning(ex, "Fout bij verwijderen groep");
             }
         }
     }
@@ -390,22 +294,16 @@
         if (selectedGroup == null) return;
         var ids = personIds?.ToArray() ?? Array.Empty<string>();
         if (ids.Length == 0) return;
-
         try
         {
             isProcessing = true;
             foreach (var pid in ids)
-            {
-                var command = new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(pid, selectedGroup.Id);
-                await CommandMediator.SendAsync(command);
-            }
-
+                await CommandMediator.SendAsync(new Harmony.ApplicationCore.Commands.Membership.AddPersonToGroupCommand(pid, selectedGroup.Id));
             await RefreshMembershipState();
-            ShowSuccessMessage("Toegevoegd aan groep.");
         }
         catch (Exception ex)
         {
-            ShowErrorMessage($"Fout bij toevoegen: {ex.Message}");
+            Logger.LogWarning(ex, "Fout bij toevoegen aan groep");
         }
         finally
         {
@@ -418,22 +316,16 @@
         if (selectedGroup == null) return;
         var ids = personIds?.ToArray() ?? Array.Empty<string>();
         if (ids.Length == 0) return;
-
         try
         {
             isProcessing = true;
             foreach (var pid in ids)
-            {
-                var command = new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(pid, selectedGroup.Id);
-                await CommandMediator.SendAsync(command);
-            }
-
+                await CommandMediator.SendAsync(new Harmony.ApplicationCore.Commands.Membership.RemovePersonFromGroupCommand(pid, selectedGroup.Id));
             await RefreshMembershipState();
-            ShowSuccessMessage("Verwijderd uit groep.");
         }
         catch (Exception ex)
         {
-            ShowErrorMessage($"Fout bij verwijderen: {ex.Message}");
+            Logger.LogWarning(ex, "Fout bij verwijderen uit groep");
         }
         finally
         {
@@ -451,10 +343,7 @@
         StateHasChanged();
     }
 
-    private void CloseModal()
-    {
-        showGroupModal = false;
-    }
+    private void CloseModal() => showGroupModal = false;
 
     private void CloseMembersModal()
     {
@@ -466,12 +355,8 @@
 
     private string GetGroupMembersTooltip(GroupDto group)
     {
-        // Return empty string if data not yet loaded - no tooltip will be shown
-        if (allPersons == null)
-            return string.Empty;
-
-        if (!group.MemberIds.Any())
-            return "Geen leden";
+        if (allPersons == null) return string.Empty;
+        if (!group.MemberIds.Any()) return "Geen leden";
 
         var memberNames = allPersons
             .Where(p => group.MemberIds.Contains(p.Id))
@@ -479,7 +364,7 @@
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        return memberNames.Any() 
+        return memberNames.Any()
             ? $"Leden: {string.Join(", ", memberNames)}"
             : "Geen leden";
     }
@@ -505,20 +390,13 @@
             coordinatorCandidates = new List<PersonDto>();
         }
 
-        if (!string.IsNullOrEmpty(groupModel.CoordinatorId))
-        {
-            var existsInCandidates = coordinatorCandidates.Any(p => p.Id == groupModel.CoordinatorId);
-            if (!existsInCandidates)
-            {
-                groupModel.CoordinatorId = null;
-            }
-        }
+        if (!string.IsNullOrEmpty(groupModel.CoordinatorId) && !coordinatorCandidates.Any(p => p.Id == groupModel.CoordinatorId))
+            groupModel.CoordinatorId = null;
     }
 
     private async Task CopyEmailsToClipboard(GroupDto group)
     {
         if (allPersons == null) return;
-
         var emails = allPersons
             .Where(p => group.MemberIds.Contains(p.Id) && !string.IsNullOrWhiteSpace(p.EmailAddress))
             .Select(p => p.EmailAddress!)
@@ -530,23 +408,7 @@
             return;
         }
 
-        var text = string.Join("; ", emails);
-        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
-    }
-
-    private async Task<bool> ShowConfirmDialog(string message)
-    {
-        return await JSRuntime.InvokeAsync<bool>("confirm", message);
-    }
-
-    private void ShowSuccessMessage(string message)
-    {
-        Console.WriteLine($"SUCCESS: {message}");
-    }
-
-    private void ShowErrorMessage(string message)
-    {
-        Console.WriteLine($"ERROR: {message}");
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", string.Join("; ", emails));
     }
 
     private IEnumerable<GroupDto> FilteredGroups
@@ -556,8 +418,6 @@
             var filtered = string.IsNullOrWhiteSpace(groupSearch) || groups == null
                 ? groups ?? Enumerable.Empty<GroupDto>()
                 : groups.Where(g => MatchesGroup(g, groupSearch));
-            
-            // Apply case-insensitive sorting
             return filtered.OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
         }
     }
@@ -572,13 +432,9 @@
 
     private static bool ContainsInsensitive(string? haystack, string needle)
         => !string.IsNullOrWhiteSpace(haystack) && haystack.Contains(needle, StringComparison.OrdinalIgnoreCase);
-
-    private void ClearGroupSearch()
-    {
-        groupSearch = "";
-    }
 }
 
 @inject ICommandMediator CommandMediator
 @inject IQueryMediator QueryMediator
 @inject IJSRuntime JSRuntime
+@inject ILogger<Groepen> Logger
