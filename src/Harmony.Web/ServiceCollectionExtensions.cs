@@ -66,6 +66,8 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<IGroupRepository, GroupRepository>();
         services.AddScoped<IConfigRepository, ConfigRepository>();
         services.AddScoped<IMembershipService, MembershipService>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IReportFileNameBuilder, ReportFileNameBuilder>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
         services.AddScoped<IDatabaseCleanupService, DatabaseCleanupService>();
