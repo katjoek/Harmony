@@ -108,6 +108,17 @@ public sealed class HarmonyWebApplicationFactory : WebApplicationFactory<Program
     }
 
     /// <summary>
+    /// Seeds a group directly into the database, bypassing the UI.
+    /// </summary>
+    public async Task SeedGroupAsync(string name)
+    {
+        using var scope = Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
+        context.Groups.Add(Group.Create(name));
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
     /// Seeds a person directly into the database, bypassing the UI.
     /// </summary>
     public async Task SeedPersonAsync(string firstName, string? email = null)

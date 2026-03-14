@@ -52,7 +52,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         await _appFixture.Factory.SeedPersonAsync("Bob", email2);
         await _appFixture.Factory.SeedPersonAsync("Charlie");
 
-        await CreateGroup(groupName);
+        await _appFixture.Factory.SeedGroupAsync(groupName);
 
         await AddAllPersonsToGroup(groupName);
 
@@ -87,7 +87,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         var groupName = "LegeMailGroep";
 
         await _appFixture.Factory.SeedPersonAsync("Dirk");
-        await CreateGroup(groupName);
+        await _appFixture.Factory.SeedGroupAsync(groupName);
         await AddAllPersonsToGroup(groupName);
 
         await _page.GotoAsync($"{_appFixture.BaseUrl}/groepen");
@@ -110,21 +110,6 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         _output.WriteLine($"Alert message: {dialogMessage}");
         Assert.NotNull(dialogMessage);
         Assert.Contains("geen e-mailadressen", dialogMessage, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private async Task CreateGroup(string groupName)
-    {
-        await _page.GotoAsync($"{_appFixture.BaseUrl}/groepen");
-        await WaitForTableLoaded();
-
-        await _page.ClickAsync("[data-testid='new-group-btn']");
-        await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
-
-        await _page.FillAsync("[data-testid='input-groupname']", groupName);
-
-        await _page.ClickAsync("[data-testid='modal-save-btn']");
-        await _page.WaitForSelectorAsync(".modal.show", new PageWaitForSelectorOptions { State = WaitForSelectorState.Hidden, Timeout = 5000 });
-        _output.WriteLine($"Created group: {groupName}");
     }
 
     private async Task AddAllPersonsToGroup(string groupName)
