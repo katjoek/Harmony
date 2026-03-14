@@ -330,26 +330,11 @@
             StateHasChanged();
             await Task.Yield(); // Allow UI to update before starting report generation
 
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string fileName;
-            if (reportModel.ReportType == "Group")
-            {
-                var adaptedGroupName = selectedGroup!.Name.Replace(" ", "_");
-                fileName = $"{adaptedGroupName}_{timestamp}";
-            }
-            else
-            {
-                var monthName = GetDutchMonthName(reportModel.SelectedMonth).Replace(" ", "_");
-                if (selectedBirthdayGroup != null)
-                {
-                    var groupName = selectedBirthdayGroup.Name.Replace(" ", "_");
-                    fileName = $"Verjaardagen_{groupName}_{monthName}_{timestamp}";
-                }
-                else
-                {
-                    fileName = $"Verjaardagen_{monthName}_{timestamp}";
-                }
-            }
+            var fileName = FileNameBuilder.Build(
+                reportModel.ReportType,
+                selectedGroup?.Name,
+                selectedBirthdayGroup?.Name,
+                reportModel.SelectedMonth);
             
             if (reportModel.OutputFormat == "PDF")
             {
@@ -464,3 +449,4 @@
 @inject ICommandMediator CommandMediator
 @inject IJSRuntime JSRuntime
 @inject Harmony.Web.Services.IReportService ReportService
+@inject Harmony.Web.Services.IReportFileNameBuilder FileNameBuilder
