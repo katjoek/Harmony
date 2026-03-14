@@ -1,149 +1,151 @@
+namespace Harmony.Web.Services;
+
 using Harmony.ApplicationCore.DTOs;
 using Harmony.Web.Models;
-using iText.Kernel.Pdf;
-using iText.Kernel.Geom;
-using iText.Kernel.Font;
 using iText.IO.Font.Constants;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
+using iText.Kernel.Geom;
+using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
-using iText.Kernel.Colors;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
-namespace Harmony.Web.Services;
-
-public class ReportService : IReportService
+public sealed class ReportService : IReportService
 {
+    private sealed record ReportColumn(string Header, Func<PersonDto, string> GetValue);
+
     public Task<byte[]> GeneratePdfReportAsync(GroupDto group, List<PersonDto> members, ReportModel config)
     {
-        try
-        {
-            using var stream = new MemoryStream();
-            using var writer = new PdfWriter(stream);
-            using var pdf = new PdfDocument(writer);
-            // Apply page orientation before adding any content
-            var pageSize = string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
-                ? PageSize.A4.Rotate()
-                : PageSize.A4;
-            pdf.SetDefaultPageSize(pageSize);
-            using var document = new Document(pdf);
-
-            // Title
-            var title = new Paragraph($"Groepsrapport: {group.Name}")
-                .SetTextAlignment(TextAlignment.CENTER)
-                .SetFontSize(20)
-                .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD));
-            document.Add(title);
-
-            // Timestamp
-            var timestamp = new Paragraph($"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}")
-                .SetTextAlignment(TextAlignment.CENTER)
-                .SetFontSize(10)
-                .SetFontColor(ColorConstants.GRAY);
-            document.Add(timestamp);
-
-            // Coordinator if present
-            if (!string.IsNullOrEmpty(group.CoordinatorName))
-            {
-                var coordinator = new Paragraph($"Coördinator: {group.CoordinatorName}")
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFontSize(12)
-                    .SetMarginTop(10);
-                document.Add(coordinator);
-            }
-
-            // Add some space
-            document.Add(new Paragraph("\n"));
-
-            // Create table
-            var columnCount = GetColumnCount(config);
-            var table = new Table(columnCount);
-            table.SetWidth(UnitValue.CreatePercentValue(100));
-            table.SetFontSize(9);
-
-            // Add headers
-            AddTableHeader(table, "Volledige naam");
-            if (config.IncludeDateOfBirth) AddTableHeader(table, "Geboortedatum");
-            if (config.IncludeAddress) AddTableHeader(table, "Adres");
-            if (config.IncludePhoneNumber) AddTableHeader(table, "Telefoon");
-            if (config.IncludeEmailAddress) AddTableHeader(table, "E-mail");
-
-            // Add member data (sorted according to config)
-            var sortedMembers = SortPersons(members, config.SortOrder);
-            foreach (var member in sortedMembers)
-            {
-                table.AddCell(new Cell().Add(new Paragraph(member.FullName ?? "")));
-                if (config.IncludeDateOfBirth) 
-                    table.AddCell(new Cell().Add(new Paragraph(member.DateOfBirth?.ToString("dd-MM-yyyy") ?? "")));
-                if (config.IncludeAddress) 
-                    table.AddCell(new Cell().Add(new Paragraph(member.FormattedAddress ?? "")));
-                if (config.IncludePhoneNumber) 
-                    table.AddCell(new Cell().Add(new Paragraph(member.PhoneNumber ?? "")));
-                if (config.IncludeEmailAddress) 
-                    table.AddCell(new Cell().Add(new Paragraph(member.EmailAddress ?? "")));
-            }
-
-            document.Add(table);
-            document.Close();
-
-            return Task.FromResult(stream.ToArray());
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            Console.WriteLine(ex.StackTrace);
-            throw;
-        }
+        var subtitle = string.IsNullOrEmpty(group.CoordinatorName) ? null : $"Coördinator: {group.CoordinatorName}";
+        return Task.FromResult(RenderPdf(
+            $"Groepsrapport: {group.Name}",
+            subtitle,
+            BuildGroupColumns(config),
+            SortForGroupReport(members, config),
+            config));
     }
 
     public Task<byte[]> GenerateExcelReportAsync(GroupDto group, List<PersonDto> members, ReportModel config)
     {
-        ExcelPackage.License.SetNonCommercialPersonal("Harmony");
-        
-        using var package = new ExcelPackage();
-        var worksheet = package.Workbook.Worksheets.Add($"Rapport {group.Name}");
+        var subtitle = string.IsNullOrEmpty(group.CoordinatorName) ? null : $"Coördinator: {group.CoordinatorName}";
+        return Task.FromResult(RenderExcel(
+            $"Rapport {group.Name}",
+            $"Groepsrapport: {group.Name}",
+            subtitle,
+            BuildGroupColumns(config),
+            SortForGroupReport(members, config),
+            config));
+    }
 
-        // Apply orientation to printer settings
-        worksheet.PrinterSettings.Orientation =
-            string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
-                ? eOrientation.Landscape
-                : eOrientation.Portrait;
+    public Task<byte[]> GenerateBirthdayPdfReportAsync(string monthNameNl, List<PersonDto> persons, ReportModel config) =>
+        Task.FromResult(RenderPdf(
+            $"Verjaardagen in {monthNameNl}",
+            null,
+            BuildBirthdayColumns(config),
+            SortForBirthdayReport(persons, config),
+            config));
+
+    public Task<byte[]> GenerateBirthdayExcelReportAsync(string monthNameNl, List<PersonDto> persons, ReportModel config) =>
+        Task.FromResult(RenderExcel(
+            $"Verjaardagen {monthNameNl}",
+            $"Verjaardagen in {monthNameNl}",
+            null,
+            BuildBirthdayColumns(config),
+            SortForBirthdayReport(persons, config),
+            config));
+
+    private static byte[] RenderPdf(
+        string title,
+        string? subtitle,
+        IReadOnlyList<ReportColumn> columns,
+        IReadOnlyList<PersonDto> rows,
+        ReportModel config)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new PdfWriter(stream);
+        using var pdf = new PdfDocument(writer);
+        pdf.SetDefaultPageSize(ResolvePageSize(config));
+        using var document = new Document(pdf);
+
+        document.Add(new Paragraph(title)
+            .SetTextAlignment(TextAlignment.CENTER)
+            .SetFontSize(20)
+            .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD)));
+
+        document.Add(new Paragraph($"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}")
+            .SetTextAlignment(TextAlignment.CENTER)
+            .SetFontSize(10)
+            .SetFontColor(ColorConstants.GRAY));
+
+        if (!string.IsNullOrEmpty(subtitle))
+            document.Add(new Paragraph(subtitle)
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetFontSize(12)
+                .SetMarginTop(10));
+
+        document.Add(new Paragraph("\n"));
+
+        var table = new Table(columns.Count);
+        table.SetWidth(UnitValue.CreatePercentValue(100));
+        table.SetFontSize(9);
+
+        foreach (var column in columns)
+            AddPdfHeaderCell(table, column.Header);
+
+        foreach (var row in rows)
+            foreach (var column in columns)
+                table.AddCell(new Cell().Add(new Paragraph(column.GetValue(row))));
+
+        document.Add(table);
+        document.Close();
+
+        return stream.ToArray();
+    }
+
+    private static byte[] RenderExcel(
+        string sheetName,
+        string title,
+        string? subtitle,
+        IReadOnlyList<ReportColumn> columns,
+        IReadOnlyList<PersonDto> rows,
+        ReportModel config)
+    {
+        ExcelPackage.License.SetNonCommercialPersonal("Harmony");
+        using var package = new ExcelPackage();
+        var worksheet = package.Workbook.Worksheets.Add(sheetName);
+
+        worksheet.PrinterSettings.Orientation = IsLandscape(config)
+            ? eOrientation.Landscape
+            : eOrientation.Portrait;
 
         var row = 1;
 
-        // Title
-        worksheet.Cells[row, 1].Value = $"Groepsrapport: {group.Name}";
+        worksheet.Cells[row, 1].Value = title;
         worksheet.Cells[row, 1].Style.Font.Size = 16;
         worksheet.Cells[row, 1].Style.Font.Bold = true;
         row += 2;
 
-        // Timestamp
         worksheet.Cells[row, 1].Value = $"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}";
         worksheet.Cells[row, 1].Style.Font.Size = 10;
         worksheet.Cells[row, 1].Style.Font.Color.SetColor(System.Drawing.Color.Gray);
         row++;
 
-        // Coordinator if present
-        if (!string.IsNullOrEmpty(group.CoordinatorName))
+        if (!string.IsNullOrEmpty(subtitle))
         {
-            worksheet.Cells[row, 1].Value = $"Coördinator: {group.CoordinatorName}";
+            worksheet.Cells[row, 1].Value = subtitle;
             worksheet.Cells[row, 1].Style.Font.Size = 12;
             row++;
         }
 
-        row += 2; // Add some space
+        row += 2;
 
-        // Headers
-        var col = 1;
-        worksheet.Cells[row, col++].Value = "Volledige naam";
-        if (config.IncludeDateOfBirth) worksheet.Cells[row, col++].Value = "Geboortedatum";
-        if (config.IncludeAddress) worksheet.Cells[row, col++].Value = "Adres";
-        if (config.IncludePhoneNumber) worksheet.Cells[row, col++].Value = "Telefoon";
-        if (config.IncludeEmailAddress) worksheet.Cells[row, col++].Value = "E-mail";
+        for (var col = 1; col <= columns.Count; col++)
+            worksheet.Cells[row, col].Value = columns[col - 1].Header;
 
-        // Style headers
-        using (var range = worksheet.Cells[row, 1, row, col - 1])
+        using (var range = worksheet.Cells[row, 1, row, columns.Count])
         {
             range.Style.Font.Bold = true;
             range.Style.Fill.PatternType = ExcelFillStyle.Solid;
@@ -153,212 +155,64 @@ public class ReportService : IReportService
 
         row++;
 
-        // Data rows (sorted according to config)
-        var sortedMembers = SortPersons(members, config.SortOrder);
-        foreach (var member in sortedMembers)
+        foreach (var person in rows)
         {
-            col = 1;
-            worksheet.Cells[row, col++].Value = member.FullName ?? "";
-            if (config.IncludeDateOfBirth) 
-                worksheet.Cells[row, col++].Value = member.DateOfBirth?.ToString("dd-MM-yyyy") ?? "";
-            if (config.IncludeAddress) 
-                worksheet.Cells[row, col++].Value = member.FormattedAddress ?? "";
-            if (config.IncludePhoneNumber) 
-                worksheet.Cells[row, col++].Value = member.PhoneNumber ?? "";
-            if (config.IncludeEmailAddress) 
-                worksheet.Cells[row, col++].Value = member.EmailAddress ?? "";
+            for (var col = 1; col <= columns.Count; col++)
+                worksheet.Cells[row, col].Value = columns[col - 1].GetValue(person);
 
-            // Add border to data rows
-            using (var range = worksheet.Cells[row, 1, row, col - 1])
-            {
+            using (var range = worksheet.Cells[row, 1, row, columns.Count])
                 range.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-            }
-
-            row++;
-        }
-
-        // Auto-fit columns
-        worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-
-        return Task.FromResult(package.GetAsByteArray());
-    }
-
-    public Task<byte[]> GenerateBirthdayPdfReportAsync(string monthNameNl, List<PersonDto> persons, ReportModel config)
-    {
-        try
-        {
-            using var stream = new MemoryStream();
-            using var writer = new PdfWriter(stream);
-            using var pdf = new PdfDocument(writer);
-            var pageSize = string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
-                ? PageSize.A4.Rotate()
-                : PageSize.A4;
-            pdf.SetDefaultPageSize(pageSize);
-            using var document = new Document(pdf);
-
-            var title = new Paragraph($"Verjaardagen in {monthNameNl}")
-                .SetTextAlignment(TextAlignment.CENTER)
-                .SetFontSize(20)
-                .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD));
-            document.Add(title);
-
-            var timestamp = new Paragraph($"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}")
-                .SetTextAlignment(TextAlignment.CENTER)
-                .SetFontSize(10)
-                .SetFontColor(ColorConstants.GRAY);
-            document.Add(timestamp);
-
-            document.Add(new Paragraph("\n"));
-
-            // Order by day in month ascending, then by the configured sort order
-            var dayOrdered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
-            var ordered = SortPersons(dayOrdered, config.SortOrder, preservePrimarySort: true);
-
-            var columnCount = GetColumnCount(config);
-            var table = new Table(columnCount);
-            table.SetWidth(UnitValue.CreatePercentValue(100));
-            table.SetFontSize(9);
-
-            // For birthday report: date column first
-            if (config.IncludeDateOfBirth) AddTableHeader(table, "Geboortedatum");
-            AddTableHeader(table, "Volledige naam");
-            if (config.IncludeAddress) AddTableHeader(table, "Adres");
-            if (config.IncludePhoneNumber) AddTableHeader(table, "Telefoon");
-            if (config.IncludeEmailAddress) AddTableHeader(table, "E-mail");
-
-            foreach (var person in ordered)
-            {
-                // For birthday report: date column first
-                if (config.IncludeDateOfBirth)
-                    table.AddCell(new Cell().Add(new Paragraph(person.DateOfBirth?.ToString("dd-MM-yyyy") ?? "")));
-                table.AddCell(new Cell().Add(new Paragraph(person.FullName ?? "")));
-                if (config.IncludeAddress)
-                    table.AddCell(new Cell().Add(new Paragraph(person.FormattedAddress ?? "")));
-                if (config.IncludePhoneNumber)
-                    table.AddCell(new Cell().Add(new Paragraph(person.PhoneNumber ?? "")));
-                if (config.IncludeEmailAddress)
-                    table.AddCell(new Cell().Add(new Paragraph(person.EmailAddress ?? "")));
-            }
-
-            document.Add(table);
-            document.Close();
-
-            return Task.FromResult(stream.ToArray());
-        }
-        catch (Exception)
-        {
-            throw;
-        }
-    }
-
-    public Task<byte[]> GenerateBirthdayExcelReportAsync(string monthNameNl, List<PersonDto> persons, ReportModel config)
-    {
-        ExcelPackage.License.SetNonCommercialPersonal("Harmony");
-
-        using var package = new ExcelPackage();
-        var worksheet = package.Workbook.Worksheets.Add($"Verjaardagen {monthNameNl}");
-
-        worksheet.PrinterSettings.Orientation =
-            string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase)
-                ? eOrientation.Landscape
-                : eOrientation.Portrait;
-
-        var row = 1;
-
-        worksheet.Cells[row, 1].Value = $"Verjaardagen in {monthNameNl}";
-        worksheet.Cells[row, 1].Style.Font.Size = 16;
-        worksheet.Cells[row, 1].Style.Font.Bold = true;
-        row += 2;
-
-        worksheet.Cells[row, 1].Value = $"Gegenereerd op: {DateTime.Now:dd-MM-yyyy HH:mm}";
-        worksheet.Cells[row, 1].Style.Font.Size = 10;
-        worksheet.Cells[row, 1].Style.Font.Color.SetColor(System.Drawing.Color.Gray);
-        row++;
-
-        row += 2;
-
-        // For birthday report: date column first
-        var col = 1;
-        if (config.IncludeDateOfBirth) worksheet.Cells[row, col++].Value = "Geboortedatum";
-        worksheet.Cells[row, col++].Value = "Volledige naam";
-        if (config.IncludeAddress) worksheet.Cells[row, col++].Value = "Adres";
-        if (config.IncludePhoneNumber) worksheet.Cells[row, col++].Value = "Telefoon";
-        if (config.IncludeEmailAddress) worksheet.Cells[row, col++].Value = "E-mail";
-
-        using (var range = worksheet.Cells[row, 1, row, col - 1])
-        {
-            range.Style.Font.Bold = true;
-            range.Style.Fill.PatternType = ExcelFillStyle.Solid;
-            range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-            range.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-        }
-
-        row++;
-
-        // Order by day in month ascending, then by the configured sort order
-        var dayOrdered = persons.OrderBy(p => p.DateOfBirth?.Day).ToList();
-        var ordered = SortPersons(dayOrdered, config.SortOrder, preservePrimarySort: true);
-
-        foreach (var person in ordered)
-        {
-            // For birthday report: date column first
-            col = 1;
-            if (config.IncludeDateOfBirth)
-                worksheet.Cells[row, col++].Value = person.DateOfBirth?.ToString("dd-MM-yyyy") ?? "";
-            worksheet.Cells[row, col++].Value = person.FullName ?? "";
-            if (config.IncludeAddress)
-                worksheet.Cells[row, col++].Value = person.FormattedAddress ?? "";
-            if (config.IncludePhoneNumber)
-                worksheet.Cells[row, col++].Value = person.PhoneNumber ?? "";
-            if (config.IncludeEmailAddress)
-                worksheet.Cells[row, col++].Value = person.EmailAddress ?? "";
-
-            using (var range = worksheet.Cells[row, 1, row, col - 1])
-            {
-                range.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-            }
 
             row++;
         }
 
         worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
-        return Task.FromResult(package.GetAsByteArray());
+        return package.GetAsByteArray();
     }
 
-    private static int GetColumnCount(ReportModel config)
+    private static IReadOnlyList<ReportColumn> BuildGroupColumns(ReportModel config)
     {
-        int count = 1; // Always include full name
-        if (config.IncludeDateOfBirth) count++;
-        if (config.IncludeAddress) count++;
-        if (config.IncludePhoneNumber) count++;
-        if (config.IncludeEmailAddress) count++;
-        return count;
+        var columns = new List<ReportColumn> { new("Volledige naam", p => p.FullName ?? "") };
+        if (config.IncludeDateOfBirth)  columns.Add(new("Geboortedatum", p => p.DateOfBirth?.ToString("dd-MM-yyyy") ?? ""));
+        if (config.IncludeAddress)      columns.Add(new("Adres",         p => p.FormattedAddress ?? ""));
+        if (config.IncludePhoneNumber)  columns.Add(new("Telefoon",      p => p.PhoneNumber ?? ""));
+        if (config.IncludeEmailAddress) columns.Add(new("E-mail",        p => p.EmailAddress ?? ""));
+        return columns;
     }
 
-    private static void AddTableHeader(Table table, string text)
+    private static IReadOnlyList<ReportColumn> BuildBirthdayColumns(ReportModel config)
+    {
+        var columns = new List<ReportColumn>();
+        if (config.IncludeDateOfBirth)  columns.Add(new("Geboortedatum", p => p.DateOfBirth?.ToString("dd-MM-yyyy") ?? ""));
+        columns.Add(new("Volledige naam", p => p.FullName ?? ""));
+        if (config.IncludeAddress)      columns.Add(new("Adres",    p => p.FormattedAddress ?? ""));
+        if (config.IncludePhoneNumber)  columns.Add(new("Telefoon", p => p.PhoneNumber ?? ""));
+        if (config.IncludeEmailAddress) columns.Add(new("E-mail",   p => p.EmailAddress ?? ""));
+        return columns;
+    }
+
+    private static IReadOnlyList<PersonDto> SortForGroupReport(IEnumerable<PersonDto> persons, ReportModel config) =>
+        config.SortOrder == "FirstName"
+            ? persons.OrderBy(p => p.FirstName).ThenBy(p => p.Surname ?? "").ToList()
+            : persons.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName).ToList();
+
+    private static IReadOnlyList<PersonDto> SortForBirthdayReport(IEnumerable<PersonDto> persons, ReportModel config) =>
+        config.SortOrder == "FirstName"
+            ? persons.OrderBy(p => p.DateOfBirth?.Day).ThenBy(p => p.FirstName).ThenBy(p => p.Surname ?? "").ToList()
+            : persons.OrderBy(p => p.DateOfBirth?.Day).ThenBy(p => p.Surname ?? "").ThenBy(p => p.FirstName).ToList();
+
+    private static PageSize ResolvePageSize(ReportModel config) =>
+        IsLandscape(config) ? PageSize.A4.Rotate() : PageSize.A4;
+
+    private static bool IsLandscape(ReportModel config) =>
+        string.Equals(config.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase);
+
+    private static void AddPdfHeaderCell(Table table, string text)
     {
         var cell = new Cell().Add(new Paragraph(text));
         cell.SetBackgroundColor(ColorConstants.LIGHT_GRAY);
         cell.SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD));
         table.AddHeaderCell(cell);
-    }
-
-    private static List<PersonDto> SortPersons(List<PersonDto> persons, string sortOrder, bool preservePrimarySort = false)
-    {
-        if (preservePrimarySort)
-        {
-            // For birthday reports, maintain the primary sort (by day) and add secondary sort
-            return sortOrder == "FirstName"
-                ? persons.OrderBy(p => p.DateOfBirth?.Day).ThenBy(p => p.FirstName).ThenBy(p => p.Surname ?? "").ToList()
-                : persons.OrderBy(p => p.DateOfBirth?.Day).ThenBy(p => p.Surname ?? "").ThenBy(p => p.FirstName).ToList();
-        }
-        else
-        {
-            // For regular reports, use the selected sort order as primary
-            return sortOrder == "FirstName"
-                ? persons.OrderBy(p => p.FirstName).ThenBy(p => p.Surname ?? "").ToList()
-                : persons.OrderBy(p => p.Surname ?? "").ThenBy(p => p.FirstName).ToList();
-        }
     }
 }
