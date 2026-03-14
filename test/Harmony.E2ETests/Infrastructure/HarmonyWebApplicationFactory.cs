@@ -133,6 +133,19 @@ public sealed class HarmonyWebApplicationFactory : WebApplicationFactory<Program
     }
 
     /// <summary>
+    /// Seeds a membership between a person and a group directly into the database, bypassing the UI.
+    /// </summary>
+    public async Task SeedMembershipAsync(string personFirstName, string groupName)
+    {
+        using var scope = Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
+        var person = await context.Persons.FirstAsync(p => p.Name.FirstName == personFirstName);
+        var group = await context.Groups.FirstAsync(g => g.Name == groupName);
+        var membershipService = scope.ServiceProvider.GetRequiredService<IMembershipService>();
+        await membershipService.AddPersonToGroupAsync(person.Id, group.Id, CancellationToken.None);
+    }
+
+    /// <summary>
     /// Deletes all test data while keeping the schema intact.
     /// Call this at the start of each test to ensure a clean state.
     /// </summary>

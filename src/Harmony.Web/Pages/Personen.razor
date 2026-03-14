@@ -108,12 +108,12 @@
                         <td>@person.FormattedAddress</td>
                         <td>@person.PhoneNumber</td>
                         <td>@person.EmailAddress</td>
-                        <td class="text-center">
+                        <td class="text-center" data-testid="group-count">
                             @person.GroupIds.Count
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-info" title="Groepen" @onclick="@(() => OpenGroupsModal(person))">
+                                <button type="button" class="btn btn-sm btn-info" title="Groepen" data-testid="groups-btn" @onclick="@(() => OpenGroupsModal(person))">
                                     <i class="fas fa-users"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-primary" @onclick="@(() => OpenEditModal(person))">

@@ -93,7 +93,7 @@
                     <tr title="@GetGroupMembersTooltip(group)">
                         <td>@group.Name</td>
                         <td>@group.CoordinatorName</td>
-                        <td>@group.MemberCount</td>
+                        <td data-testid="member-count">@group.MemberCount</td>
                         <td>
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-info" data-testid="members-btn" @onclick="@(() => OpenMembersModal(group))">
