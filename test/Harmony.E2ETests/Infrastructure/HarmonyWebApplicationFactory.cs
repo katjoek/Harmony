@@ -146,6 +146,20 @@ public sealed class HarmonyWebApplicationFactory : WebApplicationFactory<Program
     }
 
     /// <summary>
+    /// Sets the coordinator of a group directly in the database, bypassing the UI.
+    /// The person must already be a member of the group.
+    /// </summary>
+    public async Task SeedCoordinatorAsync(string personFirstName, string groupName)
+    {
+        using var scope = Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
+        var person = await context.Persons.FirstAsync(p => p.Name.FirstName == personFirstName);
+        var group = await context.Groups.FirstAsync(g => g.Name == groupName);
+        group.SetCoordinator(person.Id);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
     /// Deletes all test data while keeping the schema intact.
     /// Call this at the start of each test to ensure a clean state.
     /// </summary>
