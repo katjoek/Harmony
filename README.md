@@ -128,12 +128,14 @@ Harmony2/
 │   └── Repositories/           # Repository implementations
 ├── Harmony.Web/                # Presentation layer
 │   ├── Pages/                  # Blazor pages
+│   ├── Services/               # Application services (ReportService, ReportFileNameBuilder, …)
 │   ├── Shared/                 # Shared components
 │   └── wwwroot/                # Static files
 ├── test/
 │   ├── Harmony.Tests/          # Unit tests
 │   │   ├── Domain/             # Domain tests
-│   │   └── ApplicationCore/    # Application tests
+│   │   ├── ApplicationCore/    # Application tests
+│   │   └── Web/                # Web-layer tests (services)
 │   └── Harmony.E2ETests/       # E2E tests (Playwright)
 │       └── Infrastructure/     # Test fixtures & factories
 └── requirements/               # Project requirements
@@ -201,7 +203,7 @@ The project includes comprehensive tests:
 ### E2E Tests (`Harmony.E2ETests`)
 - **Browser Tests**: Testing the full user flow in a real browser
 - Uses Microsoft Playwright for browser automation
-- Each test gets an isolated SQLite database (automatically cleaned up)
+- Each test class shares a single running application instance (for faster startup) while each test gets an isolated SQLite database (automatically cleaned up)
 - Tests run headless (default) or with visible browser (for debugging)
 
 ## 📄 License

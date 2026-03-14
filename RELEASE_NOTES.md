@@ -1,5 +1,27 @@
 # Release Notes
 
+## Version 1.2.1
+
+Changes since v1.2.0
+
+### Improvements
+
+- **Group report filename**: The group name is now included in the filename of group reports.
+
+### Technical
+
+- **Program.cs split into focused startup classes**: Startup logic has been extracted from `Program.cs` into dedicated classes — `BrowserLauncher`, `DatabaseStartup`, `SeedCommandRunner`, `ServiceCollectionExtensions`, and `WebApplicationExtensions` — making each concern easier to find and test independently.
+- **Injectable report filename service**: Report filename logic has been extracted from `ReportService` into a dedicated `IReportFileNameBuilder` interface and `ReportFileNameBuilder` implementation, making it independently testable and replaceable.
+- **Razor file simplification**: Pages and shared components (`Groepen`, `Personen`, `Instellingen`, `Rapporten`, `DualListMembershipModal`, `BackupCard`, `GroupFormModal`, `PersonFormModal`, `SearchBar`) have been simplified and reduced in size.
+- **ReportService simplified**: Internal implementation of `ReportService` cleaned up.
+- **E2E test startup performance**: The app server and Playwright browser are now shared across all E2E test classes, significantly reducing total test run time.
+- **E2E test data seeding via database**: Test data is now seeded directly through the database instead of via the UI, making tests faster and more reliable.
+- **E2E test coverage expanded**: Added tests for group creation (`GroupCreationTests`), group membership modal (`GroupMembershipModalTests`), and setting group coordinator (`GroupCoordinatorTests`).
+- **Dual-list JS helpers extracted**: Common Playwright helper methods for the dual-list membership modal have been extracted into `DualListPageExtensions` extension methods on `IPage`.
+- **Unit tests expanded**: Added unit tests for `ReportService` and `ReportFileNameBuilder`.
+
+---
+
 ## Version 1.2.0
 
 Changes since v1.1.1
