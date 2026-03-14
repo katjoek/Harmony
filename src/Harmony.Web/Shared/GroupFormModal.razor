@@ -18,7 +18,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Coördinator</label>
-                        <InputSelect @bind-Value="@Model.CoordinatorId" class="form-select">
+                        <InputSelect @bind-Value="@Model.CoordinatorId" class="form-select" data-testid="input-coordinator">
                             <option value="">Geen coördinator</option>
                             @if (CoordinatorCandidates != null)
                             {
