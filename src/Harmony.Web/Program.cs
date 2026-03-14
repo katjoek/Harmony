@@ -1,127 +1,14 @@
-using Harmony.ApplicationCore.Interfaces;
-using Harmony.Infrastructure.Data;
-using Harmony.Infrastructure.Repositories;
-using Harmony.Infrastructure.Services;
-using Harmony.Web.Commands;
-using Harmony.Web.Services;
-using LiteBus.Messaging.Extensions.MicrosoftDependencyInjection;
-using LiteBus.Commands.Extensions.MicrosoftDependencyInjection;
-using LiteBus.Queries.Extensions.MicrosoftDependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using Harmony.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseStaticWebAssets();
-
-// Add services to the container.
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-
-const int maxFileSize = 10 * 1024 * 1024;
-
-// Configure file upload size limits (for database backup uploads)
-// Default is 500 KB, increase to 100 MB to accommodate database backups
-builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
-{
-    options.MultipartBodyLengthLimit = maxFileSize;
-    options.ValueLengthLimit = maxFileSize;
-    options.ValueCountLimit = 10; // Maximum number of form values
-});
-
-// Configure Kestrel server limits for larger request bodies
-builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
-{
-    options.Limits.MaxRequestBodySize = maxFileSize;
-});
-
-// Configure Blazor Server hub options for larger messages
-builder.Services.Configure<Microsoft.AspNetCore.SignalR.HubOptions>(options =>
-{
-    options.MaximumReceiveMessageSize = maxFileSize;
-});
-
-// Register settings service as singleton (file-based, shared across requests)
-builder.Services.AddSingleton<ISettingsService, SettingsService>();
-
-// Register connection string provider
-builder.Services.AddScoped<IDatabaseConnectionStringProvider, Harmony.Infrastructure.Services.DatabaseConnectionStringProvider>();
-
-// Add Entity Framework with dynamic connection string from settings (resolved per request)
-// Register DbContext using a factory pattern to defer connection string resolution
-// until the DbContext is actually created (prevents database access if directory not configured)
-builder.Services.AddScoped<HarmonyDbContext>(serviceProvider =>
-{
-    var connectionStringProvider = serviceProvider.GetRequiredService<IDatabaseConnectionStringProvider>();
-    // During service registration, we can use GetAwaiter().GetResult() safely
-    // as we're not in a Blazor Server synchronization context
-    var connectionString = connectionStringProvider.GetConnectionStringAsync().GetAwaiter().GetResult();
-    
-    var optionsBuilder = new DbContextOptionsBuilder<HarmonyDbContext>();
-    optionsBuilder.UseSqlite(connectionString);
-    
-    return new HarmonyDbContext(optionsBuilder.Options);
-});
-
-// Add LiteBus
-builder.Services.AddLiteBus(config =>
-{
-    var appAssembly = typeof(Harmony.ApplicationCore.Commands.Persons.CreatePersonCommand).Assembly;
-    config.AddCommandModule(module => module.RegisterFromAssembly(appAssembly));
-    config.AddQueryModule(module => module.RegisterFromAssembly(appAssembly));
-});
-
-// Add repositories and services
-builder.Services.AddScoped<IPersonRepository, PersonRepository>();
-builder.Services.AddScoped<IGroupRepository, GroupRepository>();
-builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
-builder.Services.AddScoped<IMembershipService, MembershipService>();
-builder.Services.AddScoped<IReportService, ReportService>();
-builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
-builder.Services.AddScoped<IDatabaseCleanupService, DatabaseCleanupService>();
-builder.Services.AddScoped<DataSeeder>();
-builder.Services.AddScoped<SeedDataCommand>();
+builder.Services.AddBlazorInfrastructure();
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
-// Configure server binding address based on settings
-// This must be done before app.Run() but after app.Build()
-var serverSettingsService = app.Services.GetRequiredService<ISettingsService>();
-var listenOnAllInterfaces = await serverSettingsService.GetListenOnAllInterfacesAsync();
+await app.ConfigureListenAddressAsync();
 
-if (listenOnAllInterfaces)
-{
-    if (app.Urls.Count > 0)
-    {
-        // Replace localhost with 0.0.0.0 in all URLs to listen on all interfaces
-        // Only modify URLs that explicitly use localhost - preserve custom IPs/hostnames
-        var modifiedUrls = app.Urls.Select(url =>
-        {
-            // Check if URL uses localhost (case-insensitive)
-            if (url.Contains("://localhost", StringComparison.OrdinalIgnoreCase) || 
-                url.Contains("://127.0.0.1", StringComparison.OrdinalIgnoreCase))
-            {
-                return url.Replace("localhost", "0.0.0.0", StringComparison.OrdinalIgnoreCase)
-                          .Replace("127.0.0.1", "0.0.0.0", StringComparison.OrdinalIgnoreCase);
-            }
-            // If URL already contains a specific IP address or hostname, keep it as is
-            return url;
-        }).ToList();
-        
-        app.Urls.Clear();
-        foreach (var modifiedUrl in modifiedUrls)
-        {
-            app.Urls.Add(modifiedUrl);
-        }
-    }
-    else
-    {
-        // No URLs configured, set default to listen on all interfaces
-        app.Urls.Add("http://0.0.0.0:5000");
-    }
-}
-// If listenOnAllInterfaces is false (default), URLs remain as configured (localhost)
-
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -131,213 +18,20 @@ if (!app.Environment.IsDevelopment())
 if (!app.Environment.IsEnvironment("Testing"))
     app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.MapStaticAssets();
 app.MapRazorPages();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-// Ensure database is created and migrations are applied (only if directory is configured)
-using (var scope = app.Services.CreateScope())
-{
-    var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
-    var isConfigured = await settingsService.IsDatabaseDirectoryConfiguredAsync();
-    
-    if (isConfigured)
-    {
-        var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
-        
-        // Check if this is a database created with EnsureCreated() (no migration history)
-        // If so, create the migration history table and mark existing migrations as applied
-        await EnsureMigrationHistoryExistsAsync(context, app.Logger);
-        
-        // Now apply any pending migrations
-        await context.Database.MigrateAsync();
-        
-        // Perform database clean-up: delete orphaned group membership entries
-        // (memberships for persons or groups that no longer exist)
-        var cleanupService = scope.ServiceProvider.GetRequiredService<IDatabaseCleanupService>();
-        var deletedCount = await cleanupService.CleanupOrphanedMembershipsAsync();
-        if (deletedCount > 0)
-        {
-            app.Logger.LogInformation("Database cleanup: Removed {DeletedCount} orphaned group membership entries.", deletedCount);
-        }
-    }
-}
-
-// Helper method to ensure migration history exists for databases created with EnsureCreated()
-static async Task EnsureMigrationHistoryExistsAsync(HarmonyDbContext context, ILogger logger)
-{
-    var connection = context.Database.GetDbConnection();
-    await connection.OpenAsync();
-    
-    try
-    {
-        // Check if __EFMigrationsHistory table exists
-        using var checkCmd = connection.CreateCommand();
-        checkCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'";
-        var historyExists = await checkCmd.ExecuteScalarAsync() != null;
-        
-        if (historyExists)
-        {
-            // Migration history exists, nothing to do
-            return;
-        }
-        
-        // Check if this is an existing database (has Persons table) or a new database
-        using var checkPersonsCmd = connection.CreateCommand();
-        checkPersonsCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='Persons'";
-        var isExistingDatabase = await checkPersonsCmd.ExecuteScalarAsync() != null;
-        
-        if (!isExistingDatabase)
-        {
-            // New database - MigrateAsync() will handle everything
-            return;
-        }
-        
-        logger.LogInformation("Existing database detected without migration history. Creating migration history table...");
-        
-        // Create the __EFMigrationsHistory table
-        using var createHistoryCmd = connection.CreateCommand();
-        createHistoryCmd.CommandText = @"
-            CREATE TABLE __EFMigrationsHistory (
-                MigrationId TEXT NOT NULL PRIMARY KEY,
-                ProductVersion TEXT NOT NULL
-            )";
-        await createHistoryCmd.ExecuteNonQueryAsync();
-        
-        // Determine which migrations are already applied based on existing tables/indexes
-        var migrationsToMark = new List<string>();
-        
-        // InitialCreate - check if core tables exist
-        migrationsToMark.Add("20250826072508_InitialCreate");
-        
-        // PerformanceIndexes - check if indexes exist
-        using var checkIndexCmd = connection.CreateCommand();
-        checkIndexCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='index' AND name='IX_Persons_EmailAddress'";
-        if (await checkIndexCmd.ExecuteScalarAsync() != null)
-        {
-            migrationsToMark.Add("20250826090247_PerformanceIndexes");
-        }
-        
-        // AddCascadeDeleteToMemberships - this modified FK behavior, assume applied if table exists
-        using var checkMembershipCmd = connection.CreateCommand();
-        checkMembershipCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='PersonGroupMemberships'";
-        if (await checkMembershipCmd.ExecuteScalarAsync() != null)
-        {
-            migrationsToMark.Add("20260110150415_AddCascadeDeleteToMemberships");
-        }
-        
-        // AddConfigTable - check if Configs table exists
-        using var checkConfigCmd = connection.CreateCommand();
-        checkConfigCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='Configs'";
-        if (await checkConfigCmd.ExecuteScalarAsync() != null)
-        {
-            migrationsToMark.Add("20260110175328_AddConfigTable");
-        }
-        
-        // Insert migration history records
-        const string efCoreVersion = "9.0.1"; // Match the EF Core version in use
-        foreach (var migrationId in migrationsToMark)
-        {
-            using var insertCmd = connection.CreateCommand();
-            insertCmd.CommandText = $"INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('{migrationId}', '{efCoreVersion}')";
-            await insertCmd.ExecuteNonQueryAsync();
-            logger.LogInformation("Marked migration as applied: {MigrationId}", migrationId);
-        }
-        
-        logger.LogInformation("Migration history created. {Count} migrations marked as applied.", migrationsToMark.Count);
-    }
-    finally
-    {
-        await connection.CloseAsync();
-    }
-}
+await DatabaseStartup.RunAsync(app);
 
 #if DEBUG
-// Check for seed command line argument
-if (args.Length > 0 && args[0] == "seed")
-{
-    using var scope = app.Services.CreateScope();
-    var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
-    var isConfigured = await settingsService.IsDatabaseDirectoryConfiguredAsync();
-    
-    if (!isConfigured)
-    {
-        Console.WriteLine("ERROR: Database directory is not configured. Please configure the database directory first.");
-        Console.WriteLine("Run the application and configure the database directory through the web interface.");
-        return;
-    }
-    
-    Console.WriteLine("Seeding database...");
-    var seedCommand = scope.ServiceProvider.GetRequiredService<SeedDataCommand>();
-    await seedCommand.ExecuteAsync();
-    Console.WriteLine("Seeding completed. Exiting application.");
-    return;
-}
+if (await SeedCommandRunner.TryRunAsync(app, args)) return;
 #endif
 
 #if RELEASE
-// Open default browser to Harmony homepage in Release builds only
-
-// Determine the URL to open - use the actual listening URL
-// app.Urls is populated from:
-// 1. Command-line arguments: --urls "http://localhost:8080"
-// 2. Environment variable: ASPNETCORE_URLS="http://localhost:8080"
-// 3. Configuration: appsettings.json "Urls" key
-string url = "http://localhost:5000"; // Default fallback URL
-
-// Try to get URL from app.Urls (includes command-line --urls, environment variables, and config)
-if (app.Urls.Count > 0)
-{
-    // Prefer HTTP over HTTPS, or use the first available
-    url = app.Urls.FirstOrDefault(u => u.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) 
-            ?? app.Urls.First();
-}
-else
-{
-    // Fall back to configuration (shouldn't normally be needed as app.Urls should contain these)
-    var urls = builder.Configuration["Urls"] ?? builder.Configuration["ASPNETCORE_URLS"];
-    if (!string.IsNullOrEmpty(urls))
-    {
-        // Parse URLs from the semicolon-separated list
-        var urlList = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
-        if (urlList.Length > 0)
-        {
-            // Prefer HTTP over HTTPS
-            url = urlList.FirstOrDefault(u => u.Trim().StartsWith("http://", StringComparison.OrdinalIgnoreCase))?.Trim()
-                    ?? urlList.First().Trim();
-        }
-    }
-}
-
-// Ensure URL has protocol
-if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
-    !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-{
-    url = "http://" + url;
-}
-
-// Launch browser after a short delay to ensure server is ready
-_ = Task.Run(async () =>
-{
-    await Task.Delay(2000); // Wait 2 seconds for server to start
-    try
-    {
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = url,
-            UseShellExecute = true
-        });
-    }
-    catch (Exception ex)
-    {
-        // Silently fail if browser cannot be opened
-        Console.WriteLine($"Could not open browser: {ex.Message}");
-    }
-});
+BrowserLauncher.LaunchAfterStartup(app);
 #endif
 
 app.Run();
