@@ -9,25 +9,23 @@ using Xunit.Abstractions;
 public sealed class GroupEmailCopyTests : IAsyncLifetime
 {
     private readonly PlaywrightFixture _playwrightFixture;
+    private readonly HarmonyAppFixture _appFixture;
     private readonly ITestOutputHelper _output;
-    private HarmonyWebApplicationFactory _factory = null!;
     private IBrowserContext _context = null!;
     private IPage _page = null!;
-    private string _baseUrl = null!;
 
-    public GroupEmailCopyTests(PlaywrightFixture playwrightFixture, ITestOutputHelper output)
+    public GroupEmailCopyTests(PlaywrightFixture playwrightFixture, HarmonyAppFixture appFixture, ITestOutputHelper output)
     {
         _playwrightFixture = playwrightFixture;
+        _appFixture = appFixture;
         _output = output;
     }
 
     public async Task InitializeAsync()
     {
-        _factory = new HarmonyWebApplicationFactory();
-        _ = _factory.CreateClient();
-        await _factory.InitializeDatabaseAsync();
-        _baseUrl = _factory.BaseUrl;
-        _output.WriteLine($"Test server started at: {_baseUrl}");
+        await _appFixture.Factory.ResetDatabaseAsync();
+
+        _output.WriteLine($"Test server running at: {_appFixture.BaseUrl}");
 
         _context = await _playwrightFixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
@@ -41,7 +39,6 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
     {
         await _page.CloseAsync();
         await _context.DisposeAsync();
-        await _factory.DisposeAsync();
     }
 
     [Fact]
@@ -59,7 +56,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
 
         await AddAllPersonsToGroup(groupName);
 
-        await _page.GotoAsync($"{_baseUrl}/groepen");
+        await _page.GotoAsync($"{_appFixture.BaseUrl}/groepen");
         await WaitForTableLoaded();
 
         var groupRow = _page.Locator($"table tbody tr:has-text('{groupName}')");
@@ -93,7 +90,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
         await CreateGroup(groupName);
         await AddAllPersonsToGroup(groupName);
 
-        await _page.GotoAsync($"{_baseUrl}/groepen");
+        await _page.GotoAsync($"{_appFixture.BaseUrl}/groepen");
         await WaitForTableLoaded();
 
         var groupRow = _page.Locator($"table tbody tr:has-text('{groupName}')");
@@ -117,7 +114,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
 
     private async Task CreatePerson(string firstName, string? email)
     {
-        await _page.GotoAsync($"{_baseUrl}/personen");
+        await _page.GotoAsync($"{_appFixture.BaseUrl}/personen");
         await _page.WaitForSelectorAsync("table.table", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
         await _page.ClickAsync("[data-testid='new-person-btn']");
@@ -137,7 +134,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
 
     private async Task CreateGroup(string groupName)
     {
-        await _page.GotoAsync($"{_baseUrl}/groepen");
+        await _page.GotoAsync($"{_appFixture.BaseUrl}/groepen");
         await WaitForTableLoaded();
 
         await _page.ClickAsync("[data-testid='new-group-btn']");
@@ -152,7 +149,7 @@ public sealed class GroupEmailCopyTests : IAsyncLifetime
 
     private async Task AddAllPersonsToGroup(string groupName)
     {
-        await _page.GotoAsync($"{_baseUrl}/groepen");
+        await _page.GotoAsync($"{_appFixture.BaseUrl}/groepen");
         await WaitForTableLoaded();
 
         var groupRow = _page.Locator($"table tbody tr:has-text('{groupName}')");

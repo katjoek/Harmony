@@ -9,34 +9,24 @@ using Xunit.Abstractions;
 public sealed class PersonCreationTests : IAsyncLifetime
 {
     private readonly PlaywrightFixture _playwrightFixture;
+    private readonly HarmonyAppFixture _appFixture;
     private readonly ITestOutputHelper _output;
-    private HarmonyWebApplicationFactory _factory = null!;
     private IBrowserContext _context = null!;
     private IPage _page = null!;
-    private string _baseUrl = null!;
 
-    public PersonCreationTests(PlaywrightFixture playwrightFixture, ITestOutputHelper output)
+    public PersonCreationTests(PlaywrightFixture playwrightFixture, HarmonyAppFixture appFixture, ITestOutputHelper output)
     {
         _playwrightFixture = playwrightFixture;
+        _appFixture = appFixture;
         _output = output;
     }
 
     public async Task InitializeAsync()
     {
-        // Create a new factory with isolated database for each test
-        _factory = new HarmonyWebApplicationFactory();
-        
-        // Start the server (this creates the host)
-        _ = _factory.CreateClient();
-        
-        // Initialize the test database
-        await _factory.InitializeDatabaseAsync();
-        
-        // Get the URL from the factory
-        _baseUrl = _factory.BaseUrl;
-        _output.WriteLine($"Test server started at: {_baseUrl}");
-        
-        // Create isolated browser context for this test
+        await _appFixture.Factory.ResetDatabaseAsync();
+
+        _output.WriteLine($"Test server running at: {_appFixture.BaseUrl}");
+
         _context = await _playwrightFixture.CreateContextAsync();
         _page = await _context.NewPageAsync();
     }
@@ -45,7 +35,6 @@ public sealed class PersonCreationTests : IAsyncLifetime
     {
         await _page.CloseAsync();
         await _context.DisposeAsync();
-        await _factory.DisposeAsync();
     }
 
     [Fact]
@@ -63,7 +52,7 @@ public sealed class PersonCreationTests : IAsyncLifetime
         var email = "jan@example.com";
 
         // Act - Navigate to persons page
-        await _page.GotoAsync($"{_baseUrl}/personen");
+        await _page.GotoAsync($"{_appFixture.BaseUrl}/personen");
         _output.WriteLine("Navigated to persons page");
 
         // Wait for the page to load (skeleton placeholders should disappear)
@@ -137,7 +126,7 @@ public sealed class PersonCreationTests : IAsyncLifetime
         var firstName = "Piet";
 
         // Act - Navigate to persons page
-        await _page.GotoAsync($"{_baseUrl}/personen");
+        await _page.GotoAsync($"{_appFixture.BaseUrl}/personen");
 
         // Wait for the page to load
         await _page.WaitForSelectorAsync("table.table", new PageWaitForSelectorOptions

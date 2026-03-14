@@ -105,6 +105,19 @@ public sealed class HarmonyWebApplicationFactory : WebApplicationFactory<Program
         await context.Database.EnsureCreatedAsync();
     }
 
+    /// <summary>
+    /// Deletes all test data while keeping the schema intact.
+    /// Call this at the start of each test to ensure a clean state.
+    /// </summary>
+    public async Task ResetDatabaseAsync()
+    {
+        using var scope = Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<HarmonyDbContext>();
+        await context.Database.ExecuteSqlRawAsync("DELETE FROM PersonGroupMemberships");
+        await context.Database.ExecuteSqlRawAsync("DELETE FROM Persons");
+        await context.Database.ExecuteSqlRawAsync("DELETE FROM Groups");
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)

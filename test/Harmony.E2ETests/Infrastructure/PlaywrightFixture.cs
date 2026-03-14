@@ -46,6 +46,8 @@ public sealed class PlaywrightFixture : IAsyncLifetime
 /// Collection definition for tests that share the Playwright fixture.
 /// </summary>
 [CollectionDefinition(nameof(PlaywrightCollection))]
-public sealed class PlaywrightCollection : ICollectionFixture<PlaywrightFixture>
+public sealed class PlaywrightCollection
+    : ICollectionFixture<PlaywrightFixture>,
+      ICollectionFixture<HarmonyAppFixture>
 {
 }
