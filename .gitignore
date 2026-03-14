@@ -16,6 +16,7 @@ x86/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.claude/
 
 # User-specific files
 *.user
