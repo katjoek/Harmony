@@ -21,10 +21,10 @@
                         </select>
                     </div>
                     <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
-                        <button type="button" class="btn btn-outline-primary" title="Naar rechts" @onclick="MoveLeftSelectionToRight" disabled="@(IsBusy || !selectedLeftIds.Any())">
+                        <button type="button" class="btn btn-outline-primary" title="Naar rechts" data-testid="move-right-btn" @onclick="MoveLeftSelectionToRight" disabled="@(IsBusy || !selectedLeftIds.Any())">
                             <i class="fas fa-arrow-right"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-primary" title="Naar links" @onclick="MoveRightSelectionToLeft" disabled="@(IsBusy || !selectedRightIds.Any())">
+                        <button type="button" class="btn btn-outline-primary" title="Naar links" data-testid="move-left-btn" @onclick="MoveRightSelectionToLeft" disabled="@(IsBusy || !selectedRightIds.Any())">
                             <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
