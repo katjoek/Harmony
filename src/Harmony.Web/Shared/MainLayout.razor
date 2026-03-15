@@ -1,4 +1,10 @@
 @inherits LayoutComponentBase
+@using Harmony.ApplicationCore.Interfaces
+@using Harmony.Web.Services
+@implements IDisposable
+
+@inject IUpdateNotificationState UpdateNotificationState
+@inject ISettingsService SettingsService
 
 <div class="d-flex flex-column min-vh-100">
     <!-- Header -->
@@ -8,11 +14,11 @@
                 <img src="/images/harmony-logo.png" alt="Harmony Logo" class="me-2" style="height: 1.5rem; width: auto;" />
                 <h4 class="mb-0 text-white">Harmony - Gemeenschap Beheer</h4>
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
@@ -59,3 +65,45 @@
         </div>
     </footer>
 </div>
+
+<SoftwareUpdateModal Show="@showUpdateModal"
+                     Update="@UpdateNotificationState.PendingUpdate"
+                     OnClose="@HandleDownloadClose"
+                     OnDecline="@HandleDeclineAsync" />
+
+@code {
+    private bool showUpdateModal;
+
+    protected override void OnInitialized()
+    {
+        UpdateNotificationState.StateChanged += OnUpdateStateChanged;
+        showUpdateModal = UpdateNotificationState.PendingUpdate is not null;
+    }
+
+    private void OnUpdateStateChanged()
+    {
+        InvokeAsync(() =>
+        {
+            showUpdateModal = UpdateNotificationState.PendingUpdate is not null;
+            StateHasChanged();
+        });
+    }
+
+    private void HandleDownloadClose()
+    {
+        UpdateNotificationState.SetUpdate(null, UpdateNotificationState.LastChecked ?? DateTime.Now);
+        showUpdateModal = false;
+    }
+
+    private async Task HandleDeclineAsync()
+    {
+        await SettingsService.SetUpdateChecksEnabledAsync(false);
+        UpdateNotificationState.SetUpdate(null, UpdateNotificationState.LastChecked ?? DateTime.Now);
+        showUpdateModal = false;
+    }
+
+    public void Dispose()
+    {
+        UpdateNotificationState.StateChanged -= OnUpdateStateChanged;
+    }
+}

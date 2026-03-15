@@ -129,9 +129,77 @@ public sealed class SettingsService : ISettingsService
         }
     }
 
+    public async Task<bool> GetIncludePreReleasesAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await LoadSettingsAsync(cancellationToken);
+        return settings?.IncludePreReleases ?? false;
+    }
+
+    public async Task SetIncludePreReleasesAsync(bool value, CancellationToken cancellationToken = default)
+    {
+        await UpdateSettingsAsync(settings => settings.IncludePreReleases = value, cancellationToken);
+    }
+
+    public async Task<bool> GetUpdateChecksEnabledAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await LoadSettingsAsync(cancellationToken);
+        return settings?.UpdateChecksEnabled ?? true;
+    }
+
+    public async Task SetUpdateChecksEnabledAsync(bool value, CancellationToken cancellationToken = default)
+    {
+        await UpdateSettingsAsync(settings => settings.UpdateChecksEnabled = value, cancellationToken);
+    }
+
+    private async Task<Settings?> LoadSettingsAsync(CancellationToken cancellationToken)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            if (!File.Exists(_settingsFilePath))
+                return null;
+
+            var json = await File.ReadAllTextAsync(_settingsFilePath, cancellationToken);
+            return string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<Settings>(json);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    private async Task UpdateSettingsAsync(Action<Settings> update, CancellationToken cancellationToken)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            Settings settings;
+            if (File.Exists(_settingsFilePath))
+            {
+                var json = await File.ReadAllTextAsync(_settingsFilePath, cancellationToken);
+                settings = JsonSerializer.Deserialize<Settings>(json) ?? new Settings();
+            }
+            else
+            {
+                settings = new Settings();
+            }
+
+            update(settings);
+
+            var updatedJson = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(_settingsFilePath, updatedJson, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
     private sealed class Settings
     {
         public string? DatabaseDirectory { get; set; }
         public bool ListenOnAllInterfaces { get; set; }
+        public bool IncludePreReleases { get; set; }
+        public bool UpdateChecksEnabled { get; set; } = true;
     }
 }

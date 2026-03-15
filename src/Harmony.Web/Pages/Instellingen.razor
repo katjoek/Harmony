@@ -1,5 +1,6 @@
 @page "/instellingen"
 @using Harmony.ApplicationCore.Interfaces
+@using Harmony.Web.Services
 
 <PageTitle>Instellingen - Harmony</PageTitle>
 
@@ -99,22 +100,183 @@
         </div>
 
         <BackupCard />
+
+        <!-- Software Update Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Software Update
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="form-label">Huidige versie:</span>
+                    <span class="ms-2 fw-bold">@currentVersion</span>
+                </div>
+
+                <div class="mb-3">
+                    <span class="form-label">Laatste controle:</span>
+                    <span class="ms-2">
+                        @if (UpdateNotificationState.LastChecked.HasValue)
+                        {
+                            @UpdateNotificationState.LastChecked.Value.ToString("dd-MM-yyyy HH:mm")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Nog niet gecontroleerd</span>
+                        }
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <span class="form-label">Status:</span>
+                    <span class="ms-2">
+                        @if (UpdateNotificationState.PendingUpdate is not null)
+                        {
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                Update beschikbaar: @UpdateNotificationState.PendingUpdate.TagName
+                            </span>
+                        }
+                        else if (UpdateNotificationState.LastChecked.HasValue)
+                        {
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Up-to-date
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Onbekend</span>
+                        }
+                    </span>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(updateCheckMessage))
+                {
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        @updateCheckMessage
+                        <button type="button" class="btn-close" @onclick="() => updateCheckMessage = string.Empty" aria-label="Close"></button>
+                    </div>
+                }
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includePreReleases"
+                           checked="@includePreReleases"
+                           @onchange="ToggleIncludePreReleasesAsync" />
+                    <label class="form-check-label" for="includePreReleases">
+                        Pre-releases meenemen bij het controleren op updates
+                    </label>
+                </div>
+
+                <button type="button" class="btn btn-outline-primary" @onclick="CheckNowAsync" disabled="@isCheckingUpdate">
+                    @if (isCheckingUpdate)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        <span>Controleren…</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-sync-alt me-1"></i>
+                        <span>Nu controleren</span>
+                    }
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 @code {
     [Inject] private ISettingsService SettingsService { get; set; } = null!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] private IUpdateCheckService UpdateCheckService { get; set; } = null!;
+    [Inject] private IUpdateNotificationState UpdateNotificationState { get; set; } = null!;
 
     private string databasePath = "";
     private string successMessage = "";
     private string errorMessage = "";
     private bool listenOnAllInterfaces = false;
+    private bool includePreReleases = false;
+    private bool isCheckingUpdate = false;
+    private string updateCheckMessage = "";
+    private string currentVersion = "";
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDatabasePath();
         await LoadServerBindingSetting();
+        await LoadUpdateSettings();
+        currentVersion = GetCurrentVersion();
+    }
+
+    private static string GetCurrentVersion()
+    {
+        var v = typeof(Program).Assembly.GetName().Version;
+        return v is null ? "onbekend" : $"{v.Major}.{v.Minor}.{v.Build}";
+    }
+
+    private async Task LoadUpdateSettings()
+    {
+        try
+        {
+            includePreReleases = await SettingsService.GetIncludePreReleasesAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fout bij laden update-instellingen: {ex.Message}";
+        }
+    }
+
+    private async Task ToggleIncludePreReleasesAsync(ChangeEventArgs e)
+    {
+        includePreReleases = e.Value is bool b && b;
+        try
+        {
+            await SettingsService.SetIncludePreReleasesAsync(includePreReleases);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fout bij opslaan instelling: {ex.Message}";
+        }
+    }
+
+    private async Task CheckNowAsync()
+    {
+        isCheckingUpdate = true;
+        updateCheckMessage = "";
+        try
+        {
+            var currentVersionParsed = typeof(Program).Assembly.GetName().Version;
+            var releases = await UpdateCheckService.GetReleasesAsync();
+            var latestRelease = releases
+                .Where(r => !r.IsPreRelease || includePreReleases)
+                .Where(r => currentVersionParsed is null || CompareVersions(r.Version, currentVersionParsed) > 0)
+                .OrderByDescending(r => r.Version)
+                .FirstOrDefault();
+
+            UpdateNotificationState.SetUpdate(latestRelease, DateTime.Now);
+
+            updateCheckMessage = latestRelease is not null
+                ? $"Update beschikbaar: versie {latestRelease.TagName}."
+                : "U gebruikt de nieuwste versie.";
+        }
+        catch (Exception ex)
+        {
+            updateCheckMessage = $"Fout bij controleren op updates: {ex.Message}";
+        }
+        finally
+        {
+            isCheckingUpdate = false;
+        }
+    }
+
+    private static int CompareVersions(Version candidate, Version current)
+    {
+        var candidateNorm = new Version(candidate.Major, candidate.Minor, Math.Max(candidate.Build, 0));
+        var currentNorm = new Version(current.Major, current.Minor, Math.Max(current.Build, 0));
+        return candidateNorm.CompareTo(currentNorm);
     }
 
     private async Task LoadDatabasePath()

@@ -1,0 +1,137 @@
+@using Harmony.ApplicationCore.Interfaces
+@using Harmony.Web.Services
+
+@if (Show && Update is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-download me-2"></i>
+                        Software Update Beschikbaar
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrWhiteSpace(successMessage))
+                    {
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            @successMessage
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessage
+                        </div>
+                    }
+                    else if (isDownloading)
+                    {
+                        <div class="alert alert-info" role="alert">
+                            <div class="d-flex align-items-center">
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                Installatieprogramma wordt gedownload…
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>
+                            Versie <strong>@Update.TagName</strong> is beschikbaar.
+                            @if (Update.IsPreRelease)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">pre-release</span>
+                            }
+                        </p>
+                        @if (Update.MsiDownloadUrl is not null)
+                        {
+                            <p class="mb-0">
+                                Wilt u het installatieprogramma (<code>@Update.MsiFileName</code>) downloaden naar uw map <em>Downloads</em>?
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="mb-0 text-muted">
+                                Er is geen MSI-installatieprogramma beschikbaar voor deze versie.
+                            </p>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    @if (!string.IsNullOrWhiteSpace(successMessage))
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="Close">Sluiten</button>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="Close">Sluiten</button>
+                    }
+                    else if (!isDownloading)
+                    {
+                        @if (Update.MsiDownloadUrl is not null)
+                        {
+                            <button type="button" class="btn btn-primary" @onclick="DownloadAsync">
+                                <i class="fas fa-download me-1"></i>Ja, download
+                            </button>
+                        }
+                        <button type="button" class="btn btn-outline-secondary" @onclick="DeclineAsync">
+                            Nee, niet meer vragen
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public ReleaseInfo? Update { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDecline { get; set; }
+
+    [Inject] private IUpdateCheckService UpdateCheckService { get; set; } = null!;
+
+    private bool isDownloading;
+    private string successMessage = "";
+    private string errorMessage = "";
+
+    private async Task DownloadAsync()
+    {
+        if (Update?.MsiDownloadUrl is null || Update.MsiFileName is null)
+            return;
+
+        isDownloading = true;
+        successMessage = "";
+        errorMessage = "";
+
+        try
+        {
+            var savedPath = await UpdateCheckService.DownloadInstallerAsync(
+                Update.MsiDownloadUrl, Update.MsiFileName);
+            successMessage = $"Installatieprogramma opgeslagen als: {savedPath}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Downloaden mislukt: {ex.Message}";
+        }
+        finally
+        {
+            isDownloading = false;
+        }
+    }
+
+    private async Task DeclineAsync()
+    {
+        await OnDecline.InvokeAsync();
+    }
+
+    private async Task Close()
+    {
+        successMessage = "";
+        errorMessage = "";
+        await OnClose.InvokeAsync();
+    }
+}

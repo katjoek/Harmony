@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Headers;
 
 internal static class ServiceCollectionExtensions
 {
@@ -73,6 +74,19 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<IDatabaseCleanupService, DatabaseCleanupService>();
         services.AddScoped<DataSeeder>();
         services.AddScoped<SeedDataCommand>();
+
+        services.AddHttpClient("GitHub", client =>
+        {
+            client.BaseAddress = new Uri("https://api.github.com/");
+            client.DefaultRequestHeaders.UserAgent.Add(
+                new ProductInfoHeaderValue("HarmonyApp", typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.0"));
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        });
+
+        services.AddSingleton<IUpdateCheckService, GitHubUpdateCheckService>();
+        services.AddSingleton<IUpdateNotificationState, UpdateNotificationState>();
+        services.AddHostedService<UpdateBackgroundService>();
 
         return services;
     }
