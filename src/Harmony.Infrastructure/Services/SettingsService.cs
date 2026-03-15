@@ -12,7 +12,7 @@ public sealed class SettingsService : ISettingsService
     {
         var appDirectory = AppContext.BaseDirectory;
         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        
+
         string settingsDirectory;
         if (appDirectory.StartsWith(userProfile, StringComparison.OrdinalIgnoreCase))
         {
@@ -31,6 +31,11 @@ public sealed class SettingsService : ISettingsService
         
         Directory.CreateDirectory(settingsDirectory);
         _settingsFilePath = Path.Combine(settingsDirectory, "harmony.settings.json");
+    }
+
+    internal SettingsService(string settingsFilePath)
+    {
+        _settingsFilePath = settingsFilePath;
     }
 
     public async Task<string?> GetDatabaseDirectoryAsync(CancellationToken cancellationToken = default)

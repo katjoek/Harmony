@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 
 public sealed class UpdateBackgroundService : BackgroundService
 {
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
-    private static readonly TimeSpan StartupDelay = TimeSpan.FromSeconds(10);
+    private readonly TimeSpan _checkInterval;
+    private readonly TimeSpan _startupDelay;
 
     private readonly IUpdateCheckService _updateCheckService;
     private readonly IUpdateNotificationState _notificationState;
@@ -24,17 +24,32 @@ public sealed class UpdateBackgroundService : BackgroundService
         _notificationState = notificationState;
         _settingsService = settingsService;
         _logger = logger;
+        _startupDelay = TimeSpan.FromSeconds(10);
+        _checkInterval = TimeSpan.FromHours(1);
+    }
+
+    internal UpdateBackgroundService(
+        IUpdateCheckService updateCheckService,
+        IUpdateNotificationState notificationState,
+        ISettingsService settingsService,
+        ILogger<UpdateBackgroundService> logger,
+        TimeSpan startupDelay,
+        TimeSpan checkInterval)
+        : this(updateCheckService, notificationState, settingsService, logger)
+    {
+        _startupDelay = startupDelay;
+        _checkInterval = checkInterval;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Give the app time to fully start before the first check
-        await Task.Delay(StartupDelay, stoppingToken);
+        await Task.Delay(_startupDelay, stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
             await RunCheckIfEnabledAsync(stoppingToken);
-            await Task.Delay(CheckInterval, stoppingToken);
+            await Task.Delay(_checkInterval, stoppingToken);
         }
     }
 
