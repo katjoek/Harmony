@@ -34,15 +34,15 @@ public sealed class GitHubUpdateCheckService : IUpdateCheckService
                 if (!TryParseVersion(release.TagName, out var version))
                     continue;
 
-                var msiAsset = release.Assets?.FirstOrDefault(a =>
-                    a.Name?.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) == true);
+                var exeAsset = release.Assets?.FirstOrDefault(a =>
+                    a.Name?.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) == true);
 
                 results.Add(new ReleaseInfo(
                     Version: version,
                     TagName: release.TagName ?? string.Empty,
                     IsPreRelease: release.Prerelease,
-                    MsiDownloadUrl: msiAsset?.BrowserDownloadUrl,
-                    MsiFileName: msiAsset?.Name));
+                    InstallerDownloadUrl: exeAsset?.BrowserDownloadUrl,
+                    InstallerFileName: exeAsset?.Name));
             }
 
             return results;

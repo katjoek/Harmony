@@ -29,4 +29,24 @@ public sealed class TestSettingsService : ISettingsService
 
     public Task SetListenOnAllInterfacesAsync(bool listenOnAllInterfaces, CancellationToken cancellationToken = default)
         => Task.CompletedTask; // No-op for tests
+
+    public Task<bool> GetIncludePreReleasesAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(false);
+    }
+
+    public Task SetIncludePreReleasesAsync(bool value, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> GetUpdateChecksEnabledAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(false);
+    }
+
+    public Task SetUpdateChecksEnabledAsync(bool value, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
 }

@@ -56,7 +56,7 @@ public sealed class GitHubUpdateCheckServiceTests
     }
 
     [Fact]
-    public async Task GetReleasesAsync_WithMsiAsset_PopulatesMsiFields()
+    public async Task GetReleasesAsync_WithInstallerAsset_PopulatesInstallerFields()
     {
         // Arrange
         const string json = """
@@ -65,8 +65,8 @@ public sealed class GitHubUpdateCheckServiceTests
               "prerelease": false,
               "assets": [
                 {
-                  "name": "Harmony-1.2.0-Setup.msi",
-                  "browser_download_url": "https://github.com/katjoek/Harmony/releases/download/1.2.0/Harmony-1.2.0-Setup.msi"
+                  "name": "Harmony-1.2.0-Setup.exe",
+                  "browser_download_url": "https://github.com/katjoek/Harmony/releases/download/1.2.0/Harmony-1.2.0-Setup.exe"
                 }
               ]
             }]
@@ -78,10 +78,10 @@ public sealed class GitHubUpdateCheckServiceTests
 
         // Assert
         Assert.Single(releases);
-        Assert.Equal("Harmony-1.2.0-Setup.msi", releases[0].MsiFileName);
+        Assert.Equal("Harmony-1.2.0-Setup.exe", releases[0].InstallerFileName);
         Assert.Equal(
-            "https://github.com/katjoek/Harmony/releases/download/1.2.0/Harmony-1.2.0-Setup.msi",
-            releases[0].MsiDownloadUrl);
+            "https://github.com/katjoek/Harmony/releases/download/1.2.0/Harmony-1.2.0-Setup.exe",
+            releases[0].InstallerDownloadUrl);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public sealed class GitHubUpdateCheckServiceTests
     }
 
     [Fact]
-    public async Task GetReleasesAsync_WithNoMsiAsset_LeavesFieldsNull()
+    public async Task GetReleasesAsync_WithNoInstallerAsset_LeavesFieldsNull()
     {
         // Arrange
         const string json = """
@@ -150,8 +150,8 @@ public sealed class GitHubUpdateCheckServiceTests
 
         // Assert
         Assert.Single(releases);
-        Assert.Null(releases[0].MsiDownloadUrl);
-        Assert.Null(releases[0].MsiFileName);
+        Assert.Null(releases[0].InstallerDownloadUrl);
+        Assert.Null(releases[0].InstallerFileName);
     }
 
     private sealed class StaticResponseHandler(string json) : HttpMessageHandler

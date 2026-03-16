@@ -14,16 +14,16 @@ public sealed class UpdateBackgroundServiceTests
     private static readonly Version OlderVersion = new(1, 1, 0);
 
     private static readonly ReleaseInfo NewerRelease =
-        new(NewerVersion, "v1.3.0", IsPreRelease: false, MsiDownloadUrl: null, MsiFileName: null);
+        new(NewerVersion, "v1.3.0", IsPreRelease: false, InstallerDownloadUrl: null, InstallerFileName: null);
 
     private static readonly ReleaseInfo SameRelease =
-        new(SameVersion, "v1.2.1", IsPreRelease: false, MsiDownloadUrl: null, MsiFileName: null);
+        new(SameVersion, "v1.2.1", IsPreRelease: false, InstallerDownloadUrl: null, InstallerFileName: null);
 
     private static readonly ReleaseInfo OlderRelease =
-        new(OlderVersion, "v1.1.0", IsPreRelease: false, MsiDownloadUrl: null, MsiFileName: null);
+        new(OlderVersion, "v1.1.0", IsPreRelease: false, InstallerDownloadUrl: null, InstallerFileName: null);
 
     private static readonly ReleaseInfo PreReleaseNewer =
-        new(NewerVersion, "v1.3.0-beta1", IsPreRelease: true, MsiDownloadUrl: null, MsiFileName: null);
+        new(NewerVersion, "v1.3.0-beta1", IsPreRelease: true, InstallerDownloadUrl: null, InstallerFileName: null);
 
     private static UpdateBackgroundService CreateService(
         IUpdateCheckService updateCheckService,

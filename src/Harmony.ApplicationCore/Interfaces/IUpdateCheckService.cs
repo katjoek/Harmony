@@ -4,8 +4,8 @@ public sealed record ReleaseInfo(
     Version Version,
     string TagName,
     bool IsPreRelease,
-    string? MsiDownloadUrl,
-    string? MsiFileName);
+    string? InstallerDownloadUrl,
+    string? InstallerFileName);
 
 public interface IUpdateCheckService
 {

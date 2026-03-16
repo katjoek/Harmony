@@ -7,7 +7,7 @@ using Xunit;
 public sealed class UpdateNotificationStateTests
 {
     private static readonly ReleaseInfo SomeRelease =
-        new(new Version(2, 0, 0), "v2.0.0", IsPreRelease: false, MsiDownloadUrl: null, MsiFileName: null);
+        new(new Version(2, 0, 0), "v2.0.0", IsPreRelease: false, InstallerDownloadUrl: null, InstallerFileName: null);
 
     [Fact]
     public void SetUpdate_WithRelease_StoresPendingUpdateAndTimestamp()
